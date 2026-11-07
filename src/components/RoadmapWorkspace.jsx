@@ -1,30 +1,22 @@
-import React, { useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import html2canvas from 'html2canvas';
 import {
   Eye,
   Edit3,
   Download,
-  FileJson,
-  Image as ImageIcon,
   Settings,
   Home,
-  RotateCcw,
-  Grid,
-  Rows,
   Check,
   Loader2,
-  Upload,
 } from 'lucide-react';
 import Sidebar from './Sidebar';
 import TimelineGrid from './TimelineGrid';
+import ThemeModeToggle from './ThemeModeToggle';
 
 export default function RoadmapWorkspace({
   roadmapState,
   onOpenConfigModal,
   onNavigateHome,
-  onResetToSample,
-  onUploadJson,
-  onTogglePreviewSetting,
   onAddLegendCategory,
   onUpdateLegendCategory,
   onDeleteLegendCategory,
@@ -43,12 +35,13 @@ export default function RoadmapWorkspace({
   onAddTimelineItem,
   onUpdateTimelineItem,
   onDeleteTimelineItem,
+  themeMode,
+  onChangeThemeMode,
 }) {
   const [mode, setMode] = useState('editor'); // 'editor' | 'preview'
-  const [isExportingPng, setIsExportingPng] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
   const [exportStatus, setExportStatus] = useState('');
   const exportCanvasRef = useRef(null);
-  const fileUploadRef = useRef(null);
 
   const isPreview = mode === 'preview';
   const { config, legend, sections, tasks, timelineItems } = roadmapState;
@@ -59,27 +52,30 @@ export default function RoadmapWorkspace({
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/(^-|-$)/g, '') || 'roadmap';
 
-  const handleExportJson = () => {
+  const triggerJsonDownload = (baseSlug) => {
     const dataStr = JSON.stringify(roadmapState, null, 2);
     const blob = new Blob([dataStr], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `${slugifyName(config.name)}.json`;
+    link.download = `${baseSlug}.json`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
-
-    setExportStatus('JSON exported!');
-    setTimeout(() => setExportStatus(''), 2500);
   };
 
-  const handleExportPng = async () => {
-    if (!exportCanvasRef.current || isExportingPng) return;
-    setIsExportingPng(true);
-    setExportStatus('Rendering high-res PNG...');
+  const handleExport = async () => {
+    if (!exportCanvasRef.current || isExporting) return;
+    setIsExporting(true);
+    setExportStatus('Exporting JSON & PNG...');
 
+    const baseSlug = slugifyName(config.name);
+
+    // 1. Download JSON immediately
+    triggerJsonDownload(baseSlug);
+
+    // 2. Render and download high-res PNG with baseline & input fixes
     try {
       const targetNode = exportCanvasRef.current;
       const canvas = await html2canvas(targetNode, {
@@ -89,55 +85,70 @@ export default function RoadmapWorkspace({
         logging: false,
         windowWidth: targetNode.scrollWidth + 64,
         windowHeight: targetNode.scrollHeight + 64,
+        onclone: (clonedDoc, clonedEl) => {
+          // Fix Tailwind preflight `img { display: block }` which shifts html2canvas font baseline downward
+          const styleFix = clonedDoc.createElement('style');
+          styleFix.innerHTML = `
+            img { display: inline-block !important; }
+            [data-export-text="true"] {
+              overflow: visible !important;
+              line-height: 1.35 !important;
+              padding-bottom: 2px !important;
+            }
+          `;
+          clonedDoc.head.appendChild(styleFix);
+
+          // Hide editor-only action buttons (like "+ Sub", "+ Task", "+MS") in PNG output
+          clonedEl.querySelectorAll('[data-editor-control="true"]').forEach((el) => {
+            el.style.display = 'none';
+          });
+
+          // Replace any live <input> or <textarea> inside the canvas with static wrapping <div>s
+          clonedEl.querySelectorAll('input, textarea').forEach((inputEl) => {
+            const div = clonedDoc.createElement('div');
+            div.textContent = inputEl.value || inputEl.placeholder || '';
+            div.className = inputEl.className;
+            div.style.cssText = inputEl.style.cssText;
+            div.style.whiteSpace = 'pre-wrap';
+            div.style.wordBreak = 'break-word';
+            div.style.overflow = 'visible';
+            div.style.lineHeight = '1.35';
+            div.style.paddingBottom = '2px';
+            div.style.display = 'block';
+            div.style.height = 'auto';
+            inputEl.parentNode?.replaceChild(div, inputEl);
+          });
+        },
       });
 
       const dataUrl = canvas.toDataURL('image/png');
       const link = document.createElement('a');
       link.href = dataUrl;
-      link.download = `${slugifyName(config.name)}.png`;
+      link.download = `${baseSlug}.png`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
 
-      setExportStatus('PNG downloaded!');
+      setExportStatus('JSON & PNG exported!');
     } catch (err) {
       console.error('Failed to export PNG via html2canvas:', err);
-      setExportStatus('PNG export failed');
+      setExportStatus('JSON exported (PNG failed)');
     } finally {
-      setIsExportingPng(false);
+      setIsExporting(false);
       setTimeout(() => setExportStatus(''), 3000);
     }
   };
 
-  const handleQuickJsonUpload = (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      try {
-        const parsed = JSON.parse(ev.target.result);
-        onUploadJson(parsed);
-        setExportStatus('Roadmap imported!');
-        setTimeout(() => setExportStatus(''), 2500);
-      } catch {
-        setExportStatus('Invalid JSON file');
-        setTimeout(() => setExportStatus(''), 2500);
-      }
-    };
-    reader.readAsText(file);
-    e.target.value = '';
-  };
-
   return (
-    <div className="min-h-screen h-screen flex flex-col bg-slate-950 text-slate-100 overflow-hidden">
+    <div className="min-h-screen h-screen flex flex-col bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100 overflow-hidden transition-colors">
       {/* Top Workspace Control Bar */}
-      <header className="px-4 sm:px-6 py-3 bg-slate-900/95 border-b border-slate-800 flex flex-wrap items-center justify-between gap-3 shrink-0 z-30">
+      <header className="px-4 sm:px-6 py-3 bg-white dark:bg-slate-900/95 border-b border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3 shrink-0 z-30 shadow-sm">
         {/* Left Navigation & Title */}
         <div className="flex items-center gap-3 min-w-0">
           <button
             type="button"
             onClick={onNavigateHome}
-            className="p-2 rounded-xl bg-slate-800/80 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700/70 transition-colors"
+            className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-slate-700/70 transition-colors"
             title="Back to Landing Page"
           >
             <Home className="w-4 h-4" />
@@ -145,23 +156,21 @@ export default function RoadmapWorkspace({
 
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <h2 className="font-bold text-sm sm:text-base text-white truncate max-w-xs sm:max-w-md">
+              <h2 className="font-bold text-sm sm:text-base text-slate-900 dark:text-white truncate max-w-xs sm:max-w-md">
                 {config.name}
               </h2>
-              <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-indigo-500/15 text-indigo-300 border border-indigo-500/30">
+              <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-indigo-500/15 text-indigo-600 dark:text-indigo-300 border border-indigo-500/30">
                 {config.totalPeriods} {config.periodLabel}
               </span>
             </div>
-            <div className="text-[11px] text-slate-400 hidden sm:block">
-              Auto-saved to <code className="text-slate-300">localStorage</code> •{' '}
-              {sections.length} Sections • {tasks.length} Tasks •{' '}
-              {timelineItems.length} Timeline Items
+            <div className="text-[11px] text-slate-500 dark:text-slate-400 hidden sm:block">
+              {sections.length} Sections • {tasks.length} Tasks • {timelineItems.length} Timeline Items
             </div>
           </div>
         </div>
 
         {/* Center Mode Switcher: Editor vs Preview */}
-        <div className="flex items-center gap-2 bg-slate-950 p-1 rounded-xl border border-slate-800">
+        <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-950 p-1 rounded-xl border border-slate-200 dark:border-slate-800">
           <button
             type="button"
             onClick={() => setMode('editor')}
@@ -169,7 +178,7 @@ export default function RoadmapWorkspace({
             className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
               !isPreview
                 ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
-                : 'text-slate-400 hover:text-white'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
             <Edit3 className="w-3.5 h-3.5" />
@@ -183,7 +192,7 @@ export default function RoadmapWorkspace({
             className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
               isPreview
                 ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30'
-                : 'text-slate-400 hover:text-white'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
             <Eye className="w-3.5 h-3.5" />
@@ -191,127 +200,42 @@ export default function RoadmapWorkspace({
           </button>
         </div>
 
-        {/* Right Actions: Preview Toggles (when in Preview), Config, Upload/Reset, Export JSON, Export PNG */}
-        <div className="flex items-center gap-2 flex-wrap">
+        {/* Right Actions: Identical in Editor and Preview Mode */}
+        <div className="flex items-center gap-2.5 flex-wrap">
           {exportStatus && (
-            <span className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-lg bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+            <span className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-lg bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30">
               <Check className="w-3.5 h-3.5" />
               <span>{exportStatus}</span>
             </span>
           )}
 
-          {/* Minor Design Toggles exposed in Preview Mode (and available anytime) */}
-          {isPreview && (
-            <div
-              className="flex items-center gap-1.5 bg-slate-950/90 px-2.5 py-1 rounded-xl border border-slate-800"
-              data-testid="preview-design-toggles"
-            >
-              <button
-                type="button"
-                onClick={() =>
-                  onTogglePreviewSetting(
-                    'alternateRowHighlighting',
-                    !(config.previewSettings?.alternateRowHighlighting ?? true)
-                  )
-                }
-                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${
-                  config.previewSettings?.alternateRowHighlighting ?? true
-                    ? 'bg-indigo-500/20 text-indigo-200 border border-indigo-500/40'
-                    : 'text-slate-400 hover:text-slate-200'
-                }`}
-                title="Toggle alternate row highlighting"
-              >
-                <Rows className="w-3.5 h-3.5" />
-                <span>Alt Rows</span>
-              </button>
+          <ThemeModeToggle themeMode={themeMode} onChangeThemeMode={onChangeThemeMode} />
 
-              <button
-                type="button"
-                onClick={() =>
-                  onTogglePreviewSetting(
-                    'subtleGridDemarcations',
-                    !(config.previewSettings?.subtleGridDemarcations ?? true)
-                  )
-                }
-                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${
-                  config.previewSettings?.subtleGridDemarcations ?? true
-                    ? 'bg-indigo-500/20 text-indigo-200 border border-indigo-500/40'
-                    : 'text-slate-400 hover:text-slate-200'
-                }`}
-                title="Toggle subtle grid demarcations between periods and sections"
-              >
-                <Grid className="w-3.5 h-3.5" />
-                <span>Grid Lines</span>
-              </button>
-            </div>
-          )}
-
-          {!isPreview && (
-            <>
-              <button
-                type="button"
-                onClick={onOpenConfigModal}
-                data-testid="open-config-btn"
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-colors"
-                title="Configure periods, dates, and theme"
-              >
-                <Settings className="w-3.5 h-3.5 text-indigo-400" />
-                <span className="hidden md:inline">Configure</span>
-              </button>
-
-              <input
-                ref={fileUploadRef}
-                type="file"
-                accept=".json,application/json"
-                onChange={handleQuickJsonUpload}
-                className="hidden"
-              />
-              <button
-                type="button"
-                onClick={() => fileUploadRef.current?.click()}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-colors"
-                title="Import Roadmap JSON"
-              >
-                <Upload className="w-3.5 h-3.5 text-teal-400" />
-                <span className="hidden xl:inline">Import</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={onResetToSample}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-medium bg-slate-800/70 hover:bg-slate-800 text-slate-400 hover:text-slate-200 border border-slate-800 transition-colors"
-                title="Reset to sample roadmap"
-              >
-                <RotateCcw className="w-3.5 h-3.5" />
-              </button>
-            </>
-          )}
-
-          {/* Export JSON Button */}
           <button
             type="button"
-            onClick={handleExportJson}
-            data-testid="export-json-btn"
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-100 border border-slate-700 transition-colors"
+            onClick={onOpenConfigModal}
+            data-testid="open-config-btn"
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 transition-colors"
+            title="Configure timeline, grid display, and theme"
           >
-            <FileJson className="w-3.5 h-3.5 text-amber-400" />
-            <span>Export JSON</span>
+            <Settings className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+            <span>Configure</span>
           </button>
 
-          {/* Export PNG Button */}
           <button
             type="button"
-            onClick={handleExportPng}
-            disabled={isExportingPng}
-            data-testid="export-png-btn"
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 shadow-md shadow-indigo-600/25 transition-all disabled:opacity-60"
+            onClick={handleExport}
+            disabled={isExporting}
+            data-testid="export-btn"
+            className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-xs font-semibold text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 shadow-md shadow-indigo-600/25 transition-all disabled:opacity-60"
+            title="Download both JSON and high-resolution PNG"
           >
-            {isExportingPng ? (
+            {isExporting ? (
               <Loader2 className="w-3.5 h-3.5 animate-spin" />
             ) : (
-              <ImageIcon className="w-3.5 h-3.5" />
+              <Download className="w-3.5 h-3.5" />
             )}
-            <span>Export PNG</span>
+            <span>Export</span>
           </button>
         </div>
       </header>

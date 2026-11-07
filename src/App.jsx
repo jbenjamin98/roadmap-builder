@@ -1,13 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { arrayMove } from '@dnd-kit/sortable';
 import LandingPage from './components/LandingPage';
 import ConfigModal from './components/ConfigModal';
 import RoadmapWorkspace from './components/RoadmapWorkspace';
+import CustomCursor from './components/CustomCursor';
+import SmallScreenGuard from './components/SmallScreenGuard';
 import {
   loadRoadmapState,
   saveRoadmapState,
   normalizeRoadmapState,
-  getSampleRoadmapState,
+  createBlankRoadmapState,
+  loadUiThemeMode,
+  saveUiThemeMode,
 } from './data/defaultState';
 
 export default function App() {
@@ -15,8 +19,20 @@ export default function App() {
   const [currentView, setCurrentView] = useState('landing'); // 'landing' | 'workspace'
   const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
   const [isCreatingNew, setIsCreatingNew] = useState(false);
+  const [themeMode, setThemeMode] = useState(() => loadUiThemeMode());
 
-  // Persist all state in localStorage under roadmap_builder_state_v1
+  // Sync light/dark class on <html>
+  useEffect(() => {
+    const root = document.documentElement;
+    if (themeMode === 'dark') {
+      root.classList.add('dark');
+    } else {
+      root.classList.remove('dark');
+    }
+    saveUiThemeMode(themeMode);
+  }, [themeMode]);
+
+  // Persist active roadmap state to localStorage
   useEffect(() => {
     saveRoadmapState(roadmapState);
   }, [roadmapState]);
@@ -24,85 +40,51 @@ export default function App() {
   const makeId = (prefix) =>
     `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
 
-  // View A -> Trigger View B (Configuration Modal)
+  // View A -> Trigger View B (Blank Configuration Modal)
   const handleTriggerCreateRoadmap = () => {
     setIsCreatingNew(true);
     setIsConfigModalOpen(true);
   };
 
-  // View A -> Upload JSON overwrites localStorage and routes to editor
+  // View A -> Upload JSON creates/updates a roadmap and routes to editor
   const handleUploadRoadmapJson = (parsedJson) => {
-    const normalized = normalizeRoadmapState(parsedJson);
+    const normalized = normalizeRoadmapState(parsedJson, { forceNewId: !parsedJson.id });
     saveRoadmapState(normalized);
     setRoadmapState(normalized);
     setCurrentView('workspace');
   };
 
   // Save Configuration from ConfigModal (View B)
-  const handleSaveConfig = (updatedConfig, options = {}) => {
-    setRoadmapState((prev) => {
-      const baseState = options.startFreshStructure
-        ? {
-            ...getSampleRoadmapState(),
-            sections: [
-              {
-                id: 'sec-1',
-                title: 'Strategic Pillar 1',
-                subSections: [{ id: 'sub-1', title: 'Core Stream' }],
-              },
-            ],
-            tasks: [
-              {
-                id: 'task-1',
-                subSectionId: 'sub-1',
-                title: 'Initial Milestone / Deliverable',
-              },
-            ],
-            timelineItems: [],
-          }
-        : prev;
-
-      const nextState = {
-        ...baseState,
-        config: {
-          ...baseState.config,
-          ...updatedConfig,
-          previewSettings: baseState.config?.previewSettings || {
-            alternateRowHighlighting: true,
-            subtleGridDemarcations: true,
+  const handleSaveConfig = (updatedConfig) => {
+    if (isCreatingNew) {
+      const freshState = createBlankRoadmapState(updatedConfig);
+      saveRoadmapState(freshState);
+      setRoadmapState(freshState);
+    } else {
+      setRoadmapState((prev) => {
+        const nextState = {
+          ...prev,
+          config: {
+            ...prev.config,
+            ...updatedConfig,
+            previewSettings: {
+              ...(prev.config?.previewSettings || {}),
+              ...(updatedConfig.previewSettings || {}),
+            },
           },
-        },
-      };
-      saveRoadmapState(nextState);
-      return nextState;
-    });
+        };
+        saveRoadmapState(nextState);
+        return nextState;
+      });
+    }
 
     setIsConfigModalOpen(false);
     setIsCreatingNew(false);
     setCurrentView('workspace');
   };
 
-  const handleResetToSample = () => {
-    const sample = getSampleRoadmapState();
-    saveRoadmapState(sample);
-    setRoadmapState(sample);
-  };
-
-  const handleTogglePreviewSetting = (key, value) => {
-    setRoadmapState((prev) => ({
-      ...prev,
-      config: {
-        ...prev.config,
-        previewSettings: {
-          ...(prev.config.previewSettings || {}),
-          [key]: value,
-        },
-      },
-    }));
-  };
-
   // Legend CRUD
-  const handleAddLegendCategory = ({ label, color, gradient }) => {
+  const handleAddLegendCategory = ({ label, color, gradient, hasBorder, borderColor }) => {
     setRoadmapState((prev) => ({
       ...prev,
       legend: [
@@ -112,6 +94,8 @@ export default function App() {
           label,
           color,
           gradient,
+          hasBorder: Boolean(hasBorder),
+          borderColor: borderColor || '#ffffff',
         },
       ],
     }));
@@ -397,12 +381,18 @@ export default function App() {
 
   return (
     <>
+      <SmallScreenGuard />
+      <CustomCursor
+        themeMode={themeMode}
+        isWorkspace={currentView === 'workspace'}
+        roadmapTheme={roadmapState.config?.theme}
+      />
       {currentView === 'landing' ? (
         <LandingPage
           onCreateRoadmap={handleTriggerCreateRoadmap}
           onUploadRoadmap={handleUploadRoadmapJson}
-          onContinueExisting={() => setCurrentView('workspace')}
-          currentRoadmapName={roadmapState.config?.name}
+          themeMode={themeMode}
+          onChangeThemeMode={setThemeMode}
         />
       ) : (
         <RoadmapWorkspace
@@ -411,10 +401,9 @@ export default function App() {
             setIsCreatingNew(false);
             setIsConfigModalOpen(true);
           }}
-          onNavigateHome={() => setCurrentView('landing')}
-          onResetToSample={handleResetToSample}
-          onUploadJson={handleUploadRoadmapJson}
-          onTogglePreviewSetting={handleTogglePreviewSetting}
+          onNavigateHome={() => {
+            setCurrentView('landing');
+          }}
           onAddLegendCategory={handleAddLegendCategory}
           onUpdateLegendCategory={handleUpdateLegendCategory}
           onDeleteLegendCategory={handleDeleteLegendCategory}
@@ -433,18 +422,20 @@ export default function App() {
           onAddTimelineItem={handleAddTimelineItem}
           onUpdateTimelineItem={handleUpdateTimelineItem}
           onDeleteTimelineItem={handleDeleteTimelineItem}
+          themeMode={themeMode}
+          onChangeThemeMode={setThemeMode}
         />
       )}
 
       {isConfigModalOpen && (
         <ConfigModal
-          key={isCreatingNew ? 'create' : 'edit'}
+          key={isCreatingNew ? 'create-blank' : `edit-${roadmapState.id}`}
           isOpen={isConfigModalOpen}
           onClose={() => {
             setIsConfigModalOpen(false);
             setIsCreatingNew(false);
           }}
-          initialConfig={roadmapState.config}
+          initialConfig={isCreatingNew ? null : roadmapState.config}
           onSaveConfig={handleSaveConfig}
           isCreatingNew={isCreatingNew}
         />

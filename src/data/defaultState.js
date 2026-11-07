@@ -1,11 +1,112 @@
 import { PRESET_THEMES } from '../constants/themes';
 
 export const STORAGE_KEY = 'roadmap_builder_state_v1';
+export const SAVED_ROADMAPS_KEY = 'roadmap_builder_saved_list_v1';
+export const UI_THEME_KEY = 'roadmap_builder_ui_theme_v1';
+
+export function getTodayDateString() {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, '0');
+  const d = String(now.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+export function getDefaultLegend() {
+  return [
+    {
+      id: 'leg-core',
+      label: 'Core Engineering',
+      color: '#6366f1',
+      gradient: 'linear-gradient(135deg, rgba(99, 102, 241, 0.92) 0%, rgba(139, 92, 246, 0.88) 100%)',
+      hasBorder: false,
+      borderColor: '#ffffff',
+    },
+    {
+      id: 'leg-security',
+      label: 'Security & Governance',
+      color: '#10b981',
+      gradient: 'linear-gradient(135deg, rgba(16, 185, 129, 0.92) 0%, rgba(6, 182, 212, 0.88) 100%)',
+      hasBorder: false,
+      borderColor: '#ffffff',
+    },
+    {
+      id: 'leg-ux',
+      label: 'Product & Experience',
+      color: '#ec4899',
+      gradient: 'linear-gradient(135deg, rgba(236, 72, 153, 0.92) 0%, rgba(244, 63, 94, 0.88) 100%)',
+      hasBorder: false,
+      borderColor: '#ffffff',
+    },
+    {
+      id: 'leg-release',
+      label: 'GA Launch / Gate',
+      color: '#f59e0b',
+      gradient: 'linear-gradient(135deg, rgba(245, 158, 11, 0.95) 0%, rgba(234, 88, 12, 0.9) 100%)',
+      hasBorder: false,
+      borderColor: '#ffffff',
+    },
+  ];
+}
+
+export function createBlankRoadmapState(customConfig = {}) {
+  const defaultTheme = PRESET_THEMES[0];
+  const newId = `rm-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+
+  return {
+    id: newId,
+    updatedAt: new Date().toISOString(),
+    version: 1,
+    config: {
+      name: customConfig.name || 'Untitled Roadmap',
+      periodLabel: customConfig.periodLabel || 'Sprints',
+      startDate: customConfig.startDate || getTodayDateString(),
+      weeksPerPeriod: Number(customConfig.weeksPerPeriod) || 2,
+      totalPeriods: Number(customConfig.totalPeriods) || 8,
+      fontStyle: customConfig.fontStyle || 'sans',
+      themeId: customConfig.themeId || defaultTheme.id,
+      theme: customConfig.theme || {
+        primary: defaultTheme.primary,
+        secondary: defaultTheme.secondary,
+        accents: [...defaultTheme.accents],
+      },
+      previewSettings: {
+        alternateRowHighlighting:
+          customConfig.previewSettings?.alternateRowHighlighting ?? true,
+        subtleGridDemarcations:
+          customConfig.previewSettings?.subtleGridDemarcations ?? true,
+      },
+    },
+    legend: getDefaultLegend(),
+    sections: [
+      {
+        id: 'sec-1',
+        title: 'Section 1',
+        subSections: [
+          {
+            id: 'sub-1',
+            title: 'Workstream 1',
+          },
+        ],
+      },
+    ],
+    tasks: [
+      {
+        id: 'task-1',
+        subSectionId: 'sub-1',
+        title: 'Task 1',
+      },
+    ],
+    timelineItems: [],
+  };
+}
 
 export function getSampleRoadmapState() {
   const defaultTheme = PRESET_THEMES[0];
 
   return {
+    id: 'rm-sample-default',
+    updatedAt: new Date().toISOString(),
     version: 1,
     config: {
       name: 'Platform Evolution & AI Capabilities Roadmap',
@@ -25,32 +126,7 @@ export function getSampleRoadmapState() {
         subtleGridDemarcations: true,
       },
     },
-    legend: [
-      {
-        id: 'leg-core',
-        label: 'Core Engineering',
-        color: '#6366f1',
-        gradient: 'linear-gradient(135deg, rgba(99, 102, 241, 0.92) 0%, rgba(139, 92, 246, 0.88) 100%)',
-      },
-      {
-        id: 'leg-security',
-        label: 'Security & Governance',
-        color: '#10b981',
-        gradient: 'linear-gradient(135deg, rgba(16, 185, 129, 0.92) 0%, rgba(6, 182, 212, 0.88) 100%)',
-      },
-      {
-        id: 'leg-ux',
-        label: 'Product & Experience',
-        color: '#ec4899',
-        gradient: 'linear-gradient(135deg, rgba(236, 72, 153, 0.92) 0%, rgba(244, 63, 94, 0.88) 100%)',
-      },
-      {
-        id: 'leg-release',
-        label: 'GA Launch / Gate',
-        color: '#f59e0b',
-        gradient: 'linear-gradient(135deg, rgba(245, 158, 11, 0.95) 0%, rgba(234, 88, 12, 0.9) 100%)',
-      },
-    ],
+    legend: getDefaultLegend(),
     sections: [
       {
         id: 'sec-1',
@@ -159,9 +235,14 @@ export function getSampleRoadmapState() {
 /**
  * Validates and normalizes a roadmap state object (from localStorage or JSON upload)
  */
-export function normalizeRoadmapState(raw) {
+export function normalizeRoadmapState(raw, options = {}) {
   const sample = getSampleRoadmapState();
   if (!raw || typeof raw !== 'object') return sample;
+
+  const id =
+    options.forceNewId
+      ? `rm-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`
+      : raw.id || `rm-${Date.now().toString(36)}`;
 
   const config = {
     ...sample.config,
@@ -189,18 +270,20 @@ export function normalizeRoadmapState(raw) {
           gradient:
             l.gradient ||
             `linear-gradient(135deg, ${l.color || '#6366f1'}e6 0%, ${l.color || '#6366f1'}cc 100%)`,
+          hasBorder: Boolean(l.hasBorder),
+          borderColor: l.borderColor || '#ffffff',
         }))
       : sample.legend;
 
   const sections =
-    Array.isArray(raw.sections) && raw.sections.length > 0
+    Array.isArray(raw.sections)
       ? raw.sections.map((sec, sIdx) => ({
           id: sec.id || `sec-${sIdx + 1}`,
-          title: sec.title || `Section ${sIdx + 1}`,
+          title: sec.title ?? `Section ${sIdx + 1}`,
           subSections: Array.isArray(sec.subSections)
             ? sec.subSections.map((sub, subIdx) => ({
                 id: sub.id || `sub-${sIdx + 1}-${subIdx + 1}`,
-                title: sub.title || `Sub-section ${subIdx + 1}`,
+                title: sub.title ?? `Sub-section ${subIdx + 1}`,
               }))
             : [],
         }))
@@ -210,7 +293,7 @@ export function normalizeRoadmapState(raw) {
     ? raw.tasks.map((t, tIdx) => ({
         id: t.id || `task-${tIdx + 1}`,
         subSectionId: t.subSectionId,
-        title: t.title || `Task ${tIdx + 1}`,
+        title: t.title ?? `Task ${tIdx + 1}`,
       }))
     : sample.tasks;
 
@@ -228,6 +311,8 @@ export function normalizeRoadmapState(raw) {
     : sample.timelineItems;
 
   return {
+    id,
+    updatedAt: raw.updatedAt || new Date().toISOString(),
     version: 1,
     config,
     legend,
@@ -246,8 +331,7 @@ export function loadRoadmapState() {
       return sample;
     }
     const parsed = JSON.parse(raw);
-    const normalized = normalizeRoadmapState(parsed);
-    return normalized;
+    return normalizeRoadmapState(parsed);
   } catch (err) {
     console.warn('Failed to parse roadmap_builder_state_v1 from localStorage, falling back to sample:', err);
     const sample = getSampleRoadmapState();
@@ -262,8 +346,81 @@ export function loadRoadmapState() {
 
 export function saveRoadmapState(state) {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    const withTimestamp = {
+      ...state,
+      updatedAt: new Date().toISOString(),
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(withTimestamp));
+    upsertSavedRoadmap(withTimestamp);
   } catch (err) {
     console.error('Failed to persist roadmap state to localStorage:', err);
+  }
+}
+
+export function loadSavedRoadmapsList() {
+  try {
+    const raw = localStorage.getItem(SAVED_ROADMAPS_KEY);
+    if (!raw) {
+      const current = loadRoadmapState();
+      const initialList = [current];
+      localStorage.setItem(SAVED_ROADMAPS_KEY, JSON.stringify(initialList));
+      return initialList;
+    }
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.map((item) => normalizeRoadmapState(item));
+  } catch {
+    return [];
+  }
+}
+
+export function upsertSavedRoadmap(roadmap) {
+  if (!roadmap || !roadmap.id) return [];
+  try {
+    const list = loadSavedRoadmapsList();
+    const existingIdx = list.findIndex((r) => r.id === roadmap.id);
+    const updatedItem = {
+      ...roadmap,
+      updatedAt: new Date().toISOString(),
+    };
+    let nextList;
+    if (existingIdx >= 0) {
+      nextList = [...list];
+      nextList[existingIdx] = updatedItem;
+    } else {
+      nextList = [updatedItem, ...list];
+    }
+    localStorage.setItem(SAVED_ROADMAPS_KEY, JSON.stringify(nextList));
+    return nextList;
+  } catch {
+    return [];
+  }
+}
+
+export function deleteSavedRoadmap(roadmapId) {
+  try {
+    const list = loadSavedRoadmapsList();
+    const nextList = list.filter((r) => r.id !== roadmapId);
+    localStorage.setItem(SAVED_ROADMAPS_KEY, JSON.stringify(nextList));
+    return nextList;
+  } catch {
+    return [];
+  }
+}
+
+export function loadUiThemeMode() {
+  try {
+    const saved = localStorage.getItem(UI_THEME_KEY);
+    return saved === 'light' ? 'light' : 'dark';
+  } catch {
+    return 'dark';
+  }
+}
+
+export function saveUiThemeMode(mode) {
+  try {
+    localStorage.setItem(UI_THEME_KEY, mode === 'light' ? 'light' : 'dark');
+  } catch {
+    // ignore
   }
 }
