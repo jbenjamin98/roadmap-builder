@@ -71,33 +71,33 @@
 
 @keyframes duckApproach {
   0% {
-    transform: translateY(-180px) scale(0.04) rotate(0deg);
+    transform: translateY(-42px) scale(0.04) rotate(0deg);
     opacity: 0;
   }
   12% {
-    transform: translateY(-168px) scale(0.07) rotate(-5deg);
+    transform: translateY(-38px) scale(0.07) rotate(-5deg);
     opacity: 1;
   }
   26% {
-    transform: translateY(-150px) scale(0.12) rotate(5deg);
+    transform: translateY(-32px) scale(0.12) rotate(5deg);
   }
   40% {
-    transform: translateY(-128px) scale(0.19) rotate(-6deg);
+    transform: translateY(-25px) scale(0.19) rotate(-6deg);
   }
   54% {
-    transform: translateY(-98px) scale(0.31) rotate(7deg);
+    transform: translateY(-18px) scale(0.31) rotate(7deg);
   }
   67% {
-    transform: translateY(-62px) scale(0.49) rotate(-9deg);
+    transform: translateY(-11px) scale(0.49) rotate(-9deg);
   }
   78% {
-    transform: translateY(-24px) scale(0.74) rotate(9deg);
+    transform: translateY(-4px) scale(0.74) rotate(9deg);
   }
   88% {
-    transform: translateY(8px) scale(1.04) rotate(-6deg);
+    transform: translateY(4px) scale(1.04) rotate(-6deg);
   }
   94% {
-    transform: translateY(-3px) scale(1.08) rotate(3deg);
+    transform: translateY(-2px) scale(1.08) rotate(3deg);
   }
   100% {
     transform: translateY(0px) scale(1) rotate(0deg);
@@ -106,6 +106,7 @@
 }
 
 .animate-duck-approach {
+  transform-origin: 50% 30.5%;
   animation: duckApproach 2.1s cubic-bezier(0.55, 0.05, 0.25, 1) forwards;
 }
 
@@ -203,4 +204,135 @@
 
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(100, 116, 139, 0.65);
+}
+
+
+.animate-egg-wobble {
+  animation: eggWobble 0.85s ease-in-out;
+}
+
+@keyframes eggCrackDraw {
+  0% { stroke-dashoffset: 100; opacity: 0.9; }
+  100% { stroke-dashoffset: 0; opacity: 1; }
+}
+
+.egg-crack {
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+  animation: eggCrackDraw 0.7s ease-out forwards;
+}
+
+@keyframes eggBurst {
+  0%, 60% { opacity: 0; transform: scale(0.4); }
+  80% { opacity: 0.95; transform: scale(1.2); }
+  100% { opacity: 0; transform: scale(1.8); }
+}
+
+.egg-burst {
+  transform-origin: 38px 32px;
+  animation: eggBurst 0.85s ease-out forwards;
+}
+
+@keyframes duckFlyIn {
+  0% { transform: translate(var(--fx, 0px), -380px) scale(0.12); opacity: 0; }
+  12% { opacity: 1; }
+  60% { transform: translate(calc(var(--fx, 0px) * 0.25), -60px) scale(0.8); }
+  80% { transform: translate(0, -18px) scale(1.05); }
+  100% { transform: translate(0, 0) scale(1); opacity: 1; }
+}
+
+.animate-duck-fly {
+  animation: duckFlyIn 1.7s cubic-bezier(0.25, 0.7, 0.35, 1) both;
+}
+
+@keyframes wingFlap {
+  0%, 100% { transform: rotate(35deg) scale(1.9, 0.5); }
+  50% { transform: rotate(-75deg) scale(1.9, 1.3); }
+}
+
+.duck-wing-flap {
+  transform-origin: 30px 37px;
+  animation: wingFlap 0.22s ease-in-out infinite;
+}
+
+
+@keyframes splashRing {
+  0% { transform: scale(0.2); opacity: 0.95; }
+  100% { transform: scale(1.9); opacity: 0; }
+}
+
+.splash-ring {
+  transform-origin: 80px 30px;
+  animation: splashRing 0.9s ease-out both;
+}
+
+@keyframes splashDrop {
+  0% { transform: translate(0, 0) scale(1); opacity: 1; }
+  55% { transform: translate(calc(var(--dx) * 0.7), var(--dy)) scale(1); opacity: 1; }
+  100% { transform: translate(var(--dx), 14px) scale(0.4); opacity: 0; }
+}
+
+.splash-drop {
+  animation: splashDrop 0.8s ease-out both;
+}
+
+
+@keyframes duckDiveUnder {
+  0% { transform: translateY(0) scale(1); opacity: 1; }
+  25% { transform: translateY(46px) scale(0.85); opacity: 0.18; }
+  75% { transform: translateY(46px) scale(0.85); opacity: 0.18; }
+  100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+.animate-duck-dive-under {
+  animation: duckDiveUnder 2.7s ease-in-out both;
+}
+
+@keyframes duckDiveTail {
+  0% { transform: rotate(0deg) translateY(0); }
+  22% { transform: rotate(150deg) translateY(18px); }
+  78% { transform: rotate(150deg) translateY(18px); }
+  100% { transform: rotate(0deg) translateY(0); }
+}
+
+.animate-duck-dive-tail {
+  transform-origin: 50% 70%;
+  animation: duckDiveTail 2.7s ease-in-out both;
+}
+
+@keyframes legWiggle {
+  0%, 100% { transform: rotate(-22deg); }
+  50% { transform: rotate(22deg); }
+}
+
+.duck-leg-wiggle {
+  animation: legWiggle 0.26s ease-in-out infinite;
+}
+
+
+@keyframes duckShadow {
+  0%, 8% { opacity: 0; transform: scale(0.4); }
+  22%, 80% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(0.5); }
+}
+
+.duck-shadow {
+  transform-origin: 48px 54px;
+  animation: duckShadow 2.7s ease-in-out both;
+}
+
+@keyframes duckLegsUp {
+  0%, 20% { transform: translateY(26px); opacity: 0; }
+  34%, 76% { transform: translateY(0); opacity: 1; }
+  92%, 100% { transform: translateY(26px); opacity: 0; }
+}
+
+.duck-legs-up {
+  animation: duckLegsUp 2.7s ease-in-out both;
+}
+
+@keyframes duckDiveUnder {
+  0% { transform: translateY(0) scale(1); opacity: 1; }
+  14%, 86% { transform: translateY(30px) scale(0.6); opacity: 0; }
+  100% { transform: translateY(0) scale(1); opacity: 1; }
 }

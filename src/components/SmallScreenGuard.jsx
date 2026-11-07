@@ -115,13 +115,75 @@ export default function SmallScreenGuard() {
       {/* 1. SCENIC 3D PERSPECTIVE MEADOW & WINDING DIRT/STEPPING-STONE PATH */}
       <div className="pointer-events-none absolute inset-0 flex flex-col">
         {/* Upper Sky Zone (~16% height so the trailhead starts on the hill crest, never in the sky) */}
-        <div className="relative h-[16vh] w-full shrink-0">
-          {/* Sky Stars / Clouds */}
-          <span className="hidden dark:block absolute top-5 left-[16%] w-1.5 h-1.5 rounded-full bg-white/80 animate-pulse" />
-          <span className="hidden dark:block absolute top-9 left-[44%] w-1 h-1 rounded-full bg-amber-200/80 animate-ping" />
-          <span className="hidden dark:block absolute top-6 left-[72%] w-1.5 h-1.5 rounded-full bg-indigo-200/80 animate-pulse" />
-          <div className="dark:hidden absolute top-5 left-[18%] w-36 h-8 rounded-full bg-white/70 blur-md" />
-          <div className="dark:hidden absolute top-7 left-[58%] w-44 h-9 rounded-full bg-white/60 blur-md" />
+        <div className="relative h-[16vh] w-full shrink-0 overflow-hidden">
+          {/* Illustrated Sky Vector Clouds (Light Mode) & Twinkling 4-Point Stars (Dark Mode) */}
+          <svg
+            viewBox="0 0 1440 160"
+            preserveAspectRatio="none"
+            className="absolute inset-0 w-full h-full"
+          >
+            <defs>
+              <linearGradient id="cloudGradGuard" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stopColor="#ffffff" stopOpacity="0.96" />
+                <stop offset="70%" stopColor="#f0f9ff" stopOpacity="0.9" />
+                <stop offset="100%" stopColor="#bae6fd" stopOpacity="0.78" />
+              </linearGradient>
+            </defs>
+
+            {/* Light Mode Fluffy Storybook Vector Clouds */}
+            <g className="dark:hidden">
+              <g transform="translate(170, 26)">
+                <path
+                  d="M24,46 L126,46 C140,46 148,36 144,25 C140,15 128,14 122,17 C116,4 98,-2 82,4 C68,-4 46,2 40,16 C26,14 12,24 14,36 C15,42 19,46 24,46 Z"
+                  fill="url(#cloudGradGuard)"
+                  stroke="#e0f2fe"
+                  strokeWidth="1.5"
+                />
+                <path
+                  d="M42,18 C52,8 72,6 84,12"
+                  stroke="#ffffff"
+                  strokeWidth="2.2"
+                  strokeLinecap="round"
+                  fill="none"
+                />
+              </g>
+              <g transform="translate(880, 32) scale(0.9)">
+                <path
+                  d="M24,46 L136,46 C150,46 158,36 154,25 C150,15 138,14 132,17 C126,4 108,-2 92,4 C78,-4 56,2 50,16 C36,14 18,24 20,36 C21,42 22,46 24,46 Z"
+                  fill="url(#cloudGradGuard)"
+                  stroke="#e0f2fe"
+                  strokeWidth="1.5"
+                />
+              </g>
+            </g>
+
+            {/* Dark Mode Twinkling 4-Point Vector Stars */}
+            <g className="hidden dark:block">
+              <path
+                d="M210,22 L213,30 L221,33 L213,36 L210,44 L207,36 L199,33 L207,30 Z"
+                fill="#fef08a"
+                opacity="0.9"
+              />
+              <path
+                d="M520,38 L522,44 L528,46 L522,48 L520,54 L518,48 L512,46 L518,44 Z"
+                fill="#e2e8f0"
+                opacity="0.8"
+              />
+              <path
+                d="M940,24 L943,31 L950,34 L943,37 L940,44 L937,37 L930,34 L937,31 Z"
+                fill="#fef08a"
+                opacity="0.85"
+              />
+              <path
+                d="M1210,42 L1212,47 L1217,49 L1212,51 L1210,56 L1208,51 L1203,49 L1208,47 Z"
+                fill="#bae6fd"
+                opacity="0.85"
+              />
+              <circle cx="360" cy="28" r="1.8" fill="#fef9c3" opacity="0.75" />
+              <circle cx="740" cy="24" r="2" fill="#e0f2fe" opacity="0.7" />
+              <circle cx="1090" cy="30" r="1.6" fill="#fef08a" opacity="0.75" />
+            </g>
+          </svg>
         </div>
 
         {/* 3D Perspective Rolling Hills & Winding Trail Leading Straight to the Screen */}
@@ -131,125 +193,216 @@ export default function SmallScreenGuard() {
             preserveAspectRatio="none"
             className="absolute inset-0 w-full h-full"
           >
+            <defs>
+              {/* Distant & Mid-Ground Rolling Hill Gradients */}
+              <linearGradient id="farHillGuard" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stopColor="#10b981" stopOpacity="0.92" />
+                <stop offset="100%" stopColor="#047857" stopOpacity="0.98" />
+              </linearGradient>
+              <linearGradient id="meadowGuard" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stopColor="#34d399" stopOpacity="0.92" />
+                <stop offset="35%" stopColor="#059669" stopOpacity="0.96" />
+                <stop offset="100%" stopColor="#064e3b" stopOpacity="1" />
+              </linearGradient>
+              {/* Illustrated Pine & Oak Tree Gradients */}
+              <linearGradient id="treeCanopyGuard" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stopColor="#34d399" />
+                <stop offset="55%" stopColor="#059669" />
+                <stop offset="100%" stopColor="#064e3b" />
+              </linearGradient>
+              {/* 3D Winding Dirt & Sandy Trail Gradients */}
+              <linearGradient id="trailMainGuard" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stopColor="#fde68a" />
+                <stop offset="45%" stopColor="#f59e0b" />
+                <stop offset="100%" stopColor="#b45309" />
+              </linearGradient>
+              <linearGradient id="trailInnerGuard" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stopColor="#fef3c7" stopOpacity="0.9" />
+                <stop offset="55%" stopColor="#fbbf24" stopOpacity="0.85" />
+                <stop offset="100%" stopColor="#d97706" stopOpacity="0.9" />
+              </linearGradient>
+              {/* 3D Stepping Stones Gradient */}
+              <linearGradient id="stoneGradGuard" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stopColor="#e7e5e4" />
+                <stop offset="60%" stopColor="#a8a29e" />
+                <stop offset="100%" stopColor="#57534e" />
+              </linearGradient>
+              {/* Distant Pond Gradients */}
+              <linearGradient id="pondShoreGuard" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stopColor="#fef3c7" />
+                <stop offset="100%" stopColor="#d97706" />
+              </linearGradient>
+              <radialGradient id="pondWaterGuard" cx="50%" cy="45%" r="55%">
+                <stop offset="0%" stopColor="#7dd3fc" />
+                <stop offset="65%" stopColor="#0284c7" />
+                <stop offset="100%" stopColor="#0369a1" />
+              </radialGradient>
+            </defs>
+
             {/* Distant Left & Right Rolling Hills on the Horizon */}
             <path
               d="M0,70 C180,10 410,30 600,68 C790,30 1020,10 1200,70 L1200,900 L0,900 Z"
-              className="fill-emerald-700 dark:fill-emerald-950"
+              fill="url(#farHillGuard)"
+              className="dark:opacity-65"
+            />
+            <path
+              d="M0,70 C180,10 410,30 600,68 C790,30 1020,10 1200,70"
+              stroke="rgba(167,243,208,0.45)"
+              strokeWidth="2.5"
+              fill="none"
             />
 
-            {/* Distant Pine & Oak Tree Silhouettes Flanking the Trailhead */}
-            <g className="fill-emerald-900/75 dark:fill-slate-950/85">
+            {/* Illustrated Pine & Oak Trees Flanking the Trailhead */}
+            <g className="dark:opacity-75">
               {/* Left Horizon Trees */}
-              <polygon points="440,56 454,18 468,56" />
-              <polygon points="472,60 484,26 496,60" />
-              <circle cx="385" cy="42" r="22" />
-              <circle cx="408" cy="48" r="18" />
+              <rect x="382" y="54" width="6" height="16" rx="2" fill="#78350f" />
+              <circle cx="385" cy="40" r="22" fill="url(#treeCanopyGuard)" stroke="#064e3b" strokeWidth="1.8" />
+              <path d="M372,30 C378,22 390,22 396,28" stroke="#6ee7b7" strokeWidth="2" strokeLinecap="round" fill="none" opacity="0.7" />
+
+              <rect x="405" y="56" width="5" height="14" rx="1.5" fill="#78350f" />
+              <circle cx="408" cy="46" r="18" fill="url(#treeCanopyGuard)" stroke="#064e3b" strokeWidth="1.6" />
+
+              <polygon points="440,58 454,16 468,58" fill="url(#treeCanopyGuard)" stroke="#064e3b" strokeWidth="1.6" strokeLinejoin="round" />
+              <polygon points="472,62 484,24 496,62" fill="url(#treeCanopyGuard)" stroke="#064e3b" strokeWidth="1.6" strokeLinejoin="round" />
+
               {/* Right Horizon Trees */}
-              <polygon points="732,56 746,18 760,56" />
-              <polygon points="704,60 716,26 728,60" />
-              <circle cx="815" cy="42" r="22" />
-              <circle cx="792" cy="48" r="18" />
+              <polygon points="732,58 746,16 760,58" fill="url(#treeCanopyGuard)" stroke="#064e3b" strokeWidth="1.6" strokeLinejoin="round" />
+              <polygon points="704,62 716,24 728,62" fill="url(#treeCanopyGuard)" stroke="#064e3b" strokeWidth="1.6" strokeLinejoin="round" />
+
+              <rect x="789" y="56" width="5" height="14" rx="1.5" fill="#78350f" />
+              <circle cx="792" cy="46" r="18" fill="url(#treeCanopyGuard)" stroke="#064e3b" strokeWidth="1.6" />
+
+              <rect x="812" y="54" width="6" height="16" rx="2" fill="#78350f" />
+              <circle cx="815" cy="40" r="22" fill="url(#treeCanopyGuard)" stroke="#064e3b" strokeWidth="1.8" />
+              <path d="M802,30 C808,22 820,22 826,28" stroke="#6ee7b7" strokeWidth="2" strokeLinecap="round" fill="none" opacity="0.7" />
             </g>
 
             {/* Mid-Ground Lush Meadow Grass Slopes */}
             <path
               d="M0,110 C250,65 440,85 600,72 C760,85 950,65 1200,110 L1200,900 L0,900 Z"
-              className="fill-emerald-600 dark:fill-emerald-900/90"
+              fill="url(#meadowGuard)"
+              className="dark:opacity-75"
+            />
+            <path
+              d="M0,110 C250,65 440,85 600,72 C760,85 950,65 1200,110"
+              stroke="rgba(110,231,183,0.4)"
+              strokeWidth="2.5"
+              fill="none"
             />
 
-            {/* SMALL DISTANT POND WAY OFF IN THE BACKGROUND (Where the Trail Starts!) */}
+            {/* Outer Grassy Verge / Trail Border Winding Down from the Front Shore of the Distant Pond (y=162) */}
+            <path
+              d="M 578,162
+                 C 545,270 470,420 310,620
+                 C 210,745 110,840 30,900
+                 L 1170,900
+                 C 1090,840 990,745 890,620
+                 C 730,420 655,270 622,162 Z"
+              className="fill-amber-950/50 dark:fill-stone-950/80"
+            />
+
+            {/* Main 3D Perspective Winding Dirt & Cobblestone Path */}
+            <path
+              d="M 584,162
+                 C 554,270 485,420 335,620
+                 C 240,745 145,840 70,900
+                 L 1130,900
+                 C 1055,840 960,745 865,620
+                 C 715,420 646,270 616,162 Z"
+              fill="url(#trailMainGuard)"
+              className="dark:opacity-75"
+            />
+
+            {/* Inner Warm Sandy Trail Center */}
+            <path
+              d="M 590,162
+                 C 566,273 510,425 380,625
+                 C 295,748 215,842 150,900
+                 L 1050,900
+                 C 985,842 905,748 820,625
+                 C 690,425 634,273 610,162 Z"
+              fill="url(#trailInnerGuard)"
+              className="dark:opacity-65"
+            />
+
+            {/* SMALL DISTANT POND NESTLED IN THE MEADOW ABOVE THE PATH (No overlap with path!) */}
             <g>
-              {/* Distant Pond Sandy / Muddy Shoreline Bank */}
+              {/* Distant Pond Sandy Shoreline Bank */}
               <ellipse
                 cx="600"
-                cy="86"
+                cy="138"
                 rx="145"
                 ry="24"
-                className="fill-amber-200/80 dark:fill-amber-950/90"
+                fill="url(#pondShoreGuard)"
+                stroke="#b45309"
+                strokeWidth="1.5"
+                className="dark:opacity-80"
               />
               {/* Distant Pond Shimmering Water Basin */}
               <ellipse
                 cx="600"
-                cy="85"
+                cy="137"
                 rx="132"
                 ry="19"
-                className="fill-sky-400 dark:fill-sky-700 stroke-sky-200/60 dark:stroke-sky-400/35"
+                fill="url(#pondWaterGuard)"
+                stroke="#bae6fd"
                 strokeWidth="2"
               />
               {/* Inner Deep Pond Water Reflection */}
               <ellipse
                 cx="600"
-                cy="85"
-                rx="98"
-                ry="12"
-                className="fill-cyan-500/65 dark:fill-indigo-900/75"
+                cy="137"
+                rx="96"
+                ry="11.5"
+                fill="rgba(224,242,254,0.22)"
               />
-              {/* Tiny Water Shimmer Lines on the Distant Pond */}
-              <line x1="535" y1="81" x2="575" y2="81" stroke="rgba(255,255,255,0.55)" strokeWidth="1.8" strokeLinecap="round" />
-              <line x1="615" y1="88" x2="665" y2="88" stroke="rgba(255,255,255,0.45)" strokeWidth="1.6" strokeLinecap="round" />
-              {/* Miniature Floating Lily Pads in the Distant Pond */}
-              <ellipse cx="520" cy="86" rx="9" ry="3" fill="#10b981" />
-              <ellipse cx="672" cy="83" rx="10" ry="3.2" fill="#10b981" />
-              <circle cx="672" cy="81.5" r="2" fill="#f472b6" />
-              {/* Tiny Distant Duck Silhouette Swimming in the Background Pond */}
-              <ellipse cx="568" cy="82" rx="4.5" ry="2.4" fill="#fbbf24" />
-              <circle cx="572" cy="79.5" r="2.2" fill="#fbbf24" />
-              {/* Tiny Cattail Reeds on the Pond Bank */}
-              <g className="stroke-emerald-900 dark:stroke-emerald-400/50" strokeWidth="2" strokeLinecap="round">
-                <line x1="468" y1="86" x2="464" y2="68" />
-                <line x1="474" y1="88" x2="473" y2="71" />
-                <line x1="726" y1="88" x2="728" y2="70" />
-                <line x1="732" y1="86" x2="736" y2="68" />
+              {/* Luminous Water Shimmer Lines on the Distant Pond */}
+              <line x1="535" y1="133" x2="578" y2="133" stroke="rgba(255,255,255,0.7)" strokeWidth="2" strokeLinecap="round" />
+              <line x1="612" y1="140" x2="665" y2="140" stroke="rgba(255,255,255,0.55)" strokeWidth="1.8" strokeLinecap="round" />
+              {/* Miniature Illustrated Lily Pads & Lotus in the Distant Pond */}
+              <ellipse cx="520" cy="138" rx="9.5" ry="3.2" fill="#10b981" stroke="#065f46" strokeWidth="0.9" />
+              <ellipse cx="672" cy="135" rx="10.5" ry="3.4" fill="#10b981" stroke="#065f46" strokeWidth="0.9" />
+              <circle cx="672" cy="133.2" r="2.4" fill="#f472b6" stroke="#be185d" strokeWidth="0.6" />
+              {/* Tiny Distant Duck Swimming in the Background Pond */}
+              <ellipse cx="568" cy="134" rx="5" ry="2.6" fill="#fbbf24" stroke="#78350f" strokeWidth="0.8" />
+              <circle cx="572.5" cy="131.2" r="2.4" fill="#fef08a" stroke="#78350f" strokeWidth="0.8" />
+              <polygon points="574.8,131 577.5,131.6 574.8,132.4" fill="#f97316" />
+              {/* Illustrated Cattail Reeds on the Pond Bank */}
+              <g stroke="#065f46" strokeWidth="2" strokeLinecap="round">
+                <line x1="468" y1="138" x2="464" y2="117" />
+                <line x1="474" y1="140" x2="473" y2="120" />
+                <line x1="726" y1="140" x2="728" y2="119" />
+                <line x1="732" y1="138" x2="736" y2="117" />
               </g>
+              {/* Velvety Brown Cattail Seed Heads */}
+              <ellipse cx="464.8" cy="122" rx="1.8" ry="4.2" fill="#5c3a21" />
+              <ellipse cx="473.2" cy="124" rx="1.6" ry="3.8" fill="#5c3a21" />
+              <ellipse cx="727.6" cy="123" rx="1.6" ry="3.8" fill="#5c3a21" />
+              <ellipse cx="735.2" cy="121" rx="1.8" ry="4.2" fill="#5c3a21" />
             </g>
 
-            {/* Outer Grassy Verge / Trail Border Winding Down from the Front Shore of the Distant Pond */}
-            <path
-              d="M 578,100
-                 C 545,225 470,390 310,605
-                 C 210,735 110,835 30,900
-                 L 1170,900
-                 C 1090,835 990,735 890,605
-                 C 730,390 655,225 622,100 Z"
-              className="fill-amber-900/45 dark:fill-stone-950/75"
-            />
-
-            {/* Main 3D Perspective Winding Dirt & Cobblestone Path */}
-            <path
-              d="M 584,100
-                 C 554,225 485,390 335,605
-                 C 240,735 145,835 70,900
-                 L 1130,900
-                 C 1055,835 960,735 865,605
-                 C 715,390 646,225 616,100 Z"
-              className="fill-amber-200 dark:fill-amber-950"
-            />
-
-            {/* Inner Warm Sandy Trail Center */}
-            <path
-              d="M 590,100
-                 C 566,228 510,395 380,610
-                 C 295,740 215,838 150,900
-                 L 1050,900
-                 C 985,838 905,740 820,610
-                 C 690,395 634,228 610,100 Z"
-              className="fill-amber-300/80 dark:fill-amber-900/80"
-            />
-
-            {/* Perspective Stepping Stones & Cobblestones Scaling Up Along the Path */}
-            <g className="fill-stone-400/70 dark:fill-stone-700/65 stroke-stone-600/40 dark:stroke-stone-950/60" strokeWidth="2">
-              <ellipse cx="600" cy="115" rx="10" ry="3.5" />
-              <ellipse cx="594" cy="155" rx="16" ry="5" />
-              <ellipse cx="608" cy="205" rx="24" ry="7.5" />
-              <ellipse cx="585" cy="270" rx="34" ry="10.5" />
-              <ellipse cx="618" cy="350" rx="48" ry="14" />
-              <ellipse cx="572" cy="450" rx="66" ry="19" />
-              <ellipse cx="628" cy="575" rx="88" ry="25" />
-              <ellipse cx="560" cy="725" rx="115" ry="32" />
+            {/* Perspective 3D Shaded Stepping Stones & Cobblestones Scaling Up Along the Path */}
+            <g fill="url(#stoneGradGuard)" stroke="#44403c" strokeWidth="2">
+              <ellipse cx="600" cy="182" rx="10" ry="3.5" />
+              <ellipse cx="594" cy="220" rx="16" ry="5" />
+              <ellipse cx="608" cy="268" rx="24" ry="7.5" />
+              <ellipse cx="585" cy="325" rx="34" ry="10.5" />
+              <ellipse cx="618" cy="395" rx="48" ry="14" />
+              <ellipse cx="572" cy="485" rx="66" ry="19" />
+              <ellipse cx="628" cy="595" rx="88" ry="25" />
+              <ellipse cx="560" cy="735" rx="115" ry="32" />
+            </g>
+            {/* Specular Rim Highlights on Stepping Stones */}
+            <g stroke="rgba(255,255,255,0.5)" strokeWidth="1.6" strokeLinecap="round" fill="none">
+              <path d="M568,320 Q585,317 602,320" />
+              <path d="M592,388 Q618,383 644,388" />
+              <path d="M535,475 Q572,469 608,475" />
+              <path d="M578,581 Q628,573 678,581" />
+              <path d="M495,717 Q560,707 625,717" />
             </g>
 
-            {/* Roadside Grass Tufts & Wildflowers Along the Path Edges */}
-            <g className="stroke-emerald-800 dark:stroke-emerald-500/40" strokeWidth="3" strokeLinecap="round">
+            {/* Roadside Grass Tufts & Storybook Wildflowers Along the Path Edges */}
+            <g className="stroke-emerald-800 dark:stroke-emerald-400/55" strokeWidth="3" strokeLinecap="round">
               {/* Left Meadow Tufts */}
               <path d="M220,320 L212,298 M220,320 L222,295 M220,320 L230,302" />
               <path d="M150,520 L138,490 M150,520 L152,486 M150,520 L164,494" />
@@ -259,6 +412,21 @@ export default function SmallScreenGuard() {
               <path d="M1050,520 L1036,494 M1050,520 L1048,486 M1050,520 L1062,490" />
               <path d="M1110,710 L1094,676 M1110,710 L1108,668 M1110,710 L1125,672" />
             </g>
+            {/* Colorful Meadow Wildflower Blossoms */}
+            <g>
+              <circle cx="212" cy="296" r="3.5" fill="#fbbf24" />
+              <circle cx="230" cy="300" r="3" fill="#f472b6" />
+              <circle cx="138" cy="488" r="4" fill="#f472b6" />
+              <circle cx="164" cy="492" r="3.5" fill="#fef08a" />
+              <circle cx="75" cy="670" r="4.5" fill="#fbbf24" />
+              <circle cx="106" cy="674" r="4" fill="#c084fc" />
+              <circle cx="970" cy="300" r="3.5" fill="#f472b6" />
+              <circle cx="988" cy="296" r="3" fill="#fbbf24" />
+              <circle cx="1036" cy="492" r="4" fill="#fef08a" />
+              <circle cx="1062" cy="488" r="3.5" fill="#c084fc" />
+              <circle cx="1094" cy="674" r="4.5" fill="#f472b6" />
+              <circle cx="1125" cy="670" r="4" fill="#fbbf24" />
+            </g>
           </svg>
         </div>
       </div>
@@ -267,9 +435,10 @@ export default function SmallScreenGuard() {
       <div className="relative z-40 pt-4 px-4 sm:px-6 w-full flex items-center justify-center shrink-0 pointer-events-none">
         <div
           key={quackBubble}
-          className="animate-quack-float max-w-[88vw] sm:max-w-md px-4 py-1.5 rounded-full text-xs sm:text-sm font-extrabold uppercase tracking-wider bg-amber-300 text-slate-950 shadow-[0_10px_25px_rgba(0,0,0,0.45)] border-2 border-slate-900 break-words text-center"
+          className="animate-quack-float relative mb-2 max-w-[88vw] sm:max-w-md px-5 py-2.5 rounded-2xl text-xs sm:text-sm font-extrabold uppercase tracking-wider text-white drop-shadow-[0_2px_6px_rgba(15,23,42,0.6)] break-words text-center bg-slate-900/80 dark:bg-slate-950/85 backdrop-blur-xl border border-white/50 dark:border-indigo-400/40 shadow-[0_12px_32px_rgba(15,23,42,0.35),inset_0_1px_2px_rgba(255,255,255,0.7)]"
         >
           {quackBubble}
+          <span className="pointer-events-none absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 rotate-45 bg-slate-900/90 dark:bg-slate-950/90 border-r border-b border-white/50 dark:border-indigo-400/40" />
         </div>
       </div>
 
@@ -303,6 +472,40 @@ export default function SmallScreenGuard() {
                 fill="none"
                 xmlns="http://www.w3.org/2000/svg"
               >
+                <defs>
+                  {/* Luminous Storybook Golden Feather Gradients (Matching Sun & Landing Page Ducks) */}
+                  <radialGradient id="guardBodyG" cx="42%" cy="28%" r="70%">
+                    <stop offset="0%" stopColor="#fef9c3" />
+                    <stop offset="48%" stopColor="#fbbf24" />
+                    <stop offset="100%" stopColor="#d97706" />
+                  </radialGradient>
+                  <radialGradient id="guardHeadG" cx="40%" cy="26%" r="70%">
+                    <stop offset="0%" stopColor="#fef9c3" />
+                    <stop offset="52%" stopColor="#fbbf24" />
+                    <stop offset="100%" stopColor="#d97706" />
+                  </radialGradient>
+                  <linearGradient id="guardWingG" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#fde047" />
+                    <stop offset="55%" stopColor="#f59e0b" />
+                    <stop offset="100%" stopColor="#b45309" />
+                  </linearGradient>
+                  <linearGradient id="guardBeakG" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stopColor="#fdba74" />
+                    <stop offset="50%" stopColor="#f97316" />
+                    <stop offset="100%" stopColor="#c2410c" />
+                  </linearGradient>
+                  <linearGradient id="guardBeardG" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stopColor="#7c5132" />
+                    <stop offset="50%" stopColor="#5c3a21" />
+                    <stop offset="100%" stopColor="#29180d" />
+                  </linearGradient>
+                  <linearGradient id="guardLensG" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#ffffff" stopOpacity="0.38" />
+                    <stop offset="55%" stopColor="#bae6fd" stopOpacity="0.18" />
+                    <stop offset="100%" stopColor="#38bdf8" stopOpacity="0.25" />
+                  </linearGradient>
+                </defs>
+
                 {/* Ground Shadow & Dirt Trail Pebbles Under His Waddling Feet */}
                 <ellipse
                   cx="90"
@@ -318,17 +521,17 @@ export default function SmallScreenGuard() {
                   ry="6"
                   fill="rgba(28, 25, 23, 0.52)"
                 />
-                <circle cx="46" cy="153" r="2.2" fill="#78716c" opacity="0.7" />
-                <circle cx="135" cy="154" r="2.5" fill="#78716c" opacity="0.7" />
-                <circle cx="124" cy="159" r="1.6" fill="#a8a29e" opacity="0.65" />
+                <circle cx="46" cy="153" r="2.2" fill="#a8a29e" opacity="0.75" />
+                <circle cx="135" cy="154" r="2.5" fill="#a8a29e" opacity="0.75" />
+                <circle cx="124" cy="159" r="1.6" fill="#d6d3d1" opacity="0.7" />
 
                 {/* Little Animated Webbed Feet Waddling Underneath */}
                 <g className="animate-foot-left">
                   <path
                     d="M68 134 L64 148 M64 148 L52 154 L60 156 L66 158 L74 155 Z"
-                    fill="#f97316"
-                    stroke="#0f172a"
-                    strokeWidth="3"
+                    fill="url(#guardBeakG)"
+                    stroke="#7c2d12"
+                    strokeWidth="2.8"
                     strokeLinecap="round"
                     strokeLinejoin="round"
                   />
@@ -336,9 +539,9 @@ export default function SmallScreenGuard() {
                 <g className="animate-foot-right">
                   <path
                     d="M112 134 L116 148 M116 148 L106 155 L114 158 L120 156 L128 154 Z"
-                    fill="#f97316"
-                    stroke="#0f172a"
-                    strokeWidth="3"
+                    fill="url(#guardBeakG)"
+                    stroke="#7c2d12"
+                    strokeWidth="2.8"
                     strokeLinecap="round"
                     strokeLinejoin="round"
                   />
@@ -347,16 +550,31 @@ export default function SmallScreenGuard() {
                 {/* Plump Duck Body */}
                 <path
                   d="M38 108 C30 82, 54 68, 90 68 C126 68, 150 82, 142 108 C136 132, 116 142, 90 142 C64 142, 44 132, 38 108 Z"
-                  fill="#fbbf24"
-                  stroke="#0f172a"
-                  strokeWidth="4"
+                  fill="url(#guardBodyG)"
+                  stroke="#78350f"
+                  strokeWidth="3.5"
                   strokeLinejoin="round"
+                />
+                {/* Luminous Specular Shoulder & Belly Highlights */}
+                <path
+                  d="M48 86 C60 75, 76 72, 90 72"
+                  stroke="rgba(255,255,255,0.62)"
+                  strokeWidth="2.6"
+                  strokeLinecap="round"
+                  fill="none"
+                />
+                <path
+                  d="M62 134 C78 139, 102 139, 118 134"
+                  stroke="rgba(254,240,138,0.55)"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  fill="none"
                 />
 
                 {/* CHEST TATTOOS (ALL BLACK INK) */}
                 {/* 1. Large Black Handprint on His Left Chest (Viewer's Right) */}
                 <g
-                  opacity="0.86"
+                  opacity="0.88"
                   fill="#0f172a"
                   stroke="#0f172a"
                   strokeLinecap="round"
@@ -383,7 +601,7 @@ export default function SmallScreenGuard() {
 
                 {/* 2. Two Small Black Handprints on His Right Chest (Viewer's Left) */}
                 <g
-                  opacity="0.86"
+                  opacity="0.88"
                   fill="#0f172a"
                   stroke="#0f172a"
                   strokeLinecap="round"
@@ -430,10 +648,18 @@ export default function SmallScreenGuard() {
                 {/* HIS RIGHT ARM / WING (Viewer's Left Wing) -> DETAILED BLACK APPLE TREE TATTOO */}
                 <path
                   d="M40 88 C16 84, 12 114, 34 125 C47 130, 51 103, 40 88 Z"
-                  fill="#f59e0b"
-                  stroke="#0f172a"
-                  strokeWidth="3.8"
+                  fill="url(#guardWingG)"
+                  stroke="#78350f"
+                  strokeWidth="3.2"
                   strokeLinejoin="round"
+                />
+                {/* Wing Top Rim Highlight */}
+                <path
+                  d="M36 90 C26 89, 20 96, 20 105"
+                  stroke="rgba(255,255,255,0.5)"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  fill="none"
                 />
                 <g opacity="0.92" stroke="#0f172a" fill="#0f172a">
                   {/* Scalloped Leafy Tree Canopy Silhouette & Internal Foliage Linework */}
@@ -477,10 +703,18 @@ export default function SmallScreenGuard() {
                 {/* HIS LEFT ARM / WING (Viewer's Right Wing) -> BLACK SG-400 DOUBLE-CUTAWAY HORNS GUITAR TATTOO */}
                 <path
                   d="M140 88 C164 84, 168 114, 146 125 C133 130, 129 103, 140 88 Z"
-                  fill="#f59e0b"
-                  stroke="#0f172a"
-                  strokeWidth="3.8"
+                  fill="url(#guardWingG)"
+                  stroke="#78350f"
+                  strokeWidth="3.2"
                   strokeLinejoin="round"
+                />
+                {/* Wing Top Rim Highlight */}
+                <path
+                  d="M144 90 C154 89, 160 96, 160 105"
+                  stroke="rgba(255,255,255,0.5)"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  fill="none"
                 />
                 <g
                   opacity="0.92"
@@ -633,23 +867,31 @@ export default function SmallScreenGuard() {
                   cx="90"
                   cy="52"
                   r="31"
-                  fill="#fbbf24"
-                  stroke="#0f172a"
-                  strokeWidth="4"
+                  fill="url(#guardHeadG)"
+                  stroke="#78350f"
+                  strokeWidth="3.5"
+                />
+                {/* Luminous Specular Crown Highlight */}
+                <path
+                  d="M70 30 Q90 21 110 30"
+                  stroke="rgba(255,255,255,0.72)"
+                  strokeWidth="2.6"
+                  strokeLinecap="round"
+                  fill="none"
                 />
 
                 {/* Textured Full Brown Beard & Sideburns Wrapping the Jaw */}
                 <path
                   d="M59 49 C57 62, 62 78, 73 84 C81 89, 99 89, 107 84 C118 78, 123 62, 121 49 C118 54, 114 58, 109 61 C102 66, 78 66, 71 61 C66 58, 62 54, 59 49 Z"
-                  fill="#5c3a21"
+                  fill="url(#guardBeardG)"
                   stroke="#29180d"
-                  strokeWidth="3.2"
+                  strokeWidth="3"
                   strokeLinejoin="round"
                 />
                 <path
                   d="M64 56 C70 62, 80 65, 90 65 C100 65, 110 62, 116 56"
-                  stroke="#7c5132"
-                  strokeWidth="2.5"
+                  stroke="#9a6b47"
+                  strokeWidth="2.4"
                   strokeLinecap="round"
                 />
                 <path
@@ -661,9 +903,11 @@ export default function SmallScreenGuard() {
 
                 {/* Expressive Eyes Behind Glasses */}
                 <circle cx="74" cy="44" r="4.2" fill="#0f172a" />
-                <circle cx="75.4" cy="42.5" r="1.5" fill="#ffffff" />
+                <circle cx="75.4" cy="42.4" r="1.6" fill="#ffffff" />
+                <circle cx="72.8" cy="45.4" r="0.8" fill="#ffffff" opacity="0.8" />
                 <circle cx="106" cy="44" r="4.2" fill="#0f172a" />
-                <circle cx="107.4" cy="42.5" r="1.5" fill="#ffffff" />
+                <circle cx="107.4" cy="42.4" r="1.6" fill="#ffffff" />
+                <circle cx="104.8" cy="45.4" r="0.8" fill="#ffffff" opacity="0.8" />
 
                 {/* 4. Dynamic Mood Eyebrows Above His Glasses */}
                 {moodTier === 'smooshed' && (
@@ -712,17 +956,17 @@ export default function SmallScreenGuard() {
                   {/* Left Round-Angled Lens Frame */}
                   <path
                     d="M62 39 L72 34 L85 38 C87 45, 84 54, 74 54 C64 54, 60 46, 62 39 Z"
-                    fill="rgba(255, 255, 255, 0.16)"
+                    fill="url(#guardLensG)"
                     stroke="#1e293b"
-                    strokeWidth="3.4"
+                    strokeWidth="3.2"
                     strokeLinejoin="round"
                   />
                   {/* Right Round-Angled Lens Frame */}
                   <path
                     d="M118 39 L108 34 L95 38 C93 45, 96 54, 106 54 C116 54, 120 46, 118 39 Z"
-                    fill="rgba(255, 255, 255, 0.16)"
+                    fill="url(#guardLensG)"
                     stroke="#1e293b"
-                    strokeWidth="3.4"
+                    strokeWidth="3.2"
                     strokeLinejoin="round"
                   />
 
@@ -734,23 +978,23 @@ export default function SmallScreenGuard() {
                     strokeLinecap="round"
                   />
 
-                  {/* Lens Glare */}
+                  {/* Specular Lens Glare */}
                   <line
-                    x1="66"
-                    y1="40"
+                    x1="65.5"
+                    y1="39.5"
                     x2="70"
-                    y2="48"
-                    stroke="rgba(255,255,255,0.55)"
-                    strokeWidth="2"
+                    y2="48.5"
+                    stroke="rgba(255,255,255,0.75)"
+                    strokeWidth="2.2"
                     strokeLinecap="round"
                   />
                   <line
-                    x1="100"
-                    y1="40"
+                    x1="99.5"
+                    y1="39.5"
                     x2="104"
-                    y2="48"
-                    stroke="rgba(255,255,255,0.55)"
-                    strokeWidth="2"
+                    y2="48.5"
+                    stroke="rgba(255,255,255,0.75)"
+                    strokeWidth="2.2"
                     strokeLinecap="round"
                   />
                 </g>
@@ -790,17 +1034,25 @@ export default function SmallScreenGuard() {
                 >
                   <path
                     d="M71 55 C79 49, 101 49, 109 55 C113 60, 106 67, 90 67 C74 67, 67 60, 71 55 Z"
-                    fill="#f97316"
-                    stroke="#0f172a"
-                    strokeWidth="3.5"
+                    fill="url(#guardBeakG)"
+                    stroke="#7c2d12"
+                    strokeWidth="3.2"
                     strokeLinejoin="round"
                   />
                   <path
                     d="M77 61 C83 68, 97 68, 103 61"
                     fill="#ef4444"
-                    stroke="#0f172a"
-                    strokeWidth="2.8"
+                    stroke="#7c2d12"
+                    strokeWidth="2.5"
                     strokeLinecap="round"
+                  />
+                  {/* Beak Top Specular Shine */}
+                  <path
+                    d="M78 53.5 Q90 50.5 102 53.5"
+                    stroke="rgba(255,255,255,0.65)"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    fill="none"
                   />
                   {/* Smooshed Beak-Against-Glass Flat Contact Highlight */}
                   {isPressedAgainstGlass && (
@@ -809,7 +1061,7 @@ export default function SmallScreenGuard() {
                       cy="57.5"
                       rx="11"
                       ry="2.6"
-                      fill="rgba(255, 255, 255, 0.42)"
+                      fill="rgba(255, 255, 255, 0.48)"
                     />
                   )}
                 </g>
@@ -822,58 +1074,11 @@ export default function SmallScreenGuard() {
       {/* 3 & 5. STAKED WOODEN TRAIL SIGNPOST WITH LIVE POND EXPANSION METER */}
       <div className="relative z-40 pb-6 pt-3 px-4 sm:px-8 w-full flex justify-center shrink-0">
         <div className="relative w-full max-w-lg flex flex-col items-center">
-          {/* Vertical Wooden Signpost Stake (Top Cap Peeking Above + Post Planted Into Ground Below) */}
-          <div className="pointer-events-none absolute -top-4 -bottom-8 left-1/2 -translate-x-1/2 w-10 sm:w-12 flex flex-col items-center z-0">
-            {/* Pointed Pyramid Post Top Cap */}
-            <div
-              className="w-12 sm:w-14 h-3.5 bg-gradient-to-b from-amber-700 to-amber-950 border-2 border-amber-950 rounded-t-md shadow-md"
-              style={{ clipPath: 'polygon(14% 0%, 86% 0%, 100% 100%, 0% 100%)' }}
-            />
-            {/* Main Vertical Timber Stake */}
-            <div className="w-full flex-1 bg-gradient-to-r from-amber-950 via-amber-800 to-stone-950 border-x-[3px] border-amber-950 shadow-[0_10px_25px_rgba(0,0,0,0.7)] relative overflow-hidden">
-              {/* Vertical Wood Grain Lines on Post */}
-              <span className="absolute inset-y-0 left-2.5 w-[1px] bg-amber-950/70" />
-              <span className="absolute inset-y-0 right-3 w-[1px] bg-amber-600/20" />
-            </div>
-            {/* Grass Tufts & Dirt Mound at the Base of the Post */}
-            <svg
-              viewBox="0 0 80 24"
-              className="absolute -bottom-1 w-20 h-6"
-              fill="none"
-            >
-              <ellipse cx="40" cy="20" rx="34" ry="5" fill="#292524" opacity="0.85" />
-              <path
-                d="M18 20 L12 8 M24 20 L21 6 M30 20 L29 10 M50 20 L52 9 M56 20 L60 6 M62 20 L68 9"
-                stroke="#15803d"
-                strokeWidth="2.8"
-                strokeLinecap="round"
-              />
-            </svg>
-          </div>
-
           {/* Nailed Horizontal Wooden Plank Signboard */}
-          <div className="relative z-10 w-full rounded-2xl bg-gradient-to-b from-amber-800 via-amber-900 to-stone-950 border-[3px] border-amber-950 px-6 py-4 shadow-[0_18px_38px_rgba(0,0,0,0.7)] text-amber-50 overflow-hidden">
-            {/* Horizontal Timber Plank Seams */}
-            <span className="pointer-events-none absolute inset-x-0 top-1/3 h-[2px] bg-amber-950/75 border-b border-amber-600/15" />
-            <span className="pointer-events-none absolute inset-x-0 top-2/3 h-[2px] bg-amber-950/75 border-b border-amber-600/15" />
-
-            {/* Top Edge Bevel Highlight */}
-            <span className="pointer-events-none absolute inset-x-3 top-1 h-[1px] bg-amber-400/25 rounded-full" />
-
-            {/* 4 Forged Iron Corner Nail / Bolt Heads + 2 Center Post Bolts */}
-            <span className="pointer-events-none absolute top-2.5 left-3 w-2.5 h-2.5 rounded-full bg-stone-700 border border-stone-950 shadow-inner" />
-            <span className="pointer-events-none absolute top-2.5 right-3 w-2.5 h-2.5 rounded-full bg-stone-700 border border-stone-950 shadow-inner" />
-            <span className="pointer-events-none absolute bottom-2.5 left-3 w-2.5 h-2.5 rounded-full bg-stone-700 border border-stone-950 shadow-inner" />
-            <span className="pointer-events-none absolute bottom-2.5 right-3 w-2.5 h-2.5 rounded-full bg-stone-700 border border-stone-950 shadow-inner" />
-            <span className="pointer-events-none absolute top-2 left-1/2 -translate-x-1/2 w-2.5 h-2.5 rounded-full bg-stone-600 border border-stone-950 shadow" />
-            <span className="pointer-events-none absolute bottom-2 left-1/2 -translate-x-1/2 w-2.5 h-2.5 rounded-full bg-stone-600 border border-stone-950 shadow" />
-
-            {/* Little Moss Patch on the Top-Left Corner of the Signboard */}
-            <span className="pointer-events-none absolute -top-1 left-8 w-12 h-2.5 rounded-full bg-emerald-600/85" />
-
+          <div className="relative z-10 w-full rounded-3xl px-6 py-4 text-white bg-slate-900/80 dark:bg-slate-950/85 backdrop-blur-xl border border-white/50 dark:border-indigo-400/40 shadow-[0_12px_32px_rgba(15,23,42,0.35),inset_0_1px_2px_rgba(255,255,255,0.7)]">
             <div className="relative z-10 space-y-2">
               {/* Carved Trailhead Badge Pill */}
-              <div className="inline-flex items-center gap-2 px-3 py-0.5 rounded-full bg-amber-950/85 border border-amber-400/40 text-amber-300 text-[11px] font-extrabold uppercase tracking-wider shadow-sm">
+              <div className="inline-flex items-center gap-2 text-amber-200 text-[11px] font-extrabold uppercase tracking-wider">
                 {isMobileDevice ? (
                   <>
                     <Monitor className="w-3.5 h-3.5" />
@@ -899,7 +1104,7 @@ export default function SmallScreenGuard() {
                   : 'This is a terrible experience at this window size.'}
               </h2>
 
-              <p className="text-xs text-amber-200/95 leading-relaxed">
+              <p className="text-xs text-amber-100 leading-relaxed">
                 {isMobileDevice
                   ? 'Multi-track timelines and drag-and-drop roadmaps need a full 1920px desktop pond to spread their wings!'
                   : 'My face is squished against your screen! Drag your browser window wider so I can waddle back up the trail to the pond.'}
@@ -914,67 +1119,98 @@ export default function SmallScreenGuard() {
                       style={{ width: `${progressPct}%` }}
                       className={`h-full rounded-full bg-gradient-to-r ${meterGradient} transition-all duration-150 relative flex items-center`}
                     >
-                      {/* Carved Wooden Duck Decoy Riding the Slider Thumb */}
-                      <div className="absolute -right-3.5 -top-2.5 w-8 h-8 flex items-center justify-center drop-shadow-[0_2px_4px_rgba(0,0,0,0.65)]">
+                      {/* Carved Wooden Duck Decoy Riding the Slider Thumb (Luminous Vector Style) */}
+                      <div className="absolute -right-3.5 -top-2.5 w-8 h-8 flex items-center justify-center drop-shadow-[0_3px_5px_rgba(0,0,0,0.7)]">
                         <svg
                           viewBox="0 0 36 32"
                           className="w-7 h-7"
                           fill="none"
                           xmlns="http://www.w3.org/2000/svg"
                         >
+                          <defs>
+                            <radialGradient id="decoyBodyG" cx="40%" cy="30%" r="70%">
+                              <stop offset="0%" stopColor="#f59e0b" />
+                              <stop offset="55%" stopColor="#b45309" />
+                              <stop offset="100%" stopColor="#78350f" />
+                            </radialGradient>
+                            <linearGradient id="decoyWingG" x1="0%" y1="0%" x2="100%" y2="100%">
+                              <stop offset="0%" stopColor="#d97706" />
+                              <stop offset="100%" stopColor="#78350f" />
+                            </linearGradient>
+                            <linearGradient id="decoyBeakG" x1="0%" y1="0%" x2="100%" y2="100%">
+                              <stop offset="0%" stopColor="#92400e" />
+                              <stop offset="100%" stopColor="#451a03" />
+                            </linearGradient>
+                          </defs>
                           {/* Carved Oak Duck Body */}
                           <path
                             d="M5 20 C4 15, 9 13, 16 14 C20 14.5, 24 13, 25 10 C26 14, 28 20, 24 24.5 C20 28, 10 28, 6.5 24 C5.5 23, 5 21, 5 20 Z"
-                            fill="#b45309"
+                            fill="url(#decoyBodyG)"
                             stroke="#451a03"
-                            strokeWidth="1.8"
+                            strokeWidth="1.6"
                             strokeLinejoin="round"
+                          />
+                          {/* Specular Polished Wood Back Highlight */}
+                          <path
+                            d="M8 15.5 Q14 14.5 19 15.5"
+                            stroke="rgba(254,243,199,0.55)"
+                            strokeWidth="1"
+                            strokeLinecap="round"
                           />
                           {/* Wood Grain Lines on Body */}
                           <path
                             d="M8 21 Q15 19 22 21 M10 24 Q16 23 21 24"
-                            stroke="#78350f"
-                            strokeWidth="1.1"
+                            stroke="#451a03"
+                            strokeWidth="1"
                             strokeLinecap="round"
+                            opacity="0.65"
                           />
                           {/* Carved Wing */}
                           <path
                             d="M10 17.5 C14 16, 19 17, 19 20.5 C19 22.5, 14 23.5, 10 21.5 Z"
-                            fill="#92400e"
+                            fill="url(#decoyWingG)"
                             stroke="#451a03"
-                            strokeWidth="1.4"
+                            strokeWidth="1.3"
                           />
                           {/* Carved Wooden Head */}
                           <circle
                             cx="23"
                             cy="10.5"
                             r="5.2"
-                            fill="#b45309"
+                            fill="url(#decoyBodyG)"
                             stroke="#451a03"
-                            strokeWidth="1.8"
+                            strokeWidth="1.6"
+                          />
+                          {/* Head Crown Specular Shine */}
+                          <path
+                            d="M20.5 7.2 Q23 6 25.5 7.2"
+                            stroke="rgba(254,243,199,0.65)"
+                            strokeWidth="1"
+                            strokeLinecap="round"
                           />
                           {/* Dark Walnut Beak */}
                           <path
                             d="M27.5 9.5 C31 9.5, 33 11, 31.5 12.5 C30 13.5, 27.5 13, 27.5 13 Z"
-                            fill="#78350f"
+                            fill="url(#decoyBeakG)"
                             stroke="#451a03"
-                            strokeWidth="1.4"
+                            strokeWidth="1.3"
                           />
-                          {/* Brass Pin Eye */}
+                          {/* Gleaming Brass Pin Eye */}
                           <circle
                             cx="24.5"
                             cy="9.5"
-                            r="1.2"
+                            r="1.3"
                             fill="#fde047"
                             stroke="#451a03"
                             strokeWidth="0.7"
                           />
+                          <circle cx="24.2" cy="9.2" r="0.45" fill="#ffffff" />
                         </svg>
                       </div>
                     </div>
-                    {/* Target 1920px Launch Buoy Marker on Right Edge */}
+                    {/* Target 1920px Launch Buoy Gem Marker on Right Edge */}
                     <span
-                      className="absolute right-2 top-1/2 -translate-y-1/2 w-2.5 h-2.5 rotate-45 bg-amber-400 border border-white shadow"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 w-2.5 h-2.5 rotate-45 bg-gradient-to-br from-amber-200 via-amber-400 to-orange-600 border border-amber-100 shadow"
                       title="Target: 1920px"
                     />
                   </div>

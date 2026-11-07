@@ -1,14 +1,10 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 export default function CustomCursor({
   themeMode = 'dark',
   isWorkspace = false,
   roadmapTheme = null,
 }) {
-  const ringRef = useRef(null);
-  const [isHoveringInteractive, setIsHoveringInteractive] = useState(false);
-  const [isClicking, setIsClicking] = useState(false);
-  const [isVisible, setIsVisible] = useState(false);
   const [pulses, setPulses] = useState([]);
 
   const isDark = themeMode === 'dark';
@@ -60,28 +56,7 @@ export default function CustomCursor({
       return;
     }
 
-    let mouseX = -100;
-    let mouseY = -100;
-    let ringX = -100;
-    let ringY = -100;
-    let rafId = null;
-
-    const handleMouseMove = (e) => {
-      mouseX = e.clientX;
-      mouseY = e.clientY;
-      if (!isVisible) setIsVisible(true);
-
-      const target = e.target;
-      const interactive = Boolean(
-        target?.closest?.(
-          'button, a, input, select, textarea, label, [role="button"], [data-rnd-item="true"], [draggable="true"]'
-        )
-      );
-      setIsHoveringInteractive(interactive);
-    };
-
     const handleMouseDown = (e) => {
-      setIsClicking(true);
       const id = `${Date.now()}-${Math.random()}`;
       setPulses((prev) => [
         ...prev.slice(-4),
@@ -92,37 +67,12 @@ export default function CustomCursor({
       }, 550);
     };
 
-    const handleMouseUp = () => {
-      setIsClicking(false);
-    };
-
-    const handleMouseLeave = () => {
-      setIsVisible(false);
-    };
-
-    const animateRing = () => {
-      ringX += (mouseX - ringX) * 0.25;
-      ringY += (mouseY - ringY) * 0.25;
-      if (ringRef.current) {
-        ringRef.current.style.transform = `translate3d(${ringX}px, ${ringY}px, 0)`;
-      }
-      rafId = requestAnimationFrame(animateRing);
-    };
-
-    rafId = requestAnimationFrame(animateRing);
-    window.addEventListener('mousemove', handleMouseMove, { passive: true });
     window.addEventListener('mousedown', handleMouseDown);
-    window.addEventListener('mouseup', handleMouseUp);
-    document.addEventListener('mouseleave', handleMouseLeave);
 
     return () => {
-      if (rafId) cancelAnimationFrame(rafId);
-      window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mousedown', handleMouseDown);
-      window.removeEventListener('mouseup', handleMouseUp);
-      document.removeEventListener('mouseleave', handleMouseLeave);
     };
-  }, [isVisible]);
+  }, []);
 
   return (
     <>
@@ -154,35 +104,6 @@ export default function CustomCursor({
             className="fixed -translate-x-1/2 -translate-y-1/2 w-5 h-5 rounded-full border-2 opacity-75 animate-ping"
           />
         ))}
-
-        {/* Smooth Trailing Glassmorphic Halo Ring */}
-        <div
-          ref={ringRef}
-          className={`fixed top-0 left-0 -ml-4 -mt-4 w-8 h-8 rounded-full transition-opacity duration-150 ${
-            isVisible ? 'opacity-100' : 'opacity-0'
-          }`}
-        >
-          <div
-            style={{
-              borderColor: isHoveringInteractive ? accentColor : primaryColor,
-              backgroundColor: isClicking
-                ? `${primaryColor}33`
-                : isHoveringInteractive
-                ? `${accentColor}1a`
-                : `${primaryColor}0d`,
-              boxShadow: isHoveringInteractive || isClicking
-                ? `0 0 16px -2px ${primaryColor}66`
-                : 'none',
-            }}
-            className={`w-full h-full rounded-full border transition-transform duration-150 ${
-              isClicking
-                ? 'scale-75'
-                : isHoveringInteractive
-                ? 'scale-125'
-                : 'scale-100'
-            }`}
-          />
-        </div>
       </div>
     </>
   );
