@@ -83,7 +83,7 @@ export default function SmallScreenGuard() {
 
   if (!isTooSmall) return null;
 
-  // At <= 500px: closeness = 1.0 -> massive 7x scale anchored at his face (50% 30.5%) so his face fills the entire screen!
+  // At <= 500px: closeness = 1.0 -> massive 5.5x scale anchored at his face (50% 30.5%) so his face fills the entire screen!
   // As window widens toward 1920px: closeness -> 0.0 -> smoothly backs away into the pond (scale ~ 1.15x)
   const clampedW = Math.max(
     FACE_CLOSEUP_WIDTH,
@@ -91,7 +91,7 @@ export default function SmallScreenGuard() {
   );
   const closeness =
     (MIN_DESKTOP_WIDTH - clampedW) / (MIN_DESKTOP_WIDTH - FACE_CLOSEUP_WIDTH);
-  const dynamicScale = (1.15 + Math.pow(closeness, 1.35) * 5.85).toFixed(3);
+  const dynamicScale = (1.15 + Math.pow(closeness, 1.35) * 4.35).toFixed(3);
   const isPressedAgainstGlass = closeness > 0.35;
 
   const progressPct = Math.max(
