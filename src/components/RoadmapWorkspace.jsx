@@ -1,5 +1,4 @@
 import { useRef, useState } from 'react';
-import html2canvas from 'html2canvas';
 import {
   Eye,
   Edit3,
@@ -12,6 +11,11 @@ import {
 import Sidebar from './Sidebar';
 import TimelineGrid from './TimelineGrid';
 import ThemeModeToggle from './ThemeModeToggle';
+import ExportModal from './ExportModal';
+import { getCanvasTokens } from './canvasStyles';
+import { resolveMilestoneDesign } from './styleHelpers';
+import { buildRoadmapXlsx } from '../utils/exportExcel';
+import { nextPaint, printRoadmapPdf, renderRoadmapPng } from '../utils/exportUtils';
 
 export default function RoadmapWorkspace({
   roadmapState,
@@ -41,6 +45,8 @@ export default function RoadmapWorkspace({
   const [mode, setMode] = useState('editor'); // 'editor' | 'preview'
   const [isExporting, setIsExporting] = useState(false);
   const [exportStatus, setExportStatus] = useState('');
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  const [exportErrors, setExportErrors] = useState([]);
   const exportCanvasRef = useRef(null);
 
   const isPreview = mode === 'preview';
@@ -65,77 +71,91 @@ export default function RoadmapWorkspace({
     URL.revokeObjectURL(url);
   };
 
-  const handleExport = async () => {
-    if (!exportCanvasRef.current || isExporting) return;
+  const triggerBlobDownload = (blob, filename) => {
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+  // PNG and PDF render in Preview mode so inputs become plain text and editor-only
+  // handles disappear; the previous mode is restored afterwards.
+  const handleRunExport = async (selection) => {
+    if (isExporting) return;
     setIsExporting(true);
-    setExportStatus('Exporting JSON & PNG...');
-
+    const previousMode = mode;
     const baseSlug = slugifyName(config.name);
+    const done = [];
+    const failed = [];
+    setExportErrors([]);
 
-    // 1. Download JSON immediately
-    triggerJsonDownload(baseSlug);
-
-    // 2. Render and download high-res PNG with baseline & input fixes
     try {
-      const targetNode = exportCanvasRef.current;
-      const canvas = await html2canvas(targetNode, {
-        scale: 2,
-        useCORS: true,
-        backgroundColor: config?.theme?.secondary || '#0f172a',
-        logging: false,
-        windowWidth: targetNode.scrollWidth + 64,
-        windowHeight: targetNode.scrollHeight + 64,
-        onclone: (clonedDoc, clonedEl) => {
-          // Fix Tailwind preflight `img { display: block }` which shifts html2canvas font baseline downward
-          const styleFix = clonedDoc.createElement('style');
-          styleFix.innerHTML = `
-            img { display: inline-block !important; }
-            [data-export-text="true"] {
-              overflow: visible !important;
-              line-height: 1.35 !important;
-              padding-bottom: 2px !important;
-            }
-          `;
-          clonedDoc.head.appendChild(styleFix);
+      if (selection.json) {
+        setExportStatus('Exporting JSON...');
+        triggerJsonDownload(baseSlug);
+        done.push('JSON');
+        await pause(250);
+      }
 
-          // Hide editor-only action buttons (like "+ Sub", "+ Task", "+MS") in PNG output
-          clonedEl.querySelectorAll('[data-editor-control="true"]').forEach((el) => {
-            el.style.display = 'none';
-          });
+      if (selection.excel) {
+        setExportStatus('Building Excel file...');
+        try {
+          const blob = await buildRoadmapXlsx(roadmapState);
+          triggerBlobDownload(blob, `${baseSlug}.xlsx`);
+          done.push('Excel');
+        } catch (err) {
+          console.error('Failed to export Excel:', err);
+          failed.push(`Excel: ${err?.message || err}`);
+        }
+        await pause(250);
+      }
 
-          // Replace any live <input> or <textarea> inside the canvas with static wrapping <div>s
-          clonedEl.querySelectorAll('input, textarea').forEach((inputEl) => {
-            const div = clonedDoc.createElement('div');
-            div.textContent = inputEl.value || inputEl.placeholder || '';
-            div.className = inputEl.className;
-            div.style.cssText = inputEl.style.cssText;
-            div.style.whiteSpace = 'pre-wrap';
-            div.style.wordBreak = 'break-word';
-            div.style.overflow = 'visible';
-            div.style.lineHeight = '1.35';
-            div.style.paddingBottom = '2px';
-            div.style.display = 'block';
-            div.style.height = 'auto';
-            inputEl.parentNode?.replaceChild(div, inputEl);
-          });
-        },
-      });
+      if ((selection.png || selection.pdf) && exportCanvasRef.current) {
+        setMode('preview');
+        await nextPaint();
 
-      const dataUrl = canvas.toDataURL('image/png');
-      const link = document.createElement('a');
-      link.href = dataUrl;
-      link.download = `${baseSlug}.png`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+        if (selection.png) {
+          setExportStatus('Rendering PNG...');
+          try {
+            const blob = await renderRoadmapPng(exportCanvasRef.current, {
+              backgroundColor: config?.theme?.secondary || '#0f172a',
+              scale: 2,
+            });
+            triggerBlobDownload(blob, `${baseSlug}.png`);
+            done.push('PNG');
+          } catch (err) {
+            console.error('Failed to export PNG:', err);
+            failed.push(`PNG: ${err?.message || err}`);
+          }
+          await pause(250);
+        }
 
-      setExportStatus('JSON & PNG exported!');
-    } catch (err) {
-      console.error('Failed to export PNG via html2canvas:', err);
-      setExportStatus('JSON exported (PNG failed)');
+        if (selection.pdf) {
+          // The print dialog is last because it blocks until it is closed.
+          setExportStatus('Opening print dialog for PDF...');
+          if (document.fonts?.ready) await document.fonts.ready;
+          printRoadmapPdf(exportCanvasRef.current, baseSlug);
+          done.push('PDF');
+        }
+      }
     } finally {
+      setMode(previousMode);
       setIsExporting(false);
-      setTimeout(() => setExportStatus(''), 3000);
+      if (failed.length) {
+        // Keep the dialog open and show the real reason instead of failing silently.
+        setExportErrors(failed);
+        setExportStatus(`Exported ${done.join(', ') || 'nothing'}; ${failed.length} failed`);
+      } else {
+        setIsExportModalOpen(false);
+        setExportStatus(`Exported ${done.join(', ')}`);
+      }
+      setTimeout(() => setExportStatus(''), 6000);
     }
   };
 
@@ -224,11 +244,11 @@ export default function RoadmapWorkspace({
 
           <button
             type="button"
-            onClick={handleExport}
+            onClick={() => setIsExportModalOpen(true)}
             disabled={isExporting}
             data-testid="export-btn"
             className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-xs font-semibold text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 shadow-md shadow-indigo-600/25 transition-all disabled:opacity-60"
-            title="Download both JSON and high-resolution PNG"
+            title="Choose what to export: JSON, PNG, PDF or Excel"
           >
             {isExporting ? (
               <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -248,6 +268,10 @@ export default function RoadmapWorkspace({
             sections={sections}
             tasks={tasks}
             theme={config.theme}
+            milestoneDesign={resolveMilestoneDesign(
+              config.design?.milestone,
+              getCanvasTokens(config)
+            )}
             onAddLegendCategory={onAddLegendCategory}
             onUpdateLegendCategory={onUpdateLegendCategory}
             onDeleteLegendCategory={onDeleteLegendCategory}
@@ -284,6 +308,16 @@ export default function RoadmapWorkspace({
           onDeleteTimelineItem={onDeleteTimelineItem}
         />
       </div>
+      <ExportModal
+        isOpen={isExportModalOpen}
+        onClose={() => {
+          setIsExportModalOpen(false);
+          setExportErrors([]);
+        }}
+        onExport={handleRunExport}
+        isExporting={isExporting}
+        errors={exportErrors}
+      />
     </div>
   );
 }

@@ -22,7 +22,6 @@ import {
   FolderPlus,
   Layers,
   CheckSquare,
-  Diamond,
   Palette,
   ChevronDown,
   ChevronRight,
@@ -30,11 +29,12 @@ import {
   ChevronsDownUp,
   ChevronsUpDown,
 } from 'lucide-react';
+import MilestoneMarker from './MilestoneMarker';
+import { getCategoryBackground } from './canvasStyles';
 import { LEGEND_PRESET_STYLES } from '../constants/themes';
 
 function SortableSectionItem({
   section,
-  sectionIndex,
   tasks,
   isCollapsed,
   onToggleCollapse,
@@ -77,10 +77,6 @@ function SortableSectionItem({
     if (!over || active.id === over.id) return;
     onReorderSubSections(section.id, active.id, over.id);
   };
-
-  const totalSectionTasks = tasks.filter((t) =>
-    section.subSections.some((sub) => sub.id === t.subSectionId)
-  ).length;
 
   return (
     <div
@@ -125,16 +121,6 @@ function SortableSectionItem({
           )}
         </button>
 
-        <span
-          className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded uppercase tracking-wider shrink-0"
-          style={{
-            backgroundColor: `${theme?.primary || '#6366f1'}33`,
-            color: theme?.primary || '#6366f1',
-          }}
-        >
-          S{sectionIndex + 1}
-        </span>
-
         <input
           type="text"
           value={section.title}
@@ -143,11 +129,6 @@ function SortableSectionItem({
           placeholder="Section Title..."
         />
 
-        {isCollapsed && (
-          <span className="text-[10px] text-slate-500 dark:text-slate-400 font-mono shrink-0">
-            {section.subSections.length} sub • {totalSectionTasks}t
-          </span>
-        )}
 
         <button
           type="button"
@@ -156,12 +137,20 @@ function SortableSectionItem({
           title="Add Sub-section"
         >
           <Plus className="w-3 h-3" />
-          <span>Sub</span>
+          <span>Sub-section</span>
         </button>
 
         <button
           type="button"
-          onClick={() => onDeleteSection(section.id)}
+          onClick={() => {
+            if (
+              window.confirm(
+                `Delete the section "${section.title || 'Untitled'}" and everything inside it (sub-sections, tasks and timeline items)? This cannot be undone.`
+              )
+            ) {
+              onDeleteSection(section.id);
+            }
+          }}
           className="p-1 text-slate-400 hover:text-rose-500 dark:hover:text-rose-400 transition-colors shrink-0"
           title="Delete Section"
         >
@@ -297,10 +286,6 @@ function SortableSubSectionItem({
           )}
         </button>
 
-        <span className="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-fuchsia-500/15 text-fuchsia-700 dark:text-fuchsia-300 border border-fuchsia-500/25 shrink-0">
-          Sub
-        </span>
-
         <input
           type="text"
           value={subSection.title}
@@ -329,7 +314,15 @@ function SortableSubSectionItem({
 
         <button
           type="button"
-          onClick={() => onDeleteSubSection(sectionId, subSection.id)}
+          onClick={() => {
+            if (
+              window.confirm(
+                `Delete the sub-section "${subSection.title || 'Untitled'}" and all of its tasks and timeline items? This cannot be undone.`
+              )
+            ) {
+              onDeleteSubSection(sectionId, subSection.id);
+            }
+          }}
           className="p-0.5 text-slate-400 hover:text-rose-500 dark:hover:text-rose-400 transition-colors shrink-0"
           title="Delete Sub-section"
         >
@@ -441,6 +434,7 @@ export default function Sidebar({
   sections,
   tasks,
   theme,
+  milestoneDesign,
   onAddLegendCategory,
   onUpdateLegendCategory,
   onDeleteLegendCategory,
@@ -464,6 +458,7 @@ export default function Sidebar({
   const [newLegendGradient, setNewLegendGradient] = useState('');
   const [newLegendHasBorder, setNewLegendHasBorder] = useState(false);
   const [newLegendBorderColor, setNewLegendBorderColor] = useState('#ffffff');
+  const [newLegendIsStriped, setNewLegendIsStriped] = useState(false);
 
   const [editingLegendId, setEditingLegendId] = useState(null);
   const [legendExpanded, setLegendExpanded] = useState(true);
@@ -534,10 +529,12 @@ export default function Sidebar({
         `linear-gradient(135deg, ${newLegendColor}ee 0%, ${newLegendColor}bb 100%)`,
       hasBorder: newLegendHasBorder,
       borderColor: newLegendBorderColor,
+      isStriped: newLegendIsStriped,
     });
     setNewLegendLabel('');
     setNewLegendGradient('');
     setNewLegendHasBorder(false);
+    setNewLegendIsStriped(false);
   };
 
   const themeSwatches = [
@@ -572,7 +569,12 @@ export default function Sidebar({
             title="Drag and drop this Milestone onto any Task row & Period column in the timeline grid"
           >
             <div className="w-7 h-7 rounded-lg bg-amber-500/20 border border-amber-400/40 flex items-center justify-center shrink-0">
-              <Diamond className="w-4 h-4 text-amber-500 dark:text-amber-400 fill-amber-400/80 group-hover:scale-110 transition-transform" />
+              <MilestoneMarker
+                milestoneDesign={milestoneDesign}
+                isLight
+                size={15}
+                className="group-hover:scale-110 transition-transform"
+              />
             </div>
             <div>
               <div className="text-xs font-bold text-amber-900 dark:text-amber-200">
@@ -650,7 +652,7 @@ export default function Sidebar({
                         }
                         className="w-6 h-6 rounded-lg shrink-0 cursor-pointer shadow-sm transition-transform hover:scale-105"
                         style={{
-                          background: cat.gradient || cat.color,
+                          background: getCategoryBackground(cat),
                           border: cat.hasBorder
                             ? `2px solid ${cat.borderColor || '#ffffff'}`
                             : '1px solid rgba(148, 163, 184, 0.35)',
@@ -747,9 +749,24 @@ export default function Sidebar({
                           </div>
                         </div>
 
-                        {/* Border Toggle & Border Color Picker */}
-                        <div className="flex items-center justify-between gap-2 pt-1 border-t border-slate-100 dark:border-slate-800/60">
-                          <label className="inline-flex items-center gap-2 cursor-pointer text-xs text-slate-700 dark:text-slate-300">
+                        {/* Striped Pattern & Border Toggle + Border Color Picker */}
+                        <div className="flex flex-wrap items-center justify-start gap-x-4 gap-y-2 pt-1.5 border-t border-slate-100 dark:border-slate-800/60">
+                          <label className="inline-flex items-center gap-1.5 cursor-pointer text-xs text-slate-700 dark:text-slate-300">
+                            <input
+                              type="checkbox"
+                              checked={Boolean(cat.isStriped)}
+                              onChange={(e) =>
+                                onUpdateLegendCategory(cat.id, {
+                                  isStriped: e.target.checked,
+                                })
+                              }
+                              data-testid={`legend-striped-${cat.id}`}
+                              className="rounded border-slate-300 dark:border-slate-700 text-indigo-600 focus:ring-indigo-500"
+                            />
+                            <span>Striped Pattern</span>
+                          </label>
+
+                          <label className="inline-flex items-center gap-1.5 cursor-pointer text-xs text-slate-700 dark:text-slate-300">
                             <input
                               type="checkbox"
                               checked={Boolean(cat.hasBorder)}
@@ -844,7 +861,17 @@ export default function Sidebar({
                 </div>
               </div>
 
-              <div className="flex items-center justify-between pt-1 border-t border-slate-200/70 dark:border-slate-800/70 text-[11px]">
+              <div className="flex flex-wrap items-center justify-start gap-x-4 gap-y-2 pt-1 border-t border-slate-200/70 dark:border-slate-800/70 text-[11px]">
+                <label className="inline-flex items-center gap-1.5 cursor-pointer text-slate-600 dark:text-slate-300">
+                  <input
+                    type="checkbox"
+                    checked={newLegendIsStriped}
+                    onChange={(e) => setNewLegendIsStriped(e.target.checked)}
+                    className="rounded border-slate-300 dark:border-slate-700 text-indigo-600 focus:ring-indigo-500"
+                  />
+                  <span>Striped</span>
+                </label>
+
                 <label className="inline-flex items-center gap-1.5 cursor-pointer text-slate-600 dark:text-slate-300">
                   <input
                     type="checkbox"
@@ -932,11 +959,10 @@ export default function Sidebar({
                 items={sections.map((s) => s.id)}
                 strategy={verticalListSortingStrategy}
               >
-                {sections.map((sec, idx) => (
+                {sections.map((sec) => (
                   <SortableSectionItem
                     key={sec.id}
                     section={sec}
-                    sectionIndex={idx}
                     tasks={tasks}
                     isCollapsed={collapsedSections.has(sec.id)}
                     onToggleCollapse={() => toggleSectionCollapse(sec.id)}

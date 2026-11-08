@@ -1,16 +1,35 @@
 import { useState, useRef, useLayoutEffect } from 'react';
-import {
-  Calendar,
-  Plus,
-  Layers,
-  Diamond,
-  Sparkles,
-} from 'lucide-react';
+import { Calendar, Sparkles, User, Tag as TagIcon } from 'lucide-react';
 import TaskRow from './TaskRow';
-import { calculatePeriods } from '../utils/dateUtils';
-import { FONT_STYLES, PRESET_THEMES } from '../constants/themes';
+import MilestoneMarker from './MilestoneMarker';
+import { calculatePeriods, getTodayMarkerInfo } from '../utils/dateUtils';
+import { FONT_STYLES, getSingularPeriodLabel } from '../constants/themes';
+import {
+  SPINE_WIDTH,
+  getDensity,
+  isRotatedSectionStyle,
+  normalizeDesign,
+} from '../constants/designOptions';
+import { getCanvasTokens, getCategoryBackground } from './canvasStyles';
+import {
+  CanvasOverlays,
+  LevelLabel,
+  NumBadge,
+  PeriodHeaderCell,
+  SectionNumber,
+  SectionSpine,
+} from './StyleParts';
+import {
+  INDENT,
+  INDENT_SPINE,
+  NO_WORD_BREAK,
+  computeLeftWidth,
+  resolveMilestoneDesign,
+  getSectionVisuals,
+  nbHyphen,
+} from './styleHelpers';
 
-function WrappingTitleInput({ value, onChange, className }) {
+function WrappingTitleInput({ value, onChange, className, style }) {
   const textareaRef = useRef(null);
 
   useLayoutEffect(() => {
@@ -32,8 +51,154 @@ function WrappingTitleInput({ value, onChange, className }) {
           e.currentTarget.blur();
         }
       }}
-      className={`resize-none overflow-hidden whitespace-normal break-words leading-snug ${className}`}
+      style={{ ...NO_WORD_BREAK, ...style }}
+      className={`resize-none overflow-hidden whitespace-normal leading-snug ${className}`}
     />
+  );
+}
+
+function LegendBar({ legend, design, tokens }) {
+  const opt = design?.legend || {};
+  const legendStyle = design?.legendStyle || 'chips';
+  const md = resolveMilestoneDesign(design?.milestone, tokens);
+  const msColor = md.color;
+  const msBorder = md.borderColor;
+  const swatchPx = { sm: 11, md: 14, lg: 18 }[opt.size] ?? 14;
+  const textCls = { sm: 'text-[10px]', md: 'text-xs', lg: 'text-sm' }[opt.size] ?? 'text-xs';
+  const gapCls = { tight: 'gap-1', normal: 'gap-2', loose: 'gap-3.5' }[opt.gap] || 'gap-2';
+  const caseCls = opt.labelCase === 'upper' ? 'uppercase tracking-wide' : '';
+  const framed = opt.frame !== 'none';
+  const titleText = String(opt.title ?? 'Legend').trim();
+  const shapeCls =
+    opt.swatchShape === 'square'
+      ? 'rounded-[2px]'
+      : opt.swatchShape === 'circle'
+      ? 'rounded-full'
+      : 'rounded-md';
+
+  const swatch = (cat) => (
+    <span
+      className={`shrink-0 ${shapeCls}`}
+      style={{
+        width: swatchPx,
+        height: swatchPx,
+        background: getCategoryBackground(cat),
+        border: cat.hasBorder
+          ? `2px solid ${cat.borderColor || '#ffffff'}`
+          : '1px solid rgba(255, 255, 255, 0.3)',
+      }}
+    />
+  );
+
+  const itemShell = (key, children, extra = {}) => {
+    if (legendStyle === 'swatches') {
+      return (
+        <div
+          key={key}
+          style={{ color: tokens?.textMain }}
+          className={`inline-flex items-center gap-1.5 px-1 py-0.5 font-medium ${textCls}`}
+        >
+          {children}
+        </div>
+      );
+    }
+    if (legendStyle === 'filled') {
+      return (
+        <div
+          key={key}
+          style={extra.filled}
+          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full font-bold text-white shadow-sm ${textCls}`}
+        >
+          {children}
+        </div>
+      );
+    }
+    return (
+      <div
+        key={key}
+        style={{
+          backgroundColor: tokens?.chipBg,
+          borderColor: extra.chipBorder || tokens?.chipBorder,
+          color: tokens?.textMain,
+        }}
+        className={`inline-flex items-center gap-2 px-2.5 py-1 rounded-xl border font-medium shadow-sm ${textCls}`}
+      >
+        {children}
+      </div>
+    );
+  };
+
+  return (
+    <div
+      style={
+        framed
+          ? {
+              backgroundColor: tokens?.legendBarBg,
+              borderColor: tokens?.chipBorder,
+            }
+          : undefined
+      }
+      className={`flex ${gapCls} ${
+        framed ? 'backdrop-blur-md px-4 py-2.5 rounded-2xl border' : ''
+      } flex-wrap items-center`}
+      data-testid="canvas-legend-bar"
+    >
+      {opt.showTitle !== false && titleText && (
+        <span
+          data-export-text="true"
+          style={{ color: tokens?.textMuted }}
+          className="text-[10px] font-bold uppercase tracking-wider mr-1"
+        >
+          {titleText}
+        </span>
+      )}
+
+      {legend.map((cat) =>
+        itemShell(
+          cat.id,
+          <>
+            {legendStyle !== 'filled' && swatch(cat)}
+            <span data-export-text="true" className={`leading-snug ${caseCls}`}>
+              {cat.label}
+            </span>
+          </>,
+          {
+            filled: {
+              background: getCategoryBackground(cat),
+              border: cat.hasBorder
+                ? `2px solid ${cat.borderColor || '#ffffff'}`
+                : '1px solid rgba(255,255,255,0.28)',
+            },
+          }
+        )
+      )}
+
+      {opt.includeMilestone !== false &&
+        itemShell(
+          'milestone',
+          <>
+            <MilestoneMarker
+              milestoneDesign={md}
+              size={swatchPx}
+              effects={design?.effects}
+              isLight={tokens?.isLight}
+            />
+            <span data-export-text="true" className={`leading-snug ${caseCls}`}>
+              {opt.milestoneLabel || 'Milestone'}
+            </span>
+          </>,
+          {
+            chipBorder: `${msColor}66`,
+            filled: {
+              background: `linear-gradient(135deg, ${msColor} 0%, ${msColor}cc 100%)`,
+              border:
+                md?.borderStyle && md.borderStyle !== 'none'
+                  ? `1.5px ${md.borderStyle} ${msBorder}`
+                  : '1px solid rgba(255,255,255,0.35)',
+            },
+          }
+        )}
+    </div>
   );
 }
 
@@ -45,8 +210,6 @@ export default function TimelineGrid({
   tasks,
   timelineItems,
   isPreview,
-  onAddSubSection,
-  onAddTask,
   onUpdateSectionTitle,
   onUpdateSubSectionTitle,
   onUpdateTaskTitle,
@@ -56,360 +219,560 @@ export default function TimelineGrid({
 }) {
   const [activePopoverItemId, setActivePopoverItemId] = useState(null);
 
+  const design = normalizeDesign(config?.design);
+  const density = getDensity(design);
+  const tokens = getCanvasTokens(config);
   const periods = calculatePeriods(config);
-  const colWidth = 164; // Crisp width in px per period column for snapping
+  const colWidth = density.colWidth;
 
   const fontObj =
     FONT_STYLES.find((f) => f.id === config?.fontStyle) || FONT_STYLES[0];
-  const presetTheme = PRESET_THEMES.find((t) => t.id === config?.themeId);
 
-  const primaryColor = config?.theme?.primary || presetTheme?.primary || '#6366f1';
-  const secondaryColor =
-    config?.theme?.secondary || presetTheme?.secondary || '#0f172a';
-  const accents = config?.theme?.accents ||
-    presetTheme?.accents || ['#818cf8', '#ec4899', '#14b8a6', '#f59e0b'];
+  const primaryColor = tokens.primary;
+  const accents = tokens.accents;
 
   const alternateRowHighlighting =
     config?.previewSettings?.alternateRowHighlighting ?? true;
   const subtleGridDemarcations =
     config?.previewSettings?.subtleGridDemarcations ?? true;
 
+  const periodHeaderStyle = design.periodHeaderStyle || 'accent-bar';
+  const sectionStyle = design.sectionStyle || 'gradient-banner';
+  const subSectionStyle = design.subSectionStyle || 'dot';
+  const legendPosition = design.legendPosition || 'top';
+  const banner = design.banner || {};
+  const todayInfo = design.todayMarker
+    ? getTodayMarkerInfo(config, periods)
+    : null;
+  const todayVisible = Boolean(todayInfo && todayInfo.inRange);
+  const rotated = isRotatedSectionStyle(sectionStyle);
+  // Frozen column grows just enough for the longest word in any title to fit.
+  const leftW = computeLeftWidth({ density, sections, tasks, design, rotated });
+  const numbering = design.numbering || {};
+  const numStyle = design.numberingStyle || 'soft-tint';
+  const singularPeriod = getSingularPeriodLabel(config.periodLabel);
+
   let globalTaskCounter = 0;
+
+  const periodTrack = () =>
+    periods.map((period) => {
+      const isAltCol = design.alternateColumnShading && period.index % 2 === 0;
+      return (
+        <div
+          key={period.index}
+          style={{
+            width: `${colWidth}px`,
+            borderColor: subtleGridDemarcations
+              ? tokens.gridSubtle
+              : 'transparent',
+            backgroundColor: isAltCol ? tokens.colShadeBg : undefined,
+          }}
+          className="h-full border-r"
+        />
+      );
+    });
+
+  // Sub-section header + its task rows. labelWidth/stickyLeft let rotated-spine
+  // sections reserve room on the left for the vertical cap.
+  const renderSubSectionBlock = (
+    section,
+    secIdx,
+    sub,
+    subIdx,
+    sectionAccent,
+    labelWidth,
+    stickyLeft
+  ) => {
+    const subTasks = tasks.filter((t) => t.subSectionId === sub.id);
+
+    return (
+      <div key={sub.id}>
+        <div
+          className="flex items-stretch"
+          style={{
+            minHeight: `${density.subMin}px`,
+            backgroundColor: tokens.subHeaderBg,
+          }}
+        >
+          <div
+            style={{
+              width: `${labelWidth}px`,
+              left: `${stickyLeft}px`,
+              paddingLeft: (stickyLeft > 0 ? INDENT_SPINE : INDENT).sub,
+              paddingRight: 14,
+              backgroundColor: tokens.stickyAltBg,
+              borderColor: subtleGridDemarcations
+                ? tokens.gridBorder
+                : 'transparent',
+            }}
+            className="shrink-0 py-1 flex items-center sticky z-[46] border-r"
+          >
+            <LevelLabel
+              styleId={subSectionStyle}
+              level="sub"
+              accent={sectionAccent}
+              badge={
+                numbering.subSections ? (
+                  <NumBadge
+                    label={`${secIdx + 1}.${subIdx + 1}`}
+                    accent={sectionAccent}
+                    numStyle={numStyle}
+                  />
+                ) : null
+              }
+            >
+              {isPreview ? (
+                <span
+                  data-export-text="true"
+                  style={{ color: tokens.textSecondary, ...NO_WORD_BREAK }}
+                  className="text-[11px] font-bold uppercase tracking-wider whitespace-normal leading-snug"
+                >
+                  {nbHyphen(sub.title)}
+                </span>
+              ) : (
+                <WrappingTitleInput
+                  value={sub.title}
+                  onChange={(val) =>
+                    onUpdateSubSectionTitle(section.id, sub.id, val)
+                  }
+                  style={{ color: tokens.textSecondary }}
+                  className="w-full bg-transparent text-[11px] font-bold uppercase tracking-wider focus:outline-none focus:ring-1 focus:ring-indigo-500/40 px-1.5 py-0.5 rounded"
+                />
+              )}
+            </LevelLabel>
+          </div>
+
+          <div
+            className="flex items-stretch"
+            style={{ width: `${periods.length * colWidth}px` }}
+          >
+            {periodTrack()}
+          </div>
+        </div>
+
+        {subTasks.map((task, tIdx) => {
+          const currentRowIdx = globalTaskCounter++;
+          const rowItems = timelineItems.filter(
+            (item) => item.taskId === task.id
+          );
+
+          return (
+            <TaskRow
+              key={task.id}
+              task={task}
+              rowIndex={currentRowIdx}
+              taskNumberLabel={
+                numbering.tasks
+                  ? `${secIdx + 1}.${subIdx + 1}.${tIdx + 1}`
+                  : null
+              }
+              sectionAccent={sectionAccent}
+              periods={periods}
+              colWidth={colWidth}
+              items={rowItems}
+              legend={legend}
+              design={design}
+              tokens={tokens}
+              leftWidth={labelWidth}
+              stickyLeft={stickyLeft}
+              isPreview={isPreview}
+              alternateRowHighlighting={alternateRowHighlighting}
+              subtleGridDemarcations={subtleGridDemarcations}
+              periodLabel={config.periodLabel}
+              activePopoverItemId={activePopoverItemId}
+              setActivePopoverItemId={setActivePopoverItemId}
+              onAddTimelineItem={onAddTimelineItem}
+              onUpdateTimelineItem={onUpdateTimelineItem}
+              onDeleteTimelineItem={onDeleteTimelineItem}
+              onUpdateTaskTitle={onUpdateTaskTitle}
+            />
+          );
+        })}
+      </div>
+    );
+  };
+
+  const showRight = Boolean(banner.owner) || legendPosition === 'top';
 
   return (
     <div
-      className="flex-1 overflow-auto bg-slate-100 dark:bg-slate-950 p-4 sm:p-6 transition-colors"
+      className="roadmap-scroll flex-1 overflow-auto bg-slate-100 dark:bg-slate-950 transition-colors"
       onClick={() => setActivePopoverItemId(null)}
     >
-      {/* Target DOM Node for html2canvas PNG Export (contains Legend + Timeline Grid) */}
+      <div className="p-4 sm:p-6 w-max">
+      {/* Export target. overflow-clip rounds the corners without breaking sticky. */}
       <div
         ref={exportRef}
         data-testid="roadmap-export-canvas"
         style={{
           fontFamily: fontObj.fontFamily,
-          background:
-            presetTheme?.surfaceBg ||
-            `linear-gradient(135deg, ${secondaryColor} 0%, #0f172a 100%)`,
-          borderColor: presetTheme?.glassBorder || `${primaryColor}44`,
-          minWidth: `${288 + periods.length * colWidth}px`,
+          background: tokens.surfaceBg,
+          borderColor: tokens.canvasBorder,
+          borderWidth: design.effects?.brutalist ? '3px' : '1px',
+          boxShadow: design.effects?.brutalist
+            ? `8px 8px 0px ${tokens.isLight ? '#090d16' : '#f8fafc'}`
+            : undefined,
+          color: tokens.textMain,
+          width: `${leftW + periods.length * colWidth}px`,
+          minWidth: 'max-content',
         }}
-        className="rounded-3xl border shadow-2xl overflow-hidden text-slate-100"
+        className="relative isolate rounded-3xl border shadow-2xl overflow-clip"
       >
-        {/* Top Presentation Header & Integrated Legend Bar */}
+        <CanvasOverlays effects={design.effects} tokens={tokens} />
+
+        {/* Header */}
         <div
-          className="px-6 py-5 border-b border-slate-800/80 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4"
+          className="px-6 py-5 border-b flex flex-row items-stretch justify-between gap-4"
           style={{
-            background:
-              presetTheme?.headerGradient ||
-              `linear-gradient(90deg, ${primaryColor}30 0%, ${accents[0]}18 50%, ${accents[1]}18 100%)`,
+            background: tokens.headerGradient,
+            borderColor: tokens.gridBorder,
           }}
         >
-          <div className="space-y-1">
-            <div className="inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-widest text-indigo-300">
-              <Sparkles className="w-3.5 h-3.5" style={{ color: primaryColor }} />
-              <span data-export-text="true">
-                {config.totalPeriods} {config.periodLabel} • {config.weeksPerPeriod}{' '}
-                {Number(config.weeksPerPeriod) === 1 ? 'Week' : 'Weeks'} / Period
+          <div className="space-y-1 self-center">
+            <div className="flex flex-wrap items-center gap-2 text-[11px] font-bold uppercase tracking-widest">
+              <Sparkles
+                className="w-3.5 h-3.5"
+                style={{ color: primaryColor }}
+              />
+              <span
+                data-export-text="true"
+                style={{ color: tokens.isLight ? primaryColor : '#a5b4fc' }}
+              >
+                {config.totalPeriods} {config.periodLabel} •{' '}
+                {config.weeksPerPeriod}{' '}
+                {Number(config.weeksPerPeriod) === 1 ? 'Week' : 'Weeks'} /{' '}
+                {singularPeriod}
               </span>
+              {banner.version && (
+                <span
+                  data-export-text="true"
+                  style={{
+                    backgroundColor: `${primaryColor}22`,
+                    color: primaryColor,
+                    borderColor: `${primaryColor}55`,
+                  }}
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] font-mono"
+                >
+                  <TagIcon className="w-2.5 h-2.5" />
+                  {banner.version}
+                </span>
+              )}
             </div>
+
             <h1
               data-export-text="true"
-              className="text-xl sm:text-2xl font-extrabold tracking-tight text-white leading-snug"
+              style={{ color: tokens.textMain, ...NO_WORD_BREAK }}
+              className="text-2xl font-extrabold tracking-tight leading-snug"
             >
               {config.name}
             </h1>
+            {banner.subtitle && (
+              <p
+                data-export-text="true"
+                style={{ color: tokens.textSecondary, ...NO_WORD_BREAK }}
+                className="text-xs font-medium leading-snug"
+              >
+                {banner.subtitle}
+              </p>
+            )}
+
             {periods.length > 0 && (
-              <div className="flex items-center gap-2 text-xs text-slate-300/90 font-mono">
-                <Calendar className="w-3.5 h-3.5 text-slate-400" />
+              <div
+                style={{ color: tokens.textSecondary }}
+                className="flex items-center gap-2 text-xs font-mono"
+              >
+                <Calendar
+                  className="w-3.5 h-3.5"
+                  style={{ color: tokens.textMuted }}
+                />
                 <span data-export-text="true">
-                  {periods[0].startDate} — {periods[periods.length - 1].endDate}
+                  {periods[0].startDate} —{' '}
+                  {periods[periods.length - 1].endDate}
                 </span>
               </div>
             )}
           </div>
 
-          {/* Integrated Legend Strip (Captured in PNG export & Preview) */}
-          <div
-            className="flex flex-wrap items-center gap-2 bg-slate-950/65 backdrop-blur-md px-4 py-2.5 rounded-2xl border border-white/10"
-            data-testid="canvas-legend-bar"
-          >
-            <span
-              data-export-text="true"
-              className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mr-1"
-            >
-              Legend:
-            </span>
-            {legend.map((cat) => (
-              <div
-                key={cat.id}
-                className="inline-flex items-center gap-2 px-2.5 py-1 rounded-xl bg-slate-900/90 border border-white/10 text-xs font-medium text-slate-100 shadow-sm"
-              >
+          {showRight && (
+            <div className="flex flex-col items-end justify-between gap-3">
+              {banner.owner ? (
                 <span
-                  className="w-3.5 h-3.5 rounded-md shrink-0"
-                  style={{
-                    background: cat.gradient || cat.color,
-                    border: cat.hasBorder
-                      ? `2px solid ${cat.borderColor || '#ffffff'}`
-                      : '1px solid rgba(255, 255, 255, 0.3)',
-                  }}
-                />
-                <span data-export-text="true" className="leading-snug">
-                  {cat.label}
+                  data-export-text="true"
+                  style={{ color: tokens.textSecondary }}
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-right"
+                >
+                  <User className="w-3.5 h-3.5" style={{ color: primaryColor }} />
+                  {banner.owner}
                 </span>
-              </div>
-            ))}
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-slate-900/90 border border-amber-500/30 text-xs font-medium text-amber-200">
-              <Diamond className="w-3 h-3 fill-amber-400 text-amber-400 shrink-0" />
-              <span data-export-text="true" className="leading-snug">
-                Milestone
-              </span>
+              ) : (
+                <span />
+              )}
+              {legendPosition === 'top' && (
+                <LegendBar legend={legend} design={design} tokens={tokens} />
+              )}
             </div>
-          </div>
+          )}
         </div>
 
-        {/* Main Timeline Table Header (Sticky Left Hierarchy Column + Period Columns) */}
-        <div
-          className={`flex items-stretch bg-slate-950/80 backdrop-blur-md border-b ${
-            subtleGridDemarcations ? 'border-slate-800/90' : 'border-transparent'
-          }`}
-        >
-          {/* Left Sticky Header Cell */}
+        {/* Body */}
+        <div className="relative">
+          {/* "This period" line: above rows and bars, below the frozen column */}
+          {todayVisible && periods.length > 0 && (
+            <div
+              data-testid="today-marker-line"
+              style={{
+                left: `${leftW + todayInfo.periodIndex * colWidth}px`,
+              }}
+              className="pointer-events-none absolute top-0 bottom-0 z-30"
+            >
+              <div className="h-full w-0 border-l-2 border-dashed border-rose-500/85" />
+            </div>
+          )}
+
+          {/* FROZEN header: sticky top, blank sticky-left corner */}
           <div
-            className={`w-64 sm:w-72 shrink-0 px-5 py-3.5 flex items-center justify-between sticky left-0 z-20 bg-slate-950/95 border-r ${
-              subtleGridDemarcations ? 'border-slate-800/90' : 'border-transparent'
-            }`}
+            data-sticky-header="true"
+            style={{
+              backgroundColor: tokens.stickyBg,
+              borderColor: subtleGridDemarcations
+                ? tokens.gridBorder
+                : 'transparent',
+            }}
+            className="flex items-stretch sticky top-0 z-[60] border-b shadow-sm"
           >
-            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-300">
-              <Layers className="w-4 h-4 shrink-0" style={{ color: primaryColor }} />
-              <span data-export-text="true">Initiative / Activity</span>
+            <div
+              style={{
+                width: `${leftW}px`,
+                backgroundColor: tokens.stickyBg,
+                borderColor: subtleGridDemarcations
+                  ? tokens.gridBorder
+                  : 'transparent',
+              }}
+              className="shrink-0 sticky left-0 z-50 border-r"
+            />
+
+            <div
+              className="flex flex-col relative"
+              style={{ width: `${periods.length * colWidth}px` }}
+            >
+              {/* Strip above the period headers so the flag never covers a header */}
+              {todayVisible && (
+                <div
+                  className="relative h-5 shrink-0"
+                  style={{ backgroundColor: tokens.stickyBg }}
+                >
+                  <span
+                    data-export-text="true"
+                    style={{
+                      left: `${todayInfo.periodIndex * colWidth}px`,
+                    }}
+                    className="pointer-events-none absolute top-0.5 -translate-x-full -ml-1 z-10 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-rose-500 text-white shadow-md whitespace-nowrap"
+                  >
+                    This {singularPeriod}
+                  </span>
+                </div>
+              )}
+
+              <div className="flex items-stretch">
+                {periods.map((period, idx) => (
+                  <PeriodHeaderCell
+                    key={period.index}
+                    styleId={periodHeaderStyle}
+                    period={period}
+                    accent={accents[idx % accents.length] || primaryColor}
+                    tokens={tokens}
+                    density={density}
+                    isAltCol={
+                      design.alternateColumnShading && period.index % 2 === 0
+                    }
+                    subtleGrid={subtleGridDemarcations}
+                    width={`${colWidth}px`}
+                    testId={`period-header-${period.index}`}
+                  />
+                ))}
+              </div>
+
+              {/* Dotted line continues from the flag down through the header */}
+              {todayVisible && (
+                <div
+                  className="pointer-events-none absolute top-0 bottom-0 z-10 w-0 border-l-2 border-dashed border-rose-500/85"
+                  style={{ left: `${todayInfo.periodIndex * colWidth}px` }}
+                />
+              )}
             </div>
           </div>
 
-          {/* Dynamic Period Column Headers */}
-          <div
-            className="flex items-stretch"
-            style={{ width: `${periods.length * colWidth}px` }}
-          >
-            {periods.map((period, idx) => {
-              const accentColor = accents[idx % accents.length] || primaryColor;
+          {/* Sections -> Sub-sections -> Tasks */}
+          <div>
+            {sections.map((section, secIdx) => {
+              const sectionAccent =
+                accents[secIdx % accents.length] || primaryColor;
+              const isLastSection = secIdx === sections.length - 1;
+              const dividerColor = isLastSection
+                ? 'transparent'
+                : design.sectionDividerGlow
+                ? sectionAccent
+                : subtleGridDemarcations
+                ? tokens.gridBorder
+                : 'transparent';
+
+              // Rotated spine: vertical cap sits to the LEFT of the section's rows.
+              // Spine (40px) + label column (leftW - 40px) = leftW, so periods stay aligned.
+              if (rotated) {
+                // Enough room for the vertical title to wrap onto two lines; rows
+                // normally make the section taller than this.
+                const minHeight = Math.min(
+                  220,
+                  Math.max(84, 56 + String(section.title || '').length * 3.4)
+                );
+                return (
+                  <div
+                    key={section.id}
+                    style={{ borderColor: dividerColor, minHeight }}
+                    className="border-b-2 relative flex items-stretch"
+                  >
+                    <SectionSpine
+                      styleId={sectionStyle}
+                      accent={sectionAccent}
+                      tokens={tokens}
+                      number={numbering.sections ? secIdx + 1 : null}
+                      title={section.title}
+                      roundBottomLeft={
+                        secIdx === sections.length - 1 &&
+                        legendPosition !== 'bottom'
+                          ? 24 - (design.effects?.brutalist ? 3 : 1)
+                          : 0
+                      }
+                    />
+                    <div className="flex-1">
+                      {section.subSections.map((sub, subIdx) =>
+                        renderSubSectionBlock(
+                          section,
+                          secIdx,
+                          sub,
+                          subIdx,
+                          sectionAccent,
+                          leftW - SPINE_WIDTH,
+                          SPINE_WIDTH
+                        )
+                      )}
+                    </div>
+                  </div>
+                );
+              }
+
+              const visuals = getSectionVisuals(
+                sectionStyle,
+                sectionAccent,
+                tokens,
+                subtleGridDemarcations
+              );
+
               return (
                 <div
-                  key={period.index}
-                  style={{ width: `${colWidth}px` }}
-                  data-testid={`period-header-${period.index}`}
-                  className={`px-3 py-3 flex flex-col justify-center relative border-r ${
-                    subtleGridDemarcations ? 'border-slate-800/70' : 'border-transparent'
-                  }`}
+                  key={section.id}
+                  style={{ borderColor: dividerColor }}
+                  className="border-b-2"
                 >
                   <div
-                    className="h-1 w-10 rounded-full mb-1.5 opacity-80"
-                    style={{ backgroundColor: accentColor }}
-                  />
-                  <div
-                    data-export-text="true"
-                    className="text-xs font-bold text-white tracking-tight leading-snug"
+                    className="flex items-stretch"
+                    style={{
+                      minHeight: `${density.sectionMin}px`,
+                      background: visuals.bannerBg,
+                    }}
                   >
-                    {period.title}
+                    <div
+                      style={{
+                        width: `${leftW}px`,
+                        paddingLeft: INDENT.section,
+                        paddingRight: 14,
+                        ...visuals.leftCell,
+                      }}
+                      className="shrink-0 py-2 flex items-center sticky left-0 z-[46] border-r"
+                    >
+                      <div
+                        style={
+                          visuals.pill
+                            ? {
+                                backgroundColor: `${sectionAccent}22`,
+                                border: `1.5px solid ${sectionAccent}77`,
+                              }
+                            : undefined
+                        }
+                        className={`flex items-center gap-2 min-w-0 flex-1 ${
+                          visuals.pill ? 'px-2.5 py-1 rounded-full' : ''
+                        }`}
+                      >
+                        <SectionNumber
+                          show={numbering.sections}
+                          label={`${secIdx + 1}`}
+                          accent={sectionAccent}
+                          visuals={visuals}
+                          numStyle={numStyle}
+                        />
+
+                        {isPreview ? (
+                          <span
+                            data-export-text="true"
+                            style={{ color: visuals.titleColor, ...NO_WORD_BREAK }}
+                            className="text-xs font-extrabold uppercase tracking-wider whitespace-normal leading-snug"
+                          >
+                            {nbHyphen(section.title)}
+                          </span>
+                        ) : (
+                          <WrappingTitleInput
+                            value={section.title}
+                            onChange={(val) =>
+                              onUpdateSectionTitle(section.id, val)
+                            }
+                            style={{ color: visuals.titleColor }}
+                            className="w-full bg-transparent text-xs font-extrabold uppercase tracking-wider focus:outline-none focus:ring-1 focus:ring-indigo-500/40 px-1.5 py-0.5 rounded"
+                          />
+                        )}
+                      </div>
+                    </div>
+
+                    <div
+                      className="flex items-stretch"
+                      style={{ width: `${periods.length * colWidth}px` }}
+                    >
+                      {periodTrack()}
+                    </div>
                   </div>
-                  <div
-                    data-export-text="true"
-                    className="text-[10px] font-mono text-slate-400 mt-0.5 leading-snug"
-                  >
-                    {period.dateRange}
-                  </div>
+
+                  {section.subSections.map((sub, subIdx) =>
+                    renderSubSectionBlock(
+                      section,
+                      secIdx,
+                      sub,
+                      subIdx,
+                      sectionAccent,
+                      leftW,
+                      0
+                    )
+                  )}
                 </div>
               );
             })}
           </div>
         </div>
 
-        {/* Hierarchical Sections -> Sub-sections -> Tasks Rows */}
-        <div>
-          {sections.map((section, secIdx) => {
-            const sectionAccent = accents[secIdx % accents.length] || primaryColor;
-
-            return (
-              <div
-                key={section.id}
-                className={`border-b-2 ${
-                  subtleGridDemarcations
-                    ? 'border-slate-800/80'
-                    : 'border-transparent'
-                }`}
-              >
-                {/* Section Banner Row */}
-                <div
-                  className="flex items-stretch min-h-[42px]"
-                  style={{
-                    background: `linear-gradient(90deg, ${sectionAccent}26 0%, ${sectionAccent}08 60%, transparent 100%)`,
-                  }}
-                >
-                  <div
-                    className={`w-64 sm:w-72 shrink-0 px-4 py-2.5 flex items-center justify-between gap-2 sticky left-0 z-10 backdrop-blur-md bg-slate-900/90 border-r ${
-                      subtleGridDemarcations ? 'border-slate-800/80' : 'border-transparent'
-                    }`}
-                  >
-                    <div className="flex items-start gap-2 min-w-0 flex-1">
-                      <span
-                        data-export-text="true"
-                        className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md text-white shadow-sm shrink-0 mt-0.5"
-                        style={{ backgroundColor: sectionAccent }}
-                      >
-                        0{secIdx + 1}
-                      </span>
-                      {isPreview ? (
-                        <span
-                          data-export-text="true"
-                          className="text-xs font-extrabold uppercase tracking-wider text-white whitespace-normal break-words leading-snug"
-                        >
-                          {section.title}
-                        </span>
-                      ) : (
-                        <WrappingTitleInput
-                          value={section.title}
-                          onChange={(val) => onUpdateSectionTitle(section.id, val)}
-                          className="w-full bg-transparent text-xs font-extrabold uppercase tracking-wider text-white focus:outline-none focus:bg-slate-950 px-1.5 py-0.5 rounded"
-                        />
-                      )}
-                    </div>
-
-                    {!isPreview && (
-                      <button
-                        type="button"
-                        data-editor-control="true"
-                        onClick={() => onAddSubSection(section.id)}
-                        className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-md bg-slate-800/90 hover:bg-slate-700 text-slate-200 border border-slate-700 shrink-0"
-                        title="Add Sub-section"
-                      >
-                        <Plus className="w-2.5 h-2.5" />
-                        <span>Sub</span>
-                      </button>
-                    )}
-                  </div>
-
-                  {/* Section Horizontal Track Span */}
-                  <div
-                    className="flex items-stretch"
-                    style={{ width: `${periods.length * colWidth}px` }}
-                  >
-                    {periods.map((period) => (
-                      <div
-                        key={period.index}
-                        style={{ width: `${colWidth}px` }}
-                        className={`h-full border-r ${
-                          subtleGridDemarcations ? 'border-slate-800/35' : 'border-transparent'
-                        }`}
-                      />
-                    ))}
-                  </div>
-                </div>
-
-                {/* Sub-sections inside Section */}
-                {section.subSections.map((sub) => {
-                  const subTasks = tasks.filter((t) => t.subSectionId === sub.id);
-
-                  return (
-                    <div key={sub.id}>
-                      {/* Sub-section Header Row */}
-                      <div className="flex items-stretch min-h-[34px] bg-slate-900/60">
-                        <div
-                          className={`w-64 sm:w-72 shrink-0 px-4 py-1.5 pl-6 flex items-center justify-between gap-2 sticky left-0 z-10 bg-slate-900/95 border-r ${
-                            subtleGridDemarcations
-                              ? 'border-slate-800/80'
-                              : 'border-transparent'
-                          }`}
-                        >
-                          <div className="flex items-start gap-2 min-w-0 flex-1">
-                            <span
-                              className="w-2 h-2 rounded-sm rotate-45 shrink-0 mt-1.5"
-                              style={{ backgroundColor: sectionAccent }}
-                            />
-                            {isPreview ? (
-                              <span
-                                data-export-text="true"
-                                className="text-[11px] font-bold uppercase tracking-wider text-slate-300 whitespace-normal break-words leading-snug"
-                              >
-                                {sub.title}
-                              </span>
-                            ) : (
-                              <WrappingTitleInput
-                                value={sub.title}
-                                onChange={(val) =>
-                                  onUpdateSubSectionTitle(section.id, sub.id, val)
-                                }
-                                className="w-full bg-transparent text-[11px] font-bold uppercase tracking-wider text-slate-300 focus:outline-none focus:bg-slate-950 px-1.5 py-0.5 rounded"
-                              />
-                            )}
-                          </div>
-
-                          {!isPreview && (
-                            <button
-                              type="button"
-                              data-editor-control="true"
-                              onClick={() => onAddTask(sub.id)}
-                              className="inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-300 border border-indigo-500/30 shrink-0"
-                              title="Add Task to Sub-section"
-                            >
-                              <Plus className="w-2.5 h-2.5" />
-                              <span>Task</span>
-                            </button>
-                          )}
-                        </div>
-
-                        <div
-                          className="flex items-stretch"
-                          style={{ width: `${periods.length * colWidth}px` }}
-                        >
-                          {periods.map((period) => (
-                            <div
-                              key={period.index}
-                              style={{ width: `${colWidth}px` }}
-                              className={`h-full border-r ${
-                                subtleGridDemarcations
-                                  ? 'border-slate-800/40'
-                                  : 'border-transparent'
-                              }`}
-                            />
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Task Rows inside Sub-section */}
-                      {subTasks.map((task) => {
-                        const currentRowIdx = globalTaskCounter++;
-                        const rowItems = timelineItems.filter(
-                          (item) => item.taskId === task.id
-                        );
-
-                        return (
-                          <TaskRow
-                            key={task.id}
-                            task={task}
-                            rowIndex={currentRowIdx}
-                            periods={periods}
-                            colWidth={colWidth}
-                            items={rowItems}
-                            legend={legend}
-                            isPreview={isPreview}
-                            alternateRowHighlighting={alternateRowHighlighting}
-                            subtleGridDemarcations={subtleGridDemarcations}
-                            periodLabel={config.periodLabel}
-                            activePopoverItemId={activePopoverItemId}
-                            setActivePopoverItemId={setActivePopoverItemId}
-                            onAddTimelineItem={onAddTimelineItem}
-                            onUpdateTimelineItem={onUpdateTimelineItem}
-                            onDeleteTimelineItem={onDeleteTimelineItem}
-                            onUpdateTaskTitle={onUpdateTaskTitle}
-                          />
-                        );
-                      })}
-                    </div>
-                  );
-                })}
-              </div>
-            );
-          })}
-        </div>
+        {legendPosition === 'bottom' && (
+          <div
+            style={{
+              background: tokens.headerGradient,
+              borderColor: tokens.gridBorder,
+            }}
+            className={`px-6 py-4 border-t rounded-b-3xl flex items-center ${
+              { start: 'justify-start', center: 'justify-center', end: 'justify-end' }[
+                design.legend?.align
+              ] || 'justify-end'
+            }`}
+          >
+            <LegendBar legend={legend} design={design} tokens={tokens} />
+          </div>
+        )}
+      </div>
       </div>
     </div>
   );

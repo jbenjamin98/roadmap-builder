@@ -1,4 +1,5 @@
 import { PRESET_THEMES } from '../constants/themes';
+import { getDefaultDesign, normalizeDesign } from '../constants/designOptions';
 
 export const STORAGE_KEY = 'roadmap_builder_state_v1';
 export const SAVED_ROADMAPS_KEY = 'roadmap_builder_saved_list_v1';
@@ -15,36 +16,13 @@ export function getTodayDateString() {
 export function getDefaultLegend() {
   return [
     {
-      id: 'leg-core',
-      label: 'Core Engineering',
+      id: 'leg-default',
+      label: 'Default',
       color: '#6366f1',
       gradient: 'linear-gradient(135deg, rgba(99, 102, 241, 0.92) 0%, rgba(139, 92, 246, 0.88) 100%)',
       hasBorder: false,
       borderColor: '#ffffff',
-    },
-    {
-      id: 'leg-security',
-      label: 'Security & Governance',
-      color: '#10b981',
-      gradient: 'linear-gradient(135deg, rgba(16, 185, 129, 0.92) 0%, rgba(6, 182, 212, 0.88) 100%)',
-      hasBorder: false,
-      borderColor: '#ffffff',
-    },
-    {
-      id: 'leg-ux',
-      label: 'Product & Experience',
-      color: '#ec4899',
-      gradient: 'linear-gradient(135deg, rgba(236, 72, 153, 0.92) 0%, rgba(244, 63, 94, 0.88) 100%)',
-      hasBorder: false,
-      borderColor: '#ffffff',
-    },
-    {
-      id: 'leg-release',
-      label: 'GA Launch / Gate',
-      color: '#f59e0b',
-      gradient: 'linear-gradient(135deg, rgba(245, 158, 11, 0.95) 0%, rgba(234, 88, 12, 0.9) 100%)',
-      hasBorder: false,
-      borderColor: '#ffffff',
+      isStriped: false,
     },
   ];
 }
@@ -76,6 +54,7 @@ export function createBlankRoadmapState(customConfig = {}) {
         subtleGridDemarcations:
           customConfig.previewSettings?.subtleGridDemarcations ?? true,
       },
+      design: normalizeDesign(customConfig.design),
     },
     legend: getDefaultLegend(),
     sections: [
@@ -125,6 +104,7 @@ export function getSampleRoadmapState() {
         alternateRowHighlighting: true,
         subtleGridDemarcations: true,
       },
+      design: getDefaultDesign(),
     },
     legend: getDefaultLegend(),
     sections: [
@@ -177,7 +157,7 @@ export function getSampleRoadmapState() {
         startPeriod: 1,
         duration: 3,
         type: 'bar',
-        legendId: 'leg-core',
+        legendId: 'leg-default',
         label: 'Region Mesh Rollout',
         hasEndMilestone: true,
       },
@@ -187,7 +167,7 @@ export function getSampleRoadmapState() {
         startPeriod: 5,
         duration: 1,
         type: 'milestone',
-        legendId: 'leg-release',
+        legendId: 'leg-default',
         label: 'Edge v2.0 Cutover',
       },
       {
@@ -196,7 +176,7 @@ export function getSampleRoadmapState() {
         startPeriod: 2,
         duration: 4,
         type: 'bar',
-        legendId: 'leg-security',
+        legendId: 'leg-default',
         label: 'Policy Engine & SSO Audit',
         hasEndMilestone: false,
       },
@@ -206,7 +186,7 @@ export function getSampleRoadmapState() {
         startPeriod: 7,
         duration: 1,
         type: 'milestone',
-        legendId: 'leg-release',
+        legendId: 'leg-default',
         label: 'External Audit Sign-off',
       },
       {
@@ -215,7 +195,7 @@ export function getSampleRoadmapState() {
         startPeriod: 3,
         duration: 4,
         type: 'bar',
-        legendId: 'leg-ux',
+        legendId: 'leg-default',
         label: 'Interactive Insights & Beta',
         hasEndMilestone: true,
       },
@@ -225,7 +205,7 @@ export function getSampleRoadmapState() {
         startPeriod: 8,
         duration: 1,
         type: 'milestone',
-        legendId: 'leg-release',
+        legendId: 'leg-default',
         label: 'Q1 Executive Launch',
       },
     ],
@@ -259,6 +239,7 @@ export function normalizeRoadmapState(raw, options = {}) {
       ...sample.config.previewSettings,
       ...(raw.config?.previewSettings || {}),
     },
+    design: normalizeDesign(raw.config?.design),
   };
 
   const legend =
@@ -272,6 +253,7 @@ export function normalizeRoadmapState(raw, options = {}) {
             `linear-gradient(135deg, ${l.color || '#6366f1'}e6 0%, ${l.color || '#6366f1'}cc 100%)`,
           hasBorder: Boolean(l.hasBorder),
           borderColor: l.borderColor || '#ffffff',
+          isStriped: Boolean(l.isStriped),
         }))
       : sample.legend;
 
@@ -280,6 +262,7 @@ export function normalizeRoadmapState(raw, options = {}) {
       ? raw.sections.map((sec, sIdx) => ({
           id: sec.id || `sec-${sIdx + 1}`,
           title: sec.title ?? `Section ${sIdx + 1}`,
+          collapsed: Boolean(sec.collapsed),
           subSections: Array.isArray(sec.subSections)
             ? sec.subSections.map((sub, subIdx) => ({
                 id: sub.id || `sub-${sIdx + 1}-${subIdx + 1}`,

@@ -5,6 +5,7 @@ import ConfigModal from './components/ConfigModal';
 import RoadmapWorkspace from './components/RoadmapWorkspace';
 import CustomCursor from './components/CustomCursor';
 import SmallScreenGuard from './components/SmallScreenGuard';
+import { normalizeDesign } from './constants/designOptions';
 import {
   loadRoadmapState,
   saveRoadmapState,
@@ -71,6 +72,10 @@ export default function App() {
               ...(prev.config?.previewSettings || {}),
               ...(updatedConfig.previewSettings || {}),
             },
+            design: normalizeDesign({
+              ...(prev.config?.design || {}),
+              ...(updatedConfig.design || {}),
+            }),
           },
         };
         saveRoadmapState(nextState);
@@ -84,7 +89,7 @@ export default function App() {
   };
 
   // Legend CRUD
-  const handleAddLegendCategory = ({ label, color, gradient, hasBorder, borderColor }) => {
+  const handleAddLegendCategory = ({ label, color, gradient, hasBorder, borderColor, isStriped }) => {
     setRoadmapState((prev) => ({
       ...prev,
       legend: [
@@ -96,6 +101,7 @@ export default function App() {
           gradient,
           hasBorder: Boolean(hasBorder),
           borderColor: borderColor || '#ffffff',
+          isStriped: Boolean(isStriped),
         },
       ],
     }));

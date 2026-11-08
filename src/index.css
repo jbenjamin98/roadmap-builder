@@ -336,3 +336,77 @@
   14%, 86% { transform: translateY(30px) scale(0.6); opacity: 0; }
   100% { transform: translateY(0) scale(1); opacity: 1; }
 }
+
+
+/* Custom scrollbars for the roadmap canvas (horizontal + vertical) */
+.roadmap-scroll {
+  scrollbar-width: auto;
+  scrollbar-color: rgba(99, 102, 241, 0.65) rgba(100, 116, 139, 0.16);
+}
+.roadmap-scroll::-webkit-scrollbar {
+  height: 16px;
+  width: 16px;
+}
+.roadmap-scroll::-webkit-scrollbar-track {
+  background: rgba(100, 116, 139, 0.14);
+  border-radius: 999px;
+}
+.roadmap-scroll::-webkit-scrollbar-thumb {
+  background: linear-gradient(90deg, #6366f1, #a855f7);
+  border: 4px solid transparent;
+  background-clip: content-box;
+  border-radius: 999px;
+}
+.roadmap-scroll::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(90deg, #818cf8, #c084fc);
+  background-clip: content-box;
+}
+.roadmap-scroll::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* ---- Export / print support ---- */
+[data-exporting="true"] .sticky {
+  position: relative !important;
+  left: auto !important;
+  top: auto !important;
+}
+/* Font metrics can differ slightly inside the exported image, which made labels wrap at random.
+   Keep every label on its own line; only task-bar text (.wrap-ok) may wrap. */
+[data-exporting="true"] [data-export-text]:not(.wrap-ok) {
+  white-space: nowrap !important;
+}
+[data-exporting="true"] [data-testid="canvas-legend-bar"] {
+  flex-wrap: nowrap !important;
+}
+[data-exporting="true"] [data-testid="canvas-legend-bar"] > * {
+  flex-shrink: 0;
+}
+[data-exporting="true"] [data-editor-control="true"] {
+  display: none !important;
+}
+#roadmap-print-root {
+  display: none;
+}
+@media print {
+  html,
+  body {
+    background: transparent !important;
+  }
+  body > *:not(#roadmap-print-root) {
+    display: none !important;
+  }
+  #roadmap-print-root {
+    display: block !important;
+  }
+  * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
+
+/* Consistent accent colour for native checkboxes and radios */
+input[type='checkbox'],
+input[type='radio'] {
+  accent-color: #6366f1;
+}
