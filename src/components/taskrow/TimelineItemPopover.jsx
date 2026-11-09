@@ -5,6 +5,7 @@ import { getCategoryBackground } from '../canvasStyles';
 import MilestoneMarker from '../MilestoneMarker';
 
 export default function TimelineItemPopover({
+  anchorRef,
   getAnchorEl,
   item,
   legend,
@@ -20,31 +21,33 @@ export default function TimelineItemPopover({
   const [coords, setCoords] = useState({ top: -9999, left: -9999 });
 
   useLayoutEffect(() => {
-    const anchorEl = getAnchorEl?.();
-    if (!anchorEl || !popoverRef.current) return;
+    const resolveAnchor = () => anchorRef?.current || getAnchorEl?.();
+    if (!popoverRef.current) return;
 
     const updatePosition = () => {
-      const currentAnchor = getAnchorEl?.();
+      const currentAnchor = resolveAnchor();
       if (!currentAnchor || !popoverRef.current) return;
       const anchorRect = currentAnchor.getBoundingClientRect();
       const popRect = popoverRef.current.getBoundingClientRect();
+      const popWidth = popRect.width || 288;
+      const popHeight = popRect.height || 360;
       const viewportW = window.innerWidth;
       const viewportH = window.innerHeight;
       const margin = 12;
 
       let top = anchorRect.bottom + 8;
-      if (top + popRect.height > viewportH - margin) {
-        const aboveTop = anchorRect.top - popRect.height - 8;
+      if (top + popHeight > viewportH - margin) {
+        const aboveTop = anchorRect.top - popHeight - 8;
         if (aboveTop >= margin) {
           top = aboveTop;
         } else {
-          top = Math.max(margin, viewportH - popRect.height - margin);
+          top = Math.max(margin, viewportH - popHeight - margin);
         }
       }
 
       let left = anchorRect.left;
-      if (left + popRect.width > viewportW - margin) {
-        left = Math.max(margin, viewportW - popRect.width - margin);
+      if (left + popWidth > viewportW - margin) {
+        left = Math.max(margin, viewportW - popWidth - margin);
       }
       if (left < margin) {
         left = margin;
@@ -54,13 +57,15 @@ export default function TimelineItemPopover({
     };
 
     updatePosition();
+    const rafId = requestAnimationFrame(updatePosition);
     window.addEventListener('scroll', updatePosition, true);
     window.addEventListener('resize', updatePosition);
     return () => {
+      cancelAnimationFrame(rafId);
       window.removeEventListener('scroll', updatePosition, true);
       window.removeEventListener('resize', updatePosition);
     };
-  }, [getAnchorEl, item]);
+  }, [anchorRef, getAnchorEl, item]);
 
   // Escape closes the popover (it is a small non-modal dialog; focus is not trapped).
   useEffect(() => {
@@ -77,7 +82,7 @@ export default function TimelineItemPopover({
   // Click outside closes the popover cleanly
   useEffect(() => {
     const handlePointerDownOutside = (e) => {
-      const anchor = getAnchorEl?.();
+      const anchor = anchorRef?.current || getAnchorEl?.();
       if (
         popoverRef.current &&
         !popoverRef.current.contains(e.target) &&
@@ -88,7 +93,7 @@ export default function TimelineItemPopover({
     };
     document.addEventListener('pointerdown', handlePointerDownOutside);
     return () => document.removeEventListener('pointerdown', handlePointerDownOutside);
-  }, [onClose, getAnchorEl]);
+  }, [onClose, anchorRef, getAnchorEl]);
 
   return createPortal(
     <div
@@ -102,10 +107,11 @@ export default function TimelineItemPopover({
         top: `${coords.top}px`,
         left: `${coords.left}px`,
         zIndex: 9999,
+        maxHeight: 'calc(100vh - 24px)',
       }}
       onClick={(e) => e.stopPropagation()}
       onMouseDown={(e) => e.stopPropagation()}
-      className="w-72 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-2xl p-3.5 space-y-3 text-left cursor-default text-slate-900 dark:text-slate-100"
+      className="w-72 max-h-[calc(100vh-24px)] overflow-y-auto rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-2xl p-3.5 space-y-3 text-left cursor-default text-slate-900 dark:text-slate-100"
     >
       <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-2">
         <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900 dark:text-white">

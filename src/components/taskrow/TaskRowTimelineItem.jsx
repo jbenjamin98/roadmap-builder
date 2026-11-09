@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Rnd } from 'react-rnd';
 import MilestoneMarker from '../MilestoneMarker';
 import { BarVisual } from '../StyleParts';
@@ -41,6 +41,7 @@ export default function TaskRowTimelineItem({
   const { item, category, clampedStart, clampedDuration, xPos, itemWidth, itemHeight } = metric;
   const [hoveredEnd, setHoveredEnd] = useState(null);
   const [isMoving, setIsMoving] = useState(false);
+  const barRef = useRef(null);
 
   const isActiveBar = isResizing || isMoving;
   const activeSide = isResizing ? resizingSide : isMoving || isPopoverOpen ? null : hoveredEnd;
@@ -125,7 +126,10 @@ export default function TaskRowTimelineItem({
       }}
     >
       <div
-        ref={itemRefCallback}
+        ref={(el) => {
+          barRef.current = el;
+          itemRefCallback?.(el);
+        }}
         data-rnd-item="true"
         data-testid={`timeline-item-${item.id}`}
         onClick={(e) => {
@@ -355,6 +359,7 @@ export default function TaskRowTimelineItem({
 
         {isPopoverOpen && (
           <TimelineItemPopover
+            anchorRef={barRef}
             getAnchorEl={getAnchorEl}
             item={item}
             legend={legend}
