@@ -29,22 +29,24 @@ export function createSwatches(ctx) {
     resolvedMilestone,
     sampleCategory,
     samplePeriod,
-    setThemeId,
+    selectTheme,
     swatchDesign,
     themeId,
     toggleEffect,
     tokens,
   } = ctx;
 
-  const darkThemes = PRESET_THEMES.filter((t) => !t.isLight && !t.isNeutral);
-  const lightThemes = PRESET_THEMES.filter((t) => t.isLight && !t.isNeutral);
-  const neutralThemes = PRESET_THEMES.filter((t) => t.isNeutral);
+  // Brand themes (Appian) have their own cards and never appear in these galleries.
+  const galleryThemes = PRESET_THEMES.filter((t) => !t.isBrand);
+  const darkThemes = galleryThemes.filter((t) => !t.isLight && !t.isNeutral);
+  const lightThemes = galleryThemes.filter((t) => t.isLight && !t.isNeutral);
+  const neutralThemes = galleryThemes.filter((t) => t.isNeutral);
 
   const renderThemeCard = (preset) => (
     <OptionCard
       key={preset.id}
       selected={themeId === preset.id}
-      onClick={() => setThemeId(preset.id)}
+      onClick={() => selectTheme(preset.id)}
       title={preset.name}
       desc={preset.description}
     >
@@ -168,7 +170,12 @@ export function createSwatches(ctx) {
                 numStyle={design.numberingStyle}
               />
               <span
-                style={{ color: v.titleColor }}
+                style={{
+                  color: v.titleColor,
+                  ...(design?.brandTheme
+                    ? { fontWeight: 500, textTransform: 'none', letterSpacing: '0.01em' }
+                    : {}),
+                }}
                 className="text-xs font-extrabold uppercase tracking-wider whitespace-nowrap"
               >
                 Foundation

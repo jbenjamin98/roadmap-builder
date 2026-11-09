@@ -51,7 +51,8 @@ export default function MilestoneMarker({
     shape === 'shield' ||
     shape === 'cross' ||
     shape === 'duck-egg' ||
-    shape === 'yellow-duck'
+    shape === 'yellow-duck' ||
+    shape === 'appian-flag'
   ) {
     const strokeDasharray =
       borderStyle === 'dashed' ? '3,2' : borderStyle === 'double' ? '1,0' : undefined;
@@ -60,6 +61,7 @@ export default function MilestoneMarker({
     return (
       <span
         title={title}
+        data-milestone-shape={shape}
         style={{
           width: `${size}px`,
           height: `${size}px`,
@@ -145,6 +147,16 @@ export default function MilestoneMarker({
               strokeLinejoin="round"
             />
           )}
+          {shape === 'appian-flag' && (
+            // Brand flag: one solid shape (pole + pennant) with the pennant's end cut at 45 degrees.
+            <path
+              d="M4.5 2H20V9L14 15H6.9V22H4.5Z"
+              fill={color}
+              stroke={strokeCol}
+              strokeWidth={Math.max(1, borderWidth * 0.6)}
+              strokeLinejoin="miter"
+            />
+          )}
           {shape === 'duck-egg' && (
             <g>
               <path
@@ -218,6 +230,7 @@ export default function MilestoneMarker({
         boxShadow,
         transform: shape === 'diamond' ? 'rotate(45deg)' : undefined,
       }}
+      data-milestone-shape={shape}
       className={`inline-flex items-center justify-center shrink-0 select-none ${className}`}
     >
       <span

@@ -89,7 +89,29 @@ export function getCanvasTokens(config) {
     chipBg: isLight ? 'rgba(255, 255, 255, 0.92)' : 'rgba(15, 23, 42, 0.92)',
     chipBorder: isLight ? 'rgba(148, 163, 184, 0.48)' : 'rgba(255, 255, 255, 0.14)',
     legendBarBg: isLight ? 'rgba(255, 255, 255, 0.82)' : 'rgba(2, 6, 23, 0.68)',
+    // Brand themes replace the generic slate surface/text tokens with their own palette.
+    ...(preset?.tokenOverrides || {}),
   };
+}
+
+/** WCAG relative luminance of a #rrggbb color (0 = black, 1 = white). */
+export function relativeLuminance(hex) {
+  const m = /^#?([0-9a-f]{6})/i.exec(hex || '');
+  if (!m) return 0;
+  const n = parseInt(m[1], 16);
+  const lin = (v) => {
+    const c = v / 255;
+    return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+  };
+  return 0.2126 * lin((n >> 16) & 255) + 0.7152 * lin((n >> 8) & 255) + 0.0722 * lin(n & 255);
+}
+
+/** Brand dark blue or white, whichever has the higher contrast against `bg` (WCAG AA). */
+export function getAccessibleInk(bg) {
+  const l = relativeLuminance(bg);
+  const vsWhite = 1.05 / (l + 0.05);
+  const vsDark = (l + 0.05) / (relativeLuminance('#020A51') + 0.05);
+  return vsDark > vsWhite ? '#020A51' : '#FFFFFF';
 }
 
 /**
@@ -360,6 +382,18 @@ export function getTimelineBarStyle(category, design, isLight = false, tokens = 
   }
   if (itemStyle === 'bracket-bar') {
     styleObj.borderRadius = '1px';
+  }
+  if (itemStyle === 'appian-bar') {
+    // Brand bar: solid fill, 5px radius, no shadow, trailing corner cut at 45° (the node angle).
+    styleObj.borderRadius = '5px';
+    styleObj.boxShadow = 'none';
+    styleObj.border = isLight
+      ? '1px solid rgba(2, 10, 81, 0.14)'
+      : '1px solid rgba(255, 255, 255, 0.22)';
+    styleObj.color = getAccessibleInk(base);
+    styleObj.textShadow = 'none';
+    styleObj.clipPath =
+      'polygon(0 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%)';
   }
   return styleObj;
 }

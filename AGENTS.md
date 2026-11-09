@@ -37,6 +37,8 @@ src/data/migrations.js         schema version migrations (v1 -> v...)
 src/data/roadmapSchema.js      zod check for uploaded JSON (validateRoadmapImport, 50MB limit)
 src/constants/
   designOptions.js             option catalogs + getDefaultDesign/normalizeDesign/getDensity
+  brandThemes.js               locked brand modes: Appian Light/Dark presets, getAppianDesign, Duck Mode
+                               design, getLockedTabs (which settings tabs a brand mode locks)
   effectOptions.js             effect toggles/categories/rules (static data)
   fontLoaders.js               dynamic on-demand font loaders (@fontsource)
   themes.js                    PERIOD_TYPES, legend presets, re-exports fonts + presets
@@ -68,6 +70,10 @@ src/components/
 - Always load external JSON via `normalizeRoadmapState` (fills defaults, clamps periods).
 - Periods are 1-based; `calculatePeriods` clamps to 52, the UI limits to 36.
 - Swatches and the canvas must share renderers in `parts/`; do not fork visuals.
+- Brand themes (Appian) use hidden `appian-*` style ids, set by `getAppianDesign` and reverted by
+  `getExitBrandDesign`. Their visuals live in `parts/AppianParts.jsx` (node traced from the logo's "i" dot,
+  never rotate/recolor it). Brand logos are unmodified files in `src/assets/brand/`. To lock/unlock a tab
+  in a brand mode, edit `BRAND_EDITABLE_TABS` in `brandThemes.js`.
 - `data-testid` attributes are used by `scripts/e2e-smoke.mjs`; keep them stable.
 - `dist/`, `e2e-output/` and `node_modules/` are generated; never read or edit them.
 - Keep files under ~400 lines. Split by component rather than adding to a large file.

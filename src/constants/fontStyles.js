@@ -189,6 +189,13 @@ export const FONT_STYLES = [
     fontFamily: "'Space Mono', monospace",
     sample: 'Terminal Era Schedules',
   },
+  {
+    id: 'funnel',
+    name: 'Brand Sans (Funnel Sans)',
+    className: 'font-sans',
+    fontFamily: "'Funnel Sans Variable', 'Funnel Sans', 'Noto Sans', 'Inter Variable', sans-serif",
+    sample: 'Serious AI. Built on Process.',
+  },
 ];
 
 // dark, light and neutral preset canvas themes + 1 Custom option

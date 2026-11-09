@@ -4,6 +4,7 @@ import { LevelLabel, NumBadge, SectionNumber, SectionSpine } from '../StyleParts
 import { INDENT, INDENT_SPINE, NO_WORD_BREAK, getSectionVisuals, nbHyphen } from '../styleHelpers';
 import WrappingTitleInput from './WrappingTitleInput';
 import { DuckEggIcon } from '../parts/DuckParts';
+import { getBrandAccent } from '../../constants/brandThemes';
 
 export default function TimelineSection({
   section,
@@ -41,8 +42,16 @@ export default function TimelineSection({
   onDeleteTimelineItem,
   getTaskRowIndex,
 }) {
-  const sectionAccent = accents[secIdx % accents.length] || primaryColor;
+  const sectionAccent =
+    getBrandAccent(design?.brandTheme) || accents[secIdx % accents.length] || primaryColor;
   const isLastSection = secIdx === sectionsCount - 1;
+  // Brand type: Funnel Sans Medium headings in title case (no all-caps blocks).
+  const brandSecText = design?.brandTheme
+    ? { fontWeight: 500, textTransform: 'none', letterSpacing: '0.01em' }
+    : undefined;
+  const brandSubText = design?.brandTheme
+    ? { fontWeight: 600, textTransform: 'none', letterSpacing: '0.01em' }
+    : undefined;
   const dividerColor = isLastSection
     ? 'transparent'
     : design.sectionDividerGlow
@@ -108,7 +117,7 @@ export default function TimelineSection({
               {isPreview ? (
                 <span
                   data-export-text="true"
-                  style={{ color: tokens.textSecondary, ...NO_WORD_BREAK }}
+                  style={{ color: tokens.textSecondary, ...NO_WORD_BREAK, ...brandSubText }}
                   className="text-[11px] font-bold uppercase tracking-wider whitespace-normal leading-snug"
                 >
                   {nbHyphen(sub.title)}
@@ -117,7 +126,7 @@ export default function TimelineSection({
                 <WrappingTitleInput
                   value={sub.title}
                   onChange={(val) => onUpdateSubSectionTitle(section.id, sub.id, val)}
-                  style={{ color: tokens.textSecondary }}
+                  style={{ color: tokens.textSecondary, ...brandSubText }}
                   className="w-full bg-transparent text-[11px] font-bold uppercase tracking-wider focus:outline-none focus:ring-1 focus:ring-indigo-500/40 px-1.5 py-0.5 rounded"
                 />
               )}
@@ -239,7 +248,7 @@ export default function TimelineSection({
             {isPreview ? (
               <span
                 data-export-text="true"
-                style={{ color: visuals.titleColor, ...NO_WORD_BREAK }}
+                style={{ color: visuals.titleColor, ...NO_WORD_BREAK, ...brandSecText }}
                 className="text-xs font-extrabold uppercase tracking-wider whitespace-normal leading-snug"
               >
                 {nbHyphen(section.title)}
@@ -248,7 +257,7 @@ export default function TimelineSection({
               <WrappingTitleInput
                 value={section.title}
                 onChange={(val) => onUpdateSectionTitle(section.id, val)}
-                style={{ color: visuals.titleColor }}
+                style={{ color: visuals.titleColor, ...brandSecText }}
                 className="w-full bg-transparent text-xs font-extrabold uppercase tracking-wider focus:outline-none focus:ring-1 focus:ring-indigo-500/40 px-1.5 py-0.5 rounded"
               />
             )}

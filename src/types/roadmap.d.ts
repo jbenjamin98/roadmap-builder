@@ -124,6 +124,8 @@ export interface Design {
   headerStyle: string; // CANVAS_HEADER_STYLES
   canvasCorners: string; // CANVAS_CORNER_STYLES
   duckMode?: boolean;
+  /** Locked Appian brand theme (src/constants/brandThemes.js). Mutually exclusive with duckMode. */
+  brandTheme?: '' | 'appian-light' | 'appian-dark' | 'appian-slate';
   banner: { subtitle: string; owner: string; version: string; logo?: string };
 }
 
@@ -208,6 +210,14 @@ export interface ConfigModalContext {
   handlePeriodTypeChange(newLabel: string): void;
   handleAccentChange(idx: number, colorValue: string): void;
   handleCustomBaseModeChange(mode: 'light' | 'dark'): void;
+  /** Settings tab ids locked by the active brand mode (Duck Mode or an Appian theme). */
+  lockedTabs: Set<string>;
+  selectAppian(mode: 'light' | 'dark' | 'slate'): void;
+  /** Leaves the Appian theme: brand styles revert to defaults. */
+  exitBrandMode(nextThemeId?: string): void;
+  /** Picks a canvas theme, exiting an active Appian theme first. */
+  selectTheme(themeId: string): void;
+  handleToggleDuckMode(): void;
   handleSubmit(e: React.FormEvent): void;
   isCreatingNew: boolean;
   onClose(): void;

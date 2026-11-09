@@ -1,3 +1,5 @@
+import { APPIAN_PRESETS } from './brandThemes';
+
 export const PRESET_THEMES = [
   // --- 9 DARK CANVAS THEMES ---
   {
@@ -441,4 +443,7 @@ export const PRESET_THEMES = [
     headerGradient: 'linear-gradient(90deg, #6b5f4b1a 0%, #6b5f4b06 100%)',
     glassBorder: '#6b5f4b40',
   },
+
+  // --- BRAND THEMES (locked; hidden from the normal galleries via isBrand) ---
+  ...APPIAN_PRESETS,
 ];

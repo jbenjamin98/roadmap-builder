@@ -2,6 +2,7 @@ import { useState, useRef, useLayoutEffect, useEffect, useCallback } from 'react
 import { Plus } from 'lucide-react';
 import { getSingularPeriodLabel } from '../constants/themes';
 import { getDensity, normalizeDesign } from '../constants/designOptions';
+import { getBrandAccent } from '../constants/brandThemes';
 import { LevelLabel, NumBadge } from './StyleParts';
 import {
   INDENT,
@@ -318,7 +319,8 @@ export default function TaskRow({
   );
   const verticalSlack = density.singleLine ? Math.min(8, density.vSlack) : density.vSlack;
   const rowMinHeight = Math.max(density.rowMin, maxBarHeight + verticalSlack);
-  const accentDotColor = sectionAccent || tokens?.primary || '#6366f1';
+  const accentDotColor =
+    getBrandAccent(design?.brandTheme) || sectionAccent || tokens?.primary || '#6366f1';
   const labelWrap = density.singleLine ? 'truncate whitespace-nowrap' : 'whitespace-normal wrap-ok';
 
   return (

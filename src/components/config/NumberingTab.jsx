@@ -38,8 +38,15 @@ export default function NumberingTab({ ctx }) {
         />
       </div>
 
-      <div className="space-y-2">
-        <FieldLabel>Numbering Style</FieldLabel>
+      <div
+        className={`space-y-2 ${design.brandTheme ? 'pointer-events-none opacity-50' : ''}`}
+        data-testid="config-numbering-style"
+        aria-disabled={Boolean(design.brandTheme)}
+      >
+        <FieldLabel>
+          Numbering Style
+          {design.brandTheme ? ' (set by the Appian brand theme)' : ''}
+        </FieldLabel>
         <div className="grid grid-cols-2 xl:grid-cols-3 gap-2.5">
           {NUMBERING_STYLES.map((o) => (
             <OptionCard

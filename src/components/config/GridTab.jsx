@@ -12,17 +12,24 @@ export default function GridTab({ ctx }) {
     subtleGridDemarcations,
     updateDesign,
   } = ctx;
+  const brandLocked = Boolean(design.brandTheme);
 
   return (
     <div className="space-y-4">
       {panelTitle(Grid, 'text-indigo-600 dark:text-indigo-400', 'Canvas Grid & Display')}
 
-      {/* Canvas Corner Style */}
-      <div className="space-y-2 p-3.5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-950/60">
+      {/* Canvas Corner Style (pinned by brand themes) */}
+      <div
+        data-testid="config-corner-style"
+        aria-disabled={brandLocked}
+        className="space-y-2 p-3.5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-950/60"
+      >
         <label className="block text-xs font-semibold text-slate-800 dark:text-slate-200">
           Canvas Corner Style
         </label>
-        <div className="flex flex-wrap gap-1">
+        <div
+          className={`flex flex-wrap gap-1 ${brandLocked ? 'pointer-events-none opacity-50' : ''}`}
+        >
           <Segmented
             options={CANVAS_CORNER_STYLES.map((c) => [c.id, c.name])}
             value={design.canvasCorners || 'curved'}
@@ -30,7 +37,9 @@ export default function GridTab({ ctx }) {
           />
         </div>
         <p className="text-[11px] text-slate-500 dark:text-slate-400">
-          Controls corner radius of the roadmap canvas, bottom tracks, section spines, and overlays.
+          {brandLocked
+            ? 'Pinned to Subtle (8px) by the Appian brand theme.'
+            : 'Controls corner radius of the roadmap canvas, bottom tracks, section spines, and overlays.'}
         </p>
       </div>
 

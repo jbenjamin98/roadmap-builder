@@ -1,6 +1,14 @@
 // Catalog of per-roadmap design options. Every id here is stored in config.design.
 import { PRESET_THEMES } from './themePresets';
 import { FONT_STYLES } from './fontStyles';
+import { exitBrandDesign, getAppianDesign, isAppianTheme } from './brandThemes';
+
+export {
+  DUCK_THEME_PALETTE,
+  getAppianDesign,
+  getDuckModeDesign,
+  getLockedTabs,
+} from './brandThemes';
 
 export {
   EFFECT_TOGGLES,
@@ -463,6 +471,7 @@ export function getDefaultDesign() {
     headerStyle: 'gradient-banner',
     canvasCorners: 'curved',
     duckMode: false,
+    brandTheme: '',
     banner: { subtitle: '', owner: '', version: '', logo: '' },
   };
 }
@@ -533,13 +542,16 @@ export function normalizeDesign(raw) {
   // eslint-disable-next-line no-unused-vars
   const { condensed, density, banner: rawBanner, ...rest } = r;
   const { subtitle = '', owner = '', version = '', logo = '' } = rawBanner || {};
-  return {
+  const brandTheme = isAppianTheme(r.brandTheme) ? r.brandTheme : '';
+  const out = {
     ...d,
     ...rest,
     condensedModes: modes,
     headerStyle: r.headerStyle || d.headerStyle,
     canvasCorners: r.canvasCorners || d.canvasCorners,
-    duckMode: Boolean(r.duckMode),
+    brandTheme,
+    // A brand theme and Duck Mode are mutually exclusive; the brand theme wins.
+    duckMode: brandTheme ? false : Boolean(r.duckMode),
     itemStyle:
       r.itemStyle === 'striped'
         ? 'soft-bevel'
@@ -564,6 +576,10 @@ export function normalizeDesign(raw) {
     effects: normalizeEffects({ ...d.effects, ...(r.effects || {}) }),
     banner: { subtitle, owner, version, logo },
   };
+  // Brand themes always re-apply their locked styles (also migrates older brand style ids).
+  return brandTheme
+    ? getAppianDesign(out, /** @type {any} */ (brandTheme.replace('appian-', '')))
+    : out;
 }
 
 /** Combines every active condensed mode into one set of layout metrics. */
@@ -608,39 +624,15 @@ export function getDensity(design) {
   return m;
 }
 
-export const DUCK_THEME_PALETTE = {
-  primary: '#eab308',
-  secondary: '#082f49',
-  accents: ['#facc15', '#f97316', '#0d9488', '#0284c7'],
-  baseMode: 'dark',
-};
-
-export function getDuckModeDesign(prev = {}) {
-  return {
-    ...prev,
-    duckMode: true,
-    headerStyle: 'duck-pond',
-    periodHeaderStyle: 'pill-badge',
-    sectionStyle: 'rotated-badge',
-    subSectionStyle: 'tree-line',
-    taskStyle: 'dot',
-    itemStyle: 'pill-gradient',
-    canvasCorners: 'pill',
-    milestone: {
-      ...(prev.milestone || {}),
-      shape: 'duck-egg',
-      color: '#f59e0b',
-      borderStyle: 'solid',
-      borderColor: '#ffffff',
-      borderWidth: 2,
-    },
-  };
+/** Maps every Appian-only style back to the app defaults (see brandThemes.js). */
+export function getExitBrandDesign(prev = {}) {
+  return exitBrandDesign(prev, getDefaultDesign());
 }
 
 export function getRandomDesignConfig() {
   const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
   return {
-    themeId: pick(PRESET_THEMES).id,
+    themeId: pick(PRESET_THEMES.filter((t) => !t.isBrand)).id,
     fontStyle: pick(FONT_STYLES).id,
     headerStyle: pick(CANVAS_HEADER_STYLES).id,
     periodHeaderStyle: pick(PERIOD_HEADER_STYLES).id,

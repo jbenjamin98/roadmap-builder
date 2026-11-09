@@ -1,10 +1,9 @@
-import { ArrowRight, Eye, Sliders, X } from 'lucide-react';
+import { ArrowRight, Eye, Lock, Sliders, X } from 'lucide-react';
 import ConfigPreview from './ConfigPreview';
 import { PERIOD_TYPES, PRESET_THEMES } from '../constants/themes';
 import {
-  DUCK_THEME_PALETTE,
   applyEffectToggle,
-  getDuckModeDesign,
+  getExitBrandDesign,
   getRandomDesignConfig,
   normalizeDesign,
 } from '../constants/designOptions';
@@ -16,7 +15,8 @@ import { useEffect, useRef, useState } from 'react';
 import { publishCursorTheme } from '../utils/cursorTheme';
 import useDialogBehavior from '../hooks/useDialogBehavior';
 import { SectionTitle } from './config/primitives';
-import { YellowDuckIcon } from './parts/DuckParts';
+import BrandModeBanner from './config/BrandModeBanner';
+import { createBrandModes } from './config/brandModes';
 import { FIXED_LENGTH_PERIODS, NAV_GROUPS, inputCls } from './config/navConfig';
 import { createSwatches } from './config/swatches';
 import TimelineTab from './config/TimelineTab';
@@ -169,6 +169,16 @@ export default function ConfigModal({
       };
     });
 
+  const brandModes = createBrandModes({
+    design,
+    fontStyle,
+    setDesign,
+    setFontStyle,
+    setThemeId,
+    setCustomTheme,
+  });
+  const { lockedTabs } = brandModes;
+
   const handlePeriodTypeChange = (newLabel) => {
     setPeriodLabel(newLabel);
     const preset = PERIOD_TYPES.find((p) => p.value === newLabel);
@@ -176,7 +186,7 @@ export default function ConfigModal({
   };
 
   const handleAccentChange = (idx, colorValue) => {
-    setThemeId('custom');
+    brandModes.selectTheme('custom');
     setCustomTheme((prev) => {
       const nextAccents = [...prev.accents];
       nextAccents[idx] = colorValue;
@@ -185,7 +195,7 @@ export default function ConfigModal({
   };
 
   const handleCustomBaseModeChange = (mode) => {
-    setThemeId('custom');
+    brandModes.selectTheme('custom');
     setCustomTheme((prev) => ({
       ...prev,
       baseMode: mode,
@@ -203,7 +213,7 @@ export default function ConfigModal({
     setThemeId(randomized.themeId);
     setFontStyle(randomized.fontStyle);
     setDesign((prev) => ({
-      ...prev,
+      ...getExitBrandDesign(prev),
       duckMode: false,
       headerStyle: randomized.headerStyle,
       periodHeaderStyle: randomized.periodHeaderStyle,
@@ -214,24 +224,10 @@ export default function ConfigModal({
       canvasCorners: randomized.canvasCorners,
       numberingStyle: randomized.numberingStyle,
       milestone: {
-        ...prev.milestone,
+        ...getExitBrandDesign(prev).milestone,
         shape: randomized.milestoneShape,
       },
     }));
-  };
-
-  const handleToggleDuckMode = () => {
-    if (design?.duckMode) {
-      setDesign((prev) => ({
-        ...prev,
-        duckMode: false,
-        headerStyle: 'gradient-banner',
-      }));
-    } else {
-      setThemeId('custom');
-      setCustomTheme(DUCK_THEME_PALETTE);
-      setDesign((prev) => getDuckModeDesign(prev));
-    }
   };
 
   const handleSubmit = (e) => {
@@ -287,7 +283,7 @@ export default function ConfigModal({
     handleAccentChange,
     handleCustomBaseModeChange,
     handleRandomizeDesign,
-    handleToggleDuckMode,
+    ...brandModes,
     handleSubmit,
     isCreatingNew,
     onClose,
@@ -366,7 +362,14 @@ export default function ConfigModal({
                         }`}
                       >
                         <Icon className="w-3.5 h-3.5 shrink-0" />
-                        <span>{t.label}</span>
+                        <span className="flex-1">{t.label}</span>
+                        {lockedTabs.has(t.id) && (
+                          <Lock
+                            className="w-3 h-3 shrink-0 opacity-60"
+                            aria-label="Locked by brand theme"
+                            data-testid={`config-tab-lock-${t.id}`}
+                          />
+                        )}
                       </button>
                     );
                   })}
@@ -389,43 +392,12 @@ export default function ConfigModal({
                 ))}
               </select>
 
-              {/* Active Duck Mode Banner */}
-              {design?.duckMode && (
-                <div
-                  data-testid="ultimate-duck-mode-banner"
-                  className="p-4 rounded-2xl border-2 border-amber-500/60 bg-gradient-to-r from-amber-500/15 via-emerald-500/10 to-sky-500/15 flex items-center justify-between gap-4 shadow-sm"
-                >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <YellowDuckIcon size={28} wake />
-                    <div>
-                      <div className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
-                        <span>Ultimate Duck Mode Active</span>
-                        <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-500/30">
-                          Orchestrated
-                        </span>
-                      </div>
-                      <div className="text-[11px] text-slate-600 dark:text-slate-300">
-                        Visual styling is curated by the Duck Design System (Pond palette, floating
-                        duck header, duck egg spine, rippled bars). Conflicting options are locked.
-                      </div>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleToggleDuckMode}
-                    data-testid="disable-duck-mode-btn"
-                    className="shrink-0 px-3 py-1.5 rounded-xl text-xs font-semibold bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 border border-amber-500/40 shadow-xs transition-colors cursor-pointer"
-                  >
-                    Disable Duck Mode
-                  </button>
-                </div>
-              )}
+              {/* Active brand-mode banner (Duck Mode / Appian theme) */}
+              <BrandModeBanner ctx={ctx} />
 
               <div
                 className={
-                  design?.duckMode && !['timeline', 'banner', 'themes'].includes(activeTab)
-                    ? 'pointer-events-none opacity-50 select-none'
-                    : ''
+                  lockedTabs.has(activeTab) ? 'pointer-events-none opacity-50 select-none' : ''
                 }
               >
                 {/* TIMELINE */}

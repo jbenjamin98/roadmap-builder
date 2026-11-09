@@ -1,5 +1,8 @@
 import { Dices, Layers, Moon, Palette, Sparkles, Sun } from 'lucide-react';
 import { YellowDuckIcon } from '../parts/DuckParts';
+import { AppianNode } from '../parts/AppianParts';
+import AppianThemeCards from './AppianThemeCards';
+import AppianLayoutOptions from './AppianLayoutOptions';
 
 export default function ThemesTab({ ctx }) {
   const {
@@ -16,7 +19,7 @@ export default function ThemesTab({ ctx }) {
     panelTitle,
     renderThemeCard,
     setCustomTheme,
-    setThemeId,
+    selectTheme,
     themeId,
   } = ctx;
 
@@ -84,7 +87,7 @@ export default function ThemesTab({ ctx }) {
           <span>Custom Theme</span>
         </div>
         <div
-          onClick={() => setThemeId('custom')}
+          onClick={() => selectTheme('custom')}
           data-testid="theme-custom-btn"
           className={`p-4 rounded-2xl border transition-all space-y-3.5 cursor-pointer ${
             themeId === 'custom'
@@ -143,7 +146,7 @@ export default function ThemesTab({ ctx }) {
                 label: 'Primary',
                 value: customTheme.primary,
                 set: (v) => {
-                  setThemeId('custom');
+                  selectTheme('custom');
                   setCustomTheme((p) => ({ ...p, primary: v }));
                 },
               },
@@ -152,7 +155,7 @@ export default function ThemesTab({ ctx }) {
                 label: 'Canvas Bg',
                 value: customTheme.secondary,
                 set: (v) => {
-                  setThemeId('custom');
+                  selectTheme('custom');
                   setCustomTheme((p) => ({ ...p, secondary: v }));
                 },
               },
@@ -181,6 +184,16 @@ export default function ThemesTab({ ctx }) {
             ))}
           </div>
         </div>
+      </div>
+
+      {/* Appian Brand Themes */}
+      <div className="space-y-2" data-testid="appian-themes-section">
+        <div className="flex items-center gap-1.5 text-[11px] font-bold text-slate-600 dark:text-slate-300">
+          <AppianNode height={14} color="#2322F0" />
+          <span>Brand Themes - Appian</span>
+        </div>
+        <AppianThemeCards ctx={ctx} />
+        <AppianLayoutOptions ctx={ctx} />
       </div>
 
       {/* Ultimate Duck Mode */}

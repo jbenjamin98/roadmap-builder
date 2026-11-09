@@ -31,6 +31,7 @@ const LOADERS = {
   crimson: () => import('@fontsource-variable/crimson-pro/index.css'),
   bitter: () => import('@fontsource-variable/bitter/index.css'),
   josefin: () => import('@fontsource-variable/josefin-sans/index.css'),
+  funnel: () => import('@fontsource-variable/funnel-sans/index.css'),
   poppins: () =>
     Promise.all([
       import('@fontsource/poppins/400.css'),

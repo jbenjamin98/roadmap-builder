@@ -1,4 +1,5 @@
 import { DuckEggIcon, YellowDuckIcon } from './DuckParts';
+import { AppianNode } from './AppianParts';
 
 export function LevelLabel({
   styleId = 'plain',
@@ -26,6 +27,25 @@ export function LevelLabel({
   }
 
   switch (styleId) {
+    case 'appian-node':
+      // Brand sub-section marker: filled node + SemiBold label.
+      return (
+        <div className={base}>
+          <AppianNode height={14} color={accent} />
+          {body}
+        </div>
+      );
+    case 'appian-rule':
+      // Brand task marker: a short 2px vertical accent rule (the node is kept for sub-sections).
+      return (
+        <div className={base}>
+          <span
+            className="shrink-0 rounded-full"
+            style={{ width: 2, height: 14, backgroundColor: accent }}
+          />
+          {body}
+        </div>
+      );
     case 'duck-egg':
       return (
         <div className={base}>

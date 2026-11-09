@@ -32,7 +32,11 @@ export function BarVisual({
   const labelNode = (extra = '') => (
     <span
       data-export-text="true"
-      style={{ fontSize: `${density.labelPx}px`, ...NO_WORD_BREAK }}
+      style={{
+        fontSize: `${density.labelPx}px`,
+        ...(design?.brandTheme ? { fontWeight: 500 } : {}),
+        ...NO_WORD_BREAK,
+      }}
       className={`font-semibold tracking-tight leading-snug drop-shadow-sm inline-flex items-center gap-1.5 ${wrapCls} ${extra}`}
     >
       {isDuck && <YellowDuckIcon size={14} className="shrink-0" />}

@@ -18,7 +18,10 @@ const check = (name, ok) => {
 const sel = (id) => `[data-testid="${id}"]`;
 const ITEMS = '[data-testid^="timeline-item-"]:not([data-testid="timeline-item-popover"])';
 
-const browser = await chromium.launch();
+// PW_CHANNEL=msedge|chrome uses an installed browser instead of Playwright's bundled one.
+const browser = await chromium.launch(
+  process.env.PW_CHANNEL ? { channel: process.env.PW_CHANNEL } : {}
+);
 
 async function drawBar(page) {
   const c2 = await page.locator(sel('cell-task-1-2')).boundingBox();

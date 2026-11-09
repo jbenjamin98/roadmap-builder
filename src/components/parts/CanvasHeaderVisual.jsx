@@ -3,6 +3,7 @@ import { getHeaderContainerVisuals, NO_WORD_BREAK } from './canvasHeaderStyles';
 import { CadenceRow, DateRow, OwnerRow, RoadmapPinSlot } from './CanvasHeaderParts';
 import { HeaderSwatch } from './HeaderSwatch';
 import LegendBar from '../timeline/LegendBar';
+import { AppianHeader } from './AppianParts';
 
 export function CanvasHeaderVisual({
   styleId = 'gradient-banner',
@@ -17,6 +18,22 @@ export function CanvasHeaderVisual({
   legendPosition = 'top',
   isSwatch = false,
 }) {
+  // Brand themes use their own locked header (node tag, logo, line-work).
+  if (styleId === 'appian-brand') {
+    return (
+      <AppianHeader
+        config={config}
+        banner={banner}
+        tokens={tokens}
+        singularPeriod={singularPeriod}
+        periods={periods}
+        legend={legend}
+        design={design}
+        legendPosition={legendPosition}
+        compact={isSwatch}
+      />
+    );
+  }
   const visuals = getHeaderContainerVisuals(styleId, tokens, primaryColor);
   const showRight = Boolean(banner.owner) || legendPosition === 'top';
   const effectivePrimary = visuals.isTerminal ? '#38bdf8' : primaryColor;

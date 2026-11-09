@@ -1,4 +1,6 @@
 import { PeriodHeaderBody } from './periodHeaderStyles';
+import { AppianPeriodBody } from './AppianPeriodParts';
+import { getAppianPeriodCellStyle } from './appianPeriodCell';
 
 export { DateRange } from './periodHeaderStyles';
 
@@ -41,6 +43,8 @@ export function PeriodHeaderCell({
     cellStyle.paddingLeft = 0;
     cellStyle.paddingRight = 0;
   }
+  const isBrand = String(styleId).startsWith('appian-');
+  if (isBrand) Object.assign(cellStyle, getAppianPeriodCellStyle(styleId, tokens));
 
   return (
     <div
@@ -48,16 +52,20 @@ export function PeriodHeaderCell({
       data-testid={testId}
       className="px-3 flex flex-col justify-center relative border-r"
     >
-      <PeriodHeaderBody
-        styleId={styleId}
-        period={period}
-        accent={accent}
-        tokens={tokens}
-        showDates={showDates}
-        textMain={textMain}
-        muted={muted}
-        title={title}
-      />
+      {isBrand ? (
+        <AppianPeriodBody styleId={styleId} period={period} tokens={tokens} showDates={showDates} />
+      ) : (
+        <PeriodHeaderBody
+          styleId={styleId}
+          period={period}
+          accent={accent}
+          tokens={tokens}
+          showDates={showDates}
+          textMain={textMain}
+          muted={muted}
+          title={title}
+        />
+      )}
     </div>
   );
 }

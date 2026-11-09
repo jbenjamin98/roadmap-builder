@@ -9,7 +9,10 @@ const server = await preview({ preview: { port: 4173, strictPort: true, host: '1
 const OUT = './e2e-output';
 fs.mkdirSync(OUT, { recursive: true });
 
-const browser = await chromium.launch();
+// PW_CHANNEL=msedge|chrome uses an installed browser instead of Playwright's bundled one.
+const browser = await chromium.launch(
+  process.env.PW_CHANNEL ? { channel: process.env.PW_CHANNEL } : {}
+);
 const ctx = await browser.newContext({
   viewport: { width: 1920, height: 1080 },
   acceptDownloads: true,
