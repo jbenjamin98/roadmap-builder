@@ -211,8 +211,9 @@ export function CadenceRow({
 }) {
   return (
     <div
-      className={`flex flex-wrap items-center gap-2 text-[11px] font-bold uppercase tracking-widest ${center ? 'justify-center' : ''
-        }`}
+      className={`flex flex-wrap items-center gap-2 text-[11px] font-bold uppercase tracking-widest ${
+        center ? 'justify-center' : ''
+      }`}
     >
       {!hideLogo && banner?.logo ? (
         <img
@@ -229,8 +230,9 @@ export function CadenceRow({
       >
         {isTerminal
           ? `[${config.totalPeriods} ${config.periodLabel} // ${config.weeksPerPeriod}W]`
-          : `${config.totalPeriods} ${config.periodLabel} • ${config.weeksPerPeriod} ${Number(config.weeksPerPeriod) === 1 ? 'Week' : 'Weeks'
-          } / ${singularPeriod}`}
+          : `${config.totalPeriods} ${config.periodLabel} • ${config.weeksPerPeriod} ${
+              Number(config.weeksPerPeriod) === 1 ? 'Week' : 'Weeks'
+            } / ${singularPeriod}`}
       </span>
 
       {banner?.version && (

@@ -95,11 +95,11 @@ export default function ConfigModal({
     themeId === 'custom'
       ? customTheme
       : {
-        baseMode: selectedPreset?.isLight ? 'light' : 'dark',
-        primary: selectedPreset?.primary || '#6366f1',
-        secondary: selectedPreset?.secondary || '#0f172a',
-        accents: selectedPreset?.accents || ['#818cf8', '#ec4899', '#14b8a6', '#f59e0b'],
-      };
+          baseMode: selectedPreset?.isLight ? 'light' : 'dark',
+          primary: selectedPreset?.primary || '#6366f1',
+          secondary: selectedPreset?.secondary || '#0f172a',
+          accents: selectedPreset?.accents || ['#818cf8', '#ec4899', '#14b8a6', '#f59e0b'],
+        };
 
   // Preview the draft canvas theme on the custom cursor while this modal is open.
   useEffect(() => {
@@ -359,10 +359,11 @@ export default function ConfigModal({
                         type="button"
                         onClick={() => setActiveTab(t.id)}
                         data-testid={`config-tab-${t.id}`}
-                        className={`w-full flex items-center gap-2 px-2.5 py-2 rounded-xl text-xs font-semibold text-left transition-all ${active
+                        className={`w-full flex items-center gap-2 px-2.5 py-2 rounded-xl text-xs font-semibold text-left transition-all ${
+                          active
                             ? 'bg-indigo-600 text-white shadow-sm'
                             : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-slate-800'
-                          }`}
+                        }`}
                       >
                         <Icon className="w-3.5 h-3.5 shrink-0" />
                         <span>{t.label}</span>

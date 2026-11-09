@@ -20,13 +20,13 @@ export function BarVisual({
   const baseBarStyle = getTimelineBarStyle(category, design, tokens.isLight, tokens);
   const barStyle = isDuck
     ? {
-      ...baseBarStyle,
-      borderColor: '#facc15',
-      boxShadow: `${baseBarStyle.boxShadow || ''}, 0 0 8px rgba(250, 204, 21, 0.45)`.replace(
-        /^,\s*/,
-        ''
-      ),
-    }
+        ...baseBarStyle,
+        borderColor: '#facc15',
+        boxShadow: `${baseBarStyle.boxShadow || ''}, 0 0 8px rgba(250, 204, 21, 0.45)`.replace(
+          /^,\s*/,
+          ''
+        ),
+      }
     : baseBarStyle;
   const wrapCls = density.singleLine ? 'truncate whitespace-nowrap' : 'whitespace-normal wrap-ok';
   const labelNode = (extra = '') => (
@@ -63,8 +63,9 @@ export function BarVisual({
   if (itemStyle === 'thin-line') {
     variant = (
       <div
-        className={`w-full h-full px-2 flex flex-col justify-center ${isPopoverOpen ? 'ring-2 ring-indigo-400 rounded-lg' : ''
-          }`}
+        className={`w-full h-full px-2 flex flex-col justify-center ${
+          isPopoverOpen ? 'ring-2 ring-indigo-400 rounded-lg' : ''
+        }`}
       >
         <div className="flex items-center justify-between gap-1 mb-1">
           <span
@@ -107,8 +108,9 @@ export function BarVisual({
     const tri = category.color;
     variant = (
       <div
-        className={`w-full h-full px-1 flex flex-col justify-center gap-1 ${isPopoverOpen ? 'ring-2 ring-indigo-400 rounded-lg' : ''
-          }`}
+        className={`w-full h-full px-1 flex flex-col justify-center gap-1 ${
+          isPopoverOpen ? 'ring-2 ring-indigo-400 rounded-lg' : ''
+        }`}
       >
         <div className="flex items-center justify-between gap-1.5">
           <span
@@ -198,8 +200,9 @@ export function BarVisual({
       );
     variant = (
       <div
-        className={`w-full h-full px-1 flex flex-col justify-center gap-1 ${isPopoverOpen ? 'ring-2 ring-indigo-400 rounded-lg' : ''
-          }`}
+        className={`w-full h-full px-1 flex flex-col justify-center gap-1 ${
+          isPopoverOpen ? 'ring-2 ring-indigo-400 rounded-lg' : ''
+        }`}
       >
         <div className="flex items-center justify-between gap-1.5">
           <span
@@ -284,12 +287,13 @@ export function BarVisual({
     variant = (
       <div
         style={barStyle}
-        className={`relative w-full h-full py-1 flex items-center justify-between gap-1.5 ${itemStyle === 'chevron'
+        className={`relative w-full h-full py-1 flex items-center justify-between gap-1.5 ${
+          itemStyle === 'chevron'
             ? 'pl-4 pr-5'
             : itemStyle === 'pentagon' || itemStyle === 'swallowtail'
               ? 'pl-3 pr-5'
               : 'px-3'
-          } ${ring}`}
+        } ${ring}`}
       >
         <span className="min-w-0 flex-1">{labelNode()}</span>
         {dur}

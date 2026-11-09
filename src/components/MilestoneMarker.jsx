@@ -50,8 +50,8 @@ export default function MilestoneMarker({
     shape === 'hexagon' ||
     shape === 'shield' ||
     shape === 'cross' ||
-      shape === 'duck-egg' ||
-      shape === 'yellow-duck'
+    shape === 'duck-egg' ||
+    shape === 'yellow-duck'
   ) {
     const strokeDasharray =
       borderStyle === 'dashed' ? '3,2' : borderStyle === 'double' ? '1,0' : undefined;

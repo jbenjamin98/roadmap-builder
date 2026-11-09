@@ -12,8 +12,9 @@ export function HeaderSwatch({
 }) {
   const swatchCls = visuals.hasFrostedCard
     ? 'p-2.5 rounded-xl border backdrop-blur-md flex flex-row items-stretch justify-between gap-2 overflow-hidden select-none'
-    : `${visuals.className} ${styleId === 'compact-bar' ? 'py-2 px-3' : 'py-2.5 px-3'
-    } text-left select-none overflow-hidden`;
+    : `${visuals.className} ${
+        styleId === 'compact-bar' ? 'py-2 px-3' : 'py-2.5 px-3'
+      } text-left select-none overflow-hidden`;
 
   return (
     <div className={swatchCls} style={visuals.style}>
@@ -66,8 +67,9 @@ export function HeaderSwatch({
 
         {/* Metadata / Cadence Line (guaranteed single line without wrapping) */}
         <div
-          className={`flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-wider whitespace-nowrap flex-nowrap overflow-hidden ${visuals.isCentered ? 'justify-center' : ''
-            }`}
+          className={`flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-wider whitespace-nowrap flex-nowrap overflow-hidden ${
+            visuals.isCentered ? 'justify-center' : ''
+          }`}
         >
           {!hasSeparateLogo && banner.logo ? (
             <img

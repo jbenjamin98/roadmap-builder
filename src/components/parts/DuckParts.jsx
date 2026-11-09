@@ -145,4 +145,3 @@ export function DuckFootprintIcon({ size = 14, className = '', color = '#f97316'
     </svg>
   );
 }
-

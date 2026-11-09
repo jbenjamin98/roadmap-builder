@@ -98,16 +98,16 @@ export function SectionSpine({
             <span
               data-export-text="true"
               style={{ backgroundColor: accent }}
+              className={`mt-2 rounded-full flex items-center justify-center text-[10px] font-extrabold text-white shrink-0 ${
                 number ? 'w-6 h-6' : duckMode ? 'w-6 h-6 bg-amber-400 p-0.5' : 'w-2.5 h-2.5'
               }`}
             >
-          {number || (duckMode ? <YellowDuckIcon size={16} /> : '')}
-        </span>
+              {number || (duckMode ? <YellowDuckIcon size={16} /> : '')}
+            </span>
+          )}
+          {text}
+        </div>
       )}
-      {text}
     </div>
-  )
-}
-    </div >
   );
 }
