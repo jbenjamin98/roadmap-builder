@@ -8,6 +8,7 @@ import {
   ListOrdered,
   Minimize2,
   Palette,
+  PanelTop,
   Rows,
   Sliders,
   Sparkles,
@@ -36,6 +37,7 @@ export const NAV_GROUPS = [
   {
     group: 'Hierarchy',
     items: [
+      { id: 'header', label: 'Canvas Header', icon: PanelTop },
       { id: 'period', label: 'Period Headers', icon: Columns },
       { id: 'section', label: 'Sections', icon: Rows },
       { id: 'subsection', label: 'Sub-sections', icon: Layers },

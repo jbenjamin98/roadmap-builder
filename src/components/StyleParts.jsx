@@ -6,3 +6,4 @@ export { PeriodHeaderCell } from './parts/PeriodHeaderCell';
 export { SectionSpine } from './parts/SectionSpine';
 export { BarVisual } from './parts/BarVisual';
 export { CanvasOverlays } from './parts/CanvasOverlays';
+export { CanvasHeaderVisual } from './parts/CanvasHeaderVisual';

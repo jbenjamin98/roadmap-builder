@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useLayoutEffect, useState } from 'react';
 import SmallScreenGuard from './components/SmallScreenGuard';
 import CustomCursor from './components/CustomCursor';
 import ToastHost from './components/ToastHost';
@@ -6,6 +6,7 @@ import RecoveryBanner from './components/backup/RecoveryBanner';
 import DraftNoticeDialog from './components/backup/DraftNoticeDialog';
 import DriveBackupProvider from './components/backup/DriveBackupProvider';
 import ConfirmDialog from './components/ui/ConfirmDialog';
+import ConfigModal from './components/ConfigModal';
 import useRoadmapState from './hooks/useRoadmapState';
 import { RoadmapContext } from './state/roadmapContext';
 import { hasSeenDraftNotice, markDraftNoticeSeen } from './data/persistence';
@@ -15,7 +16,6 @@ import { showToast } from './utils/toast';
 
 // Heavy views are code-split so the first paint only loads what the current view needs.
 const LandingPage = lazy(() => import('./components/LandingPage'));
-const ConfigModal = lazy(() => import('./components/ConfigModal'));
 const RoadmapWorkspace = lazy(() => import('./components/RoadmapWorkspace'));
 
 const isEditableTarget = (el) =>
@@ -46,16 +46,15 @@ export default function App() {
   const [pendingReplace, setPendingReplace] = useState(null);
   const [showDraftNotice, setShowDraftNotice] = useState(false);
 
-  // Sync light/dark class on <html>
-  useEffect(() => {
+  // Sync light/dark class on <html> synchronously before paint to prevent theme lag
+  useLayoutEffect(() => {
     document.documentElement.classList.toggle('dark', themeMode === 'dark');
     saveUiThemeMode(themeMode);
   }, [themeMode]);
 
-  // Preload editor and modal chunks immediately so opening the modal or switching views is instant.
+  // Preload editor chunk immediately so switching views is instant.
   useEffect(() => {
     import('./components/RoadmapWorkspace');
-    import('./components/ConfigModal');
   }, []);
 
   // Ctrl/Cmd+Z, Ctrl/Cmd+Shift+Z and Ctrl+Y. Native undo wins inside text fields.
@@ -178,28 +177,19 @@ export default function App() {
           )}
         </Suspense>
 
-        <Suspense
-          fallback={
-            <div
-              className="fixed inset-0 z-[200] bg-slate-900/65 dark:bg-slate-950/85 backdrop-blur-md pointer-events-none"
-              aria-hidden="true"
-            />
-          }
-        >
-          {isConfigModalOpen && (
-            <ConfigModal
-              key={isCreatingNew ? 'create-blank' : `edit-${roadmapState.id}`}
-              isOpen={isConfigModalOpen}
-              onClose={() => {
-                setIsConfigModalOpen(false);
-                setIsCreatingNew(false);
-              }}
-              initialConfig={isCreatingNew ? null : roadmapState.config}
-              onSaveConfig={handleSaveConfig}
-              isCreatingNew={isCreatingNew}
-            />
-          )}
-        </Suspense>
+        {isConfigModalOpen && (
+          <ConfigModal
+            key={isCreatingNew ? 'create-blank' : `edit-${roadmapState.id}`}
+            isOpen={isConfigModalOpen}
+            onClose={() => {
+              setIsConfigModalOpen(false);
+              setIsCreatingNew(false);
+            }}
+            initialConfig={isCreatingNew ? null : roadmapState.config}
+            onSaveConfig={handleSaveConfig}
+            isCreatingNew={isCreatingNew}
+          />
+        )}
 
         {showDraftNotice && currentView === 'workspace' && (
           <DraftNoticeDialog

@@ -3,6 +3,7 @@ import { SPINE_WIDTH } from '../../constants/designOptions';
 import { LevelLabel, NumBadge, SectionNumber, SectionSpine } from '../StyleParts';
 import { INDENT, INDENT_SPINE, NO_WORD_BREAK, getSectionVisuals, nbHyphen } from '../styleHelpers';
 import WrappingTitleInput from './WrappingTitleInput';
+import { DuckEggIcon } from '../parts/DuckParts';
 
 export default function TimelineSection({
   section,
@@ -28,6 +29,7 @@ export default function TimelineSection({
   periodLabel,
   primaryColor,
   accents,
+  cornerRadius = 24,
   isPreview,
   activePopoverItemId,
   setActivePopoverItemId,
@@ -92,6 +94,7 @@ export default function TimelineSection({
               styleId={subSectionStyle}
               level="sub"
               accent={sectionAccent}
+              duckMode={Boolean(design?.duckMode)}
               badge={
                 numbering.subSections ? (
                   <NumBadge
@@ -175,9 +178,10 @@ export default function TimelineSection({
           tokens={tokens}
           number={numbering.sections ? secIdx + 1 : null}
           title={section.title}
+          duckMode={Boolean(design?.duckMode)}
           roundBottomLeft={
             secIdx === sectionsCount - 1 && legendPosition !== 'bottom'
-              ? 24 - (design.effects?.brutalist ? 3 : 1)
+              ? Math.max(0, cornerRadius - (design.effects?.brutalist ? 3 : 1))
               : 0
           }
         />
@@ -230,6 +234,7 @@ export default function TimelineSection({
               visuals={visuals}
               numStyle={numStyle}
             />
+            {design?.duckMode && <DuckEggIcon size={16} />}
 
             {isPreview ? (
               <span

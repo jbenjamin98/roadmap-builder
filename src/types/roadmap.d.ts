@@ -121,7 +121,10 @@ export interface Design {
   };
   numbering: { sections: boolean; subSections: boolean; tasks: boolean };
   numberingStyle: string; // NUMBERING_STYLES
-  banner: { subtitle: string; owner: string; version: string };
+  headerStyle: string; // CANVAS_HEADER_STYLES
+  canvasCorners: string; // CANVAS_CORNER_STYLES
+  duckMode?: boolean;
+  banner: { subtitle: string; owner: string; version: string; logo?: string };
 }
 
 /** Output of calculatePeriods(config) in src/utils/dateUtils.js. */

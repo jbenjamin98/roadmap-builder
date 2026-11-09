@@ -1,5 +1,6 @@
 import { Clock, Columns, Compass, Grid, Rows, Zap } from 'lucide-react';
-import { ToggleRow } from './primitives';
+import { CANVAS_CORNER_STYLES } from '../../constants/designOptions';
+import { Segmented, ToggleRow } from './primitives';
 
 export default function GridTab({ ctx }) {
   const {
@@ -15,6 +16,24 @@ export default function GridTab({ ctx }) {
   return (
     <div className="space-y-4">
       {panelTitle(Grid, 'text-indigo-600 dark:text-indigo-400', 'Canvas Grid & Display')}
+
+      {/* Canvas Corner Style */}
+      <div className="space-y-2 p-3.5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-950/60">
+        <label className="block text-xs font-semibold text-slate-800 dark:text-slate-200">
+          Canvas Corner Style
+        </label>
+        <div className="flex flex-wrap gap-1">
+          <Segmented
+            options={CANVAS_CORNER_STYLES.map((c) => [c.id, c.name])}
+            value={design.canvasCorners || 'curved'}
+            onChange={(v) => updateDesign({ canvasCorners: v })}
+          />
+        </div>
+        <p className="text-[11px] text-slate-500 dark:text-slate-400">
+          Controls corner radius of the roadmap canvas, bottom tracks, section spines, and overlays.
+        </p>
+      </div>
+
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
         <ToggleRow
           icon={Rows}

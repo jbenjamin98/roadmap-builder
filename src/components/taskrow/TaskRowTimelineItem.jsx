@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Rnd } from 'react-rnd';
 import MilestoneMarker from '../MilestoneMarker';
 import { BarVisual } from '../StyleParts';
-import { NO_WORD_BREAK, nbHyphen } from '../styleHelpers';
+import { NO_WORD_BREAK, getContrastingBracketColor, nbHyphen } from '../styleHelpers';
 import TimelineItemPopover from './TimelineItemPopover';
 
 export default function TaskRowTimelineItem({
@@ -48,9 +48,8 @@ export default function TaskRowTimelineItem({
   const yOffset = Math.max(2, Math.floor((Math.max(rowMinHeight, trackHeight) - itemHeight) / 2));
   const msColor = milestoneDesign.color || '#f59e0b';
   const primaryColor = tokens?.primary || '#6366f1';
-  const accentColor = tokens?.accents?.[0] || primaryColor;
-  const ringColor =
-    primaryColor.startsWith('#') && primaryColor.length === 7 ? `${primaryColor}66` : primaryColor;
+  const barColor = category?.color || primaryColor;
+  const bracketColor = getContrastingBracketColor(barColor, tokens);
 
   return (
     <Rnd
@@ -227,9 +226,9 @@ export default function TaskRowTimelineItem({
                     style={{
                       [side]: -28,
                       width: 56,
-                      '--handle-theme': primaryColor,
-                      '--handle-accent': accentColor,
-                      '--handle-theme-ring': ringColor,
+                      '--handle-theme': bracketColor,
+                      '--handle-accent': bracketColor,
+                      '--handle-theme-ring': bracketColor,
                       '--drag-tension': tension,
                       transform: side === 'left' ? 'scaleX(-1)' : undefined,
                       transformOrigin: '28px center',
@@ -253,7 +252,7 @@ export default function TaskRowTimelineItem({
                   >
                     <div
                       className="w-full h-full relative pointer-events-none"
-                      style={{ color: primaryColor }}
+                      style={{ color: bracketColor }}
                     >
                       {/* Upper corner bracket at actual top corner of the task bar (refined compact scale) */}
                       <svg

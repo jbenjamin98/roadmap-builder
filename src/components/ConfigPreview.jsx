@@ -66,16 +66,28 @@ export default function ConfigPreview({ draftConfig }) {
   const contentWidth = leftW + density.colWidth * periodCount + 50;
 
   useLayoutEffect(() => {
+    let animFrame = null;
     const update = () => {
-      const available = wrapRef.current?.clientWidth || contentWidth;
-      setScale(Math.min(1, available / contentWidth));
-      setInnerHeight(innerRef.current?.offsetHeight || 0);
+      if (!wrapRef.current || !innerRef.current) return;
+      const available = wrapRef.current.clientWidth || contentWidth;
+      const targetScale = Math.min(1, available / contentWidth);
+      const targetHeight = innerRef.current.offsetHeight || 0;
+
+      setScale((prev) => (Math.abs(prev - targetScale) > 0.008 ? targetScale : prev));
+      setInnerHeight((prev) => (Math.abs(prev - targetHeight) > 2 ? targetHeight : prev));
     };
+
     update();
-    const ro = new ResizeObserver(update);
+    const ro = new ResizeObserver(() => {
+      cancelAnimationFrame(animFrame);
+      animFrame = requestAnimationFrame(update);
+    });
     if (wrapRef.current) ro.observe(wrapRef.current);
     if (innerRef.current) ro.observe(innerRef.current);
-    return () => ro.disconnect();
+    return () => {
+      cancelAnimationFrame(animFrame);
+      ro.disconnect();
+    };
   }, [contentWidth]);
   const secondStart = Math.min(2, lastPeriod);
 

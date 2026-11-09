@@ -42,14 +42,16 @@ export default function MilestoneMarker({
 
   const bgFill = useGrad ? `linear-gradient(135deg, ${color} 0%, ${color}bb 100%)` : color;
 
-  // SVG-based shapes: triangle, star, flag, hexagon, shield
+  // SVG-based shapes: triangle, star, flag, hexagon, shield, duck-egg, yellow-duck
   if (
     shape === 'triangle' ||
     shape === 'star' ||
     shape === 'flag' ||
     shape === 'hexagon' ||
     shape === 'shield' ||
-    shape === 'cross'
+    shape === 'cross' ||
+      shape === 'duck-egg' ||
+      shape === 'yellow-duck'
   ) {
     const strokeDasharray =
       borderStyle === 'dashed' ? '3,2' : borderStyle === 'double' ? '1,0' : undefined;
@@ -142,6 +144,50 @@ export default function MilestoneMarker({
               strokeDasharray={strokeDasharray}
               strokeLinejoin="round"
             />
+          )}
+          {shape === 'duck-egg' && (
+            <g>
+              <path
+                d="M12,2.5 C7.5,2.5 4,8 4,14 C4,18.5 7.5,21.5 12,21.5 C16.5,21.5 20,18.5 20,14 C20,8 16.5,2.5 12,2.5 Z"
+                fill={color}
+                stroke={strokeCol}
+                strokeWidth={Math.max(1.5, borderWidth)}
+                strokeDasharray={strokeDasharray}
+                strokeLinejoin="round"
+              />
+              <path
+                d="M8.5,7.5 C9,6 11,5 13,5"
+                stroke="rgba(255, 255, 255, 0.85)"
+                strokeWidth="1.2"
+                strokeLinecap="round"
+              />
+            </g>
+          )}
+          {shape === 'yellow-duck' && (
+            <g>
+              <path
+                d="M5,15 C4,11 8,9.5 13,10.5 C16,11 19,10 20,7 C21,10 21.5,15 18.5,18 C15,20.5 8,20.5 5.5,18 Z"
+                fill={color}
+                stroke={strokeCol}
+                strokeWidth={Math.max(1.2, borderWidth)}
+                strokeLinejoin="round"
+              />
+              <circle
+                cx="17"
+                cy="6.5"
+                r="4.2"
+                fill={color}
+                stroke={strokeCol}
+                strokeWidth={Math.max(1.2, borderWidth)}
+              />
+              <circle cx="18" cy="5.8" r="0.9" fill="#0f172a" />
+              <path
+                d="M21,5.8 C23.5,5.5 24.5,6.8 23.5,8 C22.5,8.8 20.5,8.2 20.5,8.2 Z"
+                fill="#f97316"
+                stroke="#c2410c"
+                strokeWidth="0.8"
+              />
+            </g>
           )}
         </svg>
       </span>

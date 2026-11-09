@@ -2,7 +2,12 @@ import { useState } from 'react';
 import useFont from '../hooks/useFont';
 import { calculatePeriods, getTodayMarkerInfo } from '../utils/dateUtils';
 import { FONT_STYLES, getSingularPeriodLabel } from '../constants/themes';
-import { getDensity, isRotatedSectionStyle, normalizeDesign } from '../constants/designOptions';
+import {
+  getCanvasCornerVisuals,
+  getDensity,
+  isRotatedSectionStyle,
+  normalizeDesign,
+} from '../constants/designOptions';
 import { getCanvasTokens } from './canvasStyles';
 import { CanvasOverlays } from './StyleParts';
 import { computeLeftWidth } from './styleHelpers';
@@ -55,13 +60,14 @@ export default function TimelineGrid({
   const numbering = design.numbering || {};
   const numStyle = design.numberingStyle || 'soft-tint';
   const singularPeriod = getSingularPeriodLabel(config.periodLabel);
+  const cornerVisuals = getCanvasCornerVisuals(design.canvasCorners);
 
   let globalTaskCounter = 0;
   const getTaskRowIndex = () => globalTaskCounter++;
 
   return (
     <div
-      className="roadmap-scroll flex-1 min-w-0 overflow-auto bg-slate-100 dark:bg-slate-950 transition-colors"
+      className="roadmap-scroll flex-1 min-w-0 overflow-auto bg-slate-100 dark:bg-slate-950"
       onClick={() => setActivePopoverItemId(null)}
       style={{
         '--scrollbar-primary': primaryColor,
@@ -89,9 +95,13 @@ export default function TimelineGrid({
             width: `${leftW + periods.length * colWidth}px`,
             minWidth: 'max-content',
           }}
-          className="relative isolate rounded-3xl border shadow-2xl overflow-clip"
+          className={`relative isolate ${cornerVisuals.twClass} border shadow-2xl overflow-clip`}
         >
-          <CanvasOverlays effects={design.effects} tokens={tokens} />
+          <CanvasOverlays
+            effects={design.effects}
+            tokens={tokens}
+            radiusClass={cornerVisuals.twClass}
+          />
 
           {/* Top Roadmap Banner */}
           <TimelineHeader
@@ -165,6 +175,7 @@ export default function TimelineGrid({
                   periodLabel={config.periodLabel}
                   primaryColor={primaryColor}
                   accents={accents}
+                  cornerRadius={cornerVisuals.radius}
                   isPreview={isPreview}
                   activePopoverItemId={activePopoverItemId}
                   setActivePopoverItemId={setActivePopoverItemId}
@@ -186,7 +197,7 @@ export default function TimelineGrid({
                 background: tokens.headerGradient,
                 borderColor: tokens.gridBorder,
               }}
-              className={`px-6 py-4 border-t rounded-b-3xl flex items-center ${
+              className={`px-6 py-4 border-t ${cornerVisuals.bottomTwClass} flex items-center ${
                 { start: 'justify-start', center: 'justify-center', end: 'justify-end' }[
                   design.legend?.align
                 ] || 'justify-end'

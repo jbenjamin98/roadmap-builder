@@ -1,4 +1,7 @@
 // Catalog of per-roadmap design options. Every id here is stored in config.design.
+import { PRESET_THEMES } from './themePresets';
+import { FONT_STYLES } from './fontStyles';
+
 export {
   EFFECT_TOGGLES,
   EFFECT_CATEGORIES,
@@ -18,6 +21,8 @@ export const MILESTONE_SHAPES = [
   { id: 'hexagon', name: 'Hexagon' },
   { id: 'shield', name: 'Shield' },
   { id: 'cross', name: 'Cross' },
+  { id: 'duck-egg', name: 'Duck egg' },
+  { id: 'yellow-duck', name: 'Yellow duck' },
 ];
 
 export const MILESTONE_BORDER_STYLES = [
@@ -59,6 +64,180 @@ export const CONDENSED_MODES = [
 
 export const SPINE_WIDTH = 40;
 
+export const CANVAS_HEADER_STYLES = [
+  {
+    id: 'gradient-banner',
+    name: 'Gradient banner',
+    desc: 'Accent fade background with bottom border',
+  },
+  {
+    id: 'clean-minimal',
+    name: 'Clean minimal',
+    desc: 'Lightweight transparent header with airy whitespace',
+  },
+  {
+    id: 'floating-card',
+    name: 'Floating card',
+    desc: 'Inset elevated card with rounded border and soft shadow',
+  },
+  {
+    id: 'editorial-split',
+    name: 'Editorial split',
+    desc: 'Divided title and metadata columns with crisp borders',
+  },
+  {
+    id: 'left-accent-rail',
+    name: 'Left accent rail',
+    desc: 'Thick accent color stripe pinned to the left edge',
+  },
+  {
+    id: 'top-accent-bar',
+    name: 'Top accent ribbon',
+    desc: 'Vivid accent color bar across the top edge',
+  },
+  {
+    id: 'two-tone',
+    name: 'Two-tone block',
+    desc: 'Contrasting tinted title area and neutral legend track',
+  },
+  {
+    id: 'pill-capsule',
+    name: 'Capsule pill',
+    desc: 'Title and logo enclosed in a rounded tinted capsule',
+  },
+  {
+    id: 'terminal-dark',
+    name: 'Terminal monospace',
+    desc: 'Monospace code style with bracketed metadata',
+  },
+  {
+    id: 'compact-bar',
+    name: 'Compact strip',
+    desc: 'Ultra-slim condensed header maximizing canvas grid space',
+  },
+  {
+    id: 'hero-centered',
+    name: 'Centered hero',
+    desc: 'Center-aligned presentation layout for slide decks',
+  },
+  {
+    id: 'underlined-rule',
+    name: 'Accent underline',
+    desc: 'Prominent accent underline directly beneath the title',
+  },
+  {
+    id: 'glass-frosted',
+    name: 'Frosted glass',
+    desc: 'Translucent glassmorphic header with specular highlights',
+  },
+  {
+    id: 'outline-card',
+    name: 'Framed outline',
+    desc: 'Clean inset card with an accent stroke border and transparent fill',
+  },
+  {
+    id: 'brutalist-block',
+    name: 'Brutalist grid',
+    desc: 'High-contrast 2px solid border with zero radius and bold shadow',
+  },
+  {
+    id: 'brand-hero',
+    name: 'Brand hero',
+    desc: 'Prominent brand logo anchoring a bold executive header',
+  },
+  {
+    id: 'logo-showcase',
+    name: 'Logo showcase',
+    desc: 'Elevated media tile for a prominent logo display',
+  },
+  {
+    id: 'stacked-emblem',
+    name: 'Stacked emblem',
+    desc: 'Centered prestige crest with large logo above title',
+  },
+  {
+    id: 'media-banner',
+    name: 'Media banner',
+    desc: 'Wide executive banner with an expansive logo anchor and vertical divider',
+  },
+  {
+    id: 'floating-crest',
+    name: 'Floating crest',
+    desc: 'Elevated rounded card with an oversized glowing circular emblem badge',
+  },
+  {
+    id: 'executive-billboard',
+    name: 'Executive billboard',
+    desc: 'High-impact dual-column billboard featuring a spacious logo tile and stacked metrics',
+  },
+  {
+    id: 'crest-minimal',
+    name: 'Minimal crest',
+    desc: 'Clean circular monogram crest with fine hairline border and symmetrical stats',
+  },
+  {
+    id: 'badge-strip',
+    name: 'Brand marquee',
+    desc: 'Sleek horizontal marquee badge featuring an elongated logo capsule',
+  },
+  {
+    id: 'split-billboard',
+    name: 'Dual-tone billboard',
+    desc: 'Contrasting split card layout with an elevated logo spotlight block',
+  },
+];
+
+export const STANDARD_HEADER_STYLES = CANVAS_HEADER_STYLES.slice(0, 15);
+export const LOGO_HEADER_STYLES = CANVAS_HEADER_STYLES.slice(15);
+
+export const CANVAS_CORNER_STYLES = [
+  {
+    id: 'sharp',
+    name: 'Sharp (0px)',
+    desc: 'Square 90° corners, crisp edges',
+    radius: 0,
+    twClass: 'rounded-none',
+    bottomTwClass: 'rounded-b-none',
+  },
+  {
+    id: 'subtle',
+    name: 'Subtle (8px)',
+    desc: 'Clean slightly rounded corners',
+    radius: 8,
+    twClass: 'rounded-lg',
+    bottomTwClass: 'rounded-b-lg',
+  },
+  {
+    id: 'rounded',
+    name: 'Medium (16px)',
+    desc: 'Balanced modern rounded corners',
+    radius: 16,
+    twClass: 'rounded-2xl',
+    bottomTwClass: 'rounded-b-2xl',
+  },
+  {
+    id: 'curved',
+    name: 'Curved (24px)',
+    desc: 'Classic large smooth curve (Default)',
+    radius: 24,
+    twClass: 'rounded-3xl',
+    bottomTwClass: 'rounded-b-3xl',
+  },
+  {
+    id: 'pill',
+    name: 'Pill (32px)',
+    desc: 'Extra round pill-like curved corners',
+    radius: 32,
+    twClass: 'rounded-[2rem]',
+    bottomTwClass: 'rounded-b-[2rem]',
+  },
+];
+
+export function getCanvasCornerVisuals(cornerId) {
+  const found = CANVAS_CORNER_STYLES.find((c) => c.id === cornerId);
+  return found || CANVAS_CORNER_STYLES[3];
+}
+
 export const PERIOD_HEADER_STYLES = [
   { id: 'accent-bar', name: 'Accent bar', desc: 'Colored bar above title' },
   { id: 'pill-badge', name: 'Pill badge', desc: 'Title in a colored pill' },
@@ -92,6 +271,7 @@ export const SECTION_STYLES = [
   { id: 'bracket-ends', name: 'Bracket end', desc: 'Heavy left edge with a rounded right end' },
   { id: 'glow-fade', name: 'Glow fade', desc: 'Soft accent glow fading across the row' },
   { id: 'top-rule', name: 'Top rule', desc: 'Thick accent rule above the title' },
+  { id: 'accent-badge', name: 'Accent badge', desc: 'Inset badge pill with solid left accent tag' },
   { id: 'rotated-spine', name: 'Solid spine', desc: 'Vertical solid cap left of its rows' },
   {
     id: 'rotated-outline',
@@ -111,9 +291,21 @@ export const SECTION_STYLES = [
     desc: 'Translucent vertical cap with a bright edge',
   },
   { id: 'rotated-badge', name: 'Badge spine', desc: 'Round badge on top of a vertical title' },
+  {
+    id: 'rotated-accent-notch',
+    name: 'Notched spine',
+    desc: 'Vertical cap with crisp notched corner accent',
+  },
+  {
+    id: 'rotated-minimal',
+    name: 'Minimal spine',
+    desc: 'Ultra-clean hairline border vertical cap with airy letter spacing',
+  },
 ];
 
 export const isRotatedSectionStyle = (id) => String(id || '').startsWith('rotated-');
+export const STANDARD_SECTION_STYLES = SECTION_STYLES.filter((s) => !isRotatedSectionStyle(s.id));
+export const SPINE_SECTION_STYLES = SECTION_STYLES.filter((s) => isRotatedSectionStyle(s.id));
 
 // Sub-sections and tasks share one family of styles (same names, scaled per level).
 export const LEVEL_STYLES = [
@@ -268,7 +460,10 @@ export function getDefaultDesign() {
     },
     numbering: { sections: false, subSections: false, tasks: false },
     numberingStyle: 'soft-tint',
-    banner: { subtitle: '', owner: '', version: '' },
+    headerStyle: 'gradient-banner',
+    canvasCorners: 'curved',
+    duckMode: false,
+    banner: { subtitle: '', owner: '', version: '', logo: '' },
   };
 }
 
@@ -337,11 +532,14 @@ export function normalizeDesign(raw) {
 
   // eslint-disable-next-line no-unused-vars
   const { condensed, density, banner: rawBanner, ...rest } = r;
-  const { subtitle = '', owner = '', version = '' } = rawBanner || {};
+  const { subtitle = '', owner = '', version = '', logo = '' } = rawBanner || {};
   return {
     ...d,
     ...rest,
     condensedModes: modes,
+    headerStyle: r.headerStyle || d.headerStyle,
+    canvasCorners: r.canvasCorners || d.canvasCorners,
+    duckMode: Boolean(r.duckMode),
     itemStyle:
       r.itemStyle === 'striped'
         ? 'soft-bevel'
@@ -364,7 +562,7 @@ export function normalizeDesign(raw) {
     // The column layout was removed; legends are always a row.
     legend: { ...d.legend, ...(r.legend || {}), layout: 'row' },
     effects: normalizeEffects({ ...d.effects, ...(r.effects || {}) }),
-    banner: { subtitle, owner, version },
+    banner: { subtitle, owner, version, logo },
   };
 }
 
@@ -408,4 +606,50 @@ export function getDensity(design) {
   }
   if (m.singleLine) m.itemPad = Math.min(m.itemPad, 12);
   return m;
+}
+
+export const DUCK_THEME_PALETTE = {
+  primary: '#eab308',
+  secondary: '#082f49',
+  accents: ['#facc15', '#f97316', '#0d9488', '#0284c7'],
+  baseMode: 'dark',
+};
+
+export function getDuckModeDesign(prev = {}) {
+  return {
+    ...prev,
+    duckMode: true,
+    headerStyle: 'duck-pond',
+    periodHeaderStyle: 'pill-badge',
+    sectionStyle: 'rotated-badge',
+    subSectionStyle: 'tree-line',
+    taskStyle: 'dot',
+    itemStyle: 'pill-gradient',
+    canvasCorners: 'pill',
+    milestone: {
+      ...(prev.milestone || {}),
+      shape: 'duck-egg',
+      color: '#f59e0b',
+      borderStyle: 'solid',
+      borderColor: '#ffffff',
+      borderWidth: 2,
+    },
+  };
+}
+
+export function getRandomDesignConfig() {
+  const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+  return {
+    themeId: pick(PRESET_THEMES).id,
+    fontStyle: pick(FONT_STYLES).id,
+    headerStyle: pick(CANVAS_HEADER_STYLES).id,
+    periodHeaderStyle: pick(PERIOD_HEADER_STYLES).id,
+    sectionStyle: pick(SECTION_STYLES).id,
+    subSectionStyle: pick(LEVEL_STYLES).id,
+    taskStyle: pick(LEVEL_STYLES).id,
+    itemStyle: pick(ITEM_STYLES).id,
+    canvasCorners: pick(CANVAS_CORNER_STYLES).id,
+    numberingStyle: pick(NUMBERING_STYLES).id,
+    milestoneShape: pick(MILESTONE_SHAPES).id,
+  };
 }

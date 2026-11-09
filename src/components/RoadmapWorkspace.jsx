@@ -161,7 +161,7 @@ export default function RoadmapWorkspace({
         '--scrollbar-thumb-subtle': `${primaryColor}66`,
         '--scrollbar-thumb-subtle-hover': primaryColor,
       }}
-      className="min-h-screen h-screen flex flex-col bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100 overflow-hidden transition-colors"
+      className="min-h-screen h-screen flex flex-col bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100 overflow-hidden"
     >
       {/* Top Workspace Control Bar */}
       <header className="px-4 sm:px-6 py-3 bg-white dark:bg-slate-900/95 border-b border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3 shrink-0 z-30 shadow-sm">

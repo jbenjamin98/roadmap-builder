@@ -89,6 +89,15 @@ export function getSectionVisuals(styleId, accent, tokens, subtleGrid = true) {
         borderColor: subtleGrid ? tokens.gridBorder : 'transparent',
       };
       break;
+    case 'accent-badge':
+      bannerBg = `${accent}0d`;
+      leftCell = {
+        backgroundColor: tokens.stickyAltBg,
+        borderLeft: `4px solid ${accent}`,
+        borderRadius: '6px',
+        borderColor: subtleGrid ? tokens.gridBorder : 'transparent',
+      };
+      break;
     default:
   }
 
@@ -160,4 +169,73 @@ export function resolveMilestoneDesign(md, tokens) {
         : '#ffffff'
       : md.borderColor;
   return { ...md, color, borderColor };
+}
+
+/** Converts 3 or 6 digit hex to RGB { r, g, b } */
+function hexToRgb(hex) {
+  if (!hex || typeof hex !== 'string') return null;
+  const clean = hex.replace('#', '').trim();
+  if (clean.length === 3) {
+    return {
+      r: parseInt(clean[0] + clean[0], 16),
+      g: parseInt(clean[1] + clean[1], 16),
+      b: parseInt(clean[2] + clean[2], 16),
+    };
+  }
+  if (clean.length === 6) {
+    return {
+      r: parseInt(clean.slice(0, 2), 16),
+      g: parseInt(clean.slice(2, 4), 16),
+      b: parseInt(clean.slice(4, 6), 16),
+    };
+  }
+  return null;
+}
+
+/** Computes Euclidean color distance in RGB space */
+function colorDistance(c1, c2) {
+  const rgb1 = hexToRgb(c1);
+  const rgb2 = hexToRgb(c2);
+  if (!rgb1 || !rgb2) return 0;
+  const dr = rgb1.r - rgb2.r;
+  const dg = rgb1.g - rgb2.g;
+  const db = rgb1.b - rgb2.b;
+  return Math.sqrt(dr * dr + dg * dg + db * db);
+}
+
+/**
+ * Returns a high-visibility accent color for task bar corner brackets that is ALWAYS
+ * visibly different in hue/contrast from the task bar's own color to maximize clarity.
+ */
+export function getContrastingBracketColor(barColor, tokens) {
+  const candidates = [
+    ...(tokens?.accents || []),
+    tokens?.primary,
+    '#f59e0b', // Vivid Amber
+    '#06b6d4', // Vivid Cyan
+    '#ec4899', // Vivid Pink
+    '#10b981', // Vivid Emerald
+    '#8b5cf6', // Vivid Purple
+    '#3b82f6', // Vivid Blue
+    '#f43f5e', // Vivid Rose
+    '#ffffff', // Crisp White
+  ].filter(Boolean);
+
+  let bestColor = '#f59e0b';
+  let maxDistance = -1;
+
+  for (const candidate of candidates) {
+    const dist = colorDistance(barColor, candidate);
+    if (dist > maxDistance) {
+      maxDistance = dist;
+      bestColor = candidate;
+    }
+  }
+
+  // Ensure minimum contrast distance against the bar
+  if (colorDistance(barColor, bestColor) < 80) {
+    return colorDistance(barColor, '#f59e0b') > 80 ? '#f59e0b' : '#06b6d4';
+  }
+
+  return bestColor;
 }

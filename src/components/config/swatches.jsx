@@ -1,6 +1,7 @@
 import { BASE_DENSITY } from './navConfig';
 import {
   BarVisual,
+  CanvasHeaderVisual,
   CanvasOverlays,
   LevelLabel,
   NumBadge,
@@ -76,6 +77,36 @@ export function createSwatches(ctx) {
 
   /* ---- swatches (all use the real renderers so they match the canvas) ---- */
 
+  const sampleHeaderConfig = {
+    name: 'Roadmap',
+    periodLabel: 'Sprints',
+    totalPeriods: 8,
+    weeksPerPeriod: 2,
+  };
+  const sampleHeaderBanner = {
+    subtitle: 'Strategic goals',
+    owner: 'Platform Team',
+    version: 'v2.0',
+    logo: design?.banner?.logo || '',
+  };
+
+  const headerSwatch = (id) => (
+    <Stage tokens={tokens} className="w-full">
+      <CanvasHeaderVisual
+        isSwatch
+        styleId={id}
+        config={sampleHeaderConfig}
+        banner={sampleHeaderBanner}
+        tokens={tokens}
+        primaryColor={accent}
+        singularPeriod="Sprint"
+        periods={[]}
+        legend={[]}
+        design={design}
+      />
+    </Stage>
+  );
+
   const periodSwatch = (id) => (
     <Stage tokens={tokens}>
       <PeriodHeaderCell
@@ -100,6 +131,7 @@ export function createSwatches(ctx) {
               tokens={tokens}
               number={numbering.sections ? 1 : null}
               title="Foundation"
+              duckMode={Boolean(design?.duckMode)}
             />
             <div className="flex-1 px-2 flex flex-col justify-center gap-1.5">
               <div className="h-2 rounded" style={{ backgroundColor: tokens.gridBorder }} />
@@ -299,6 +331,7 @@ export function createSwatches(ctx) {
     lightThemes,
     neutralThemes,
     renderThemeCard,
+    headerSwatch,
     periodSwatch,
     sectionSwatch,
     levelSwatch,

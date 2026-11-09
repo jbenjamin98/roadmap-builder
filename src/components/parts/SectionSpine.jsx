@@ -1,8 +1,17 @@
 import { SPINE_WIDTH } from '../../constants/designOptions';
 import { NO_WORD_BREAK, nbHyphen } from '../styleHelpers';
+import { YellowDuckIcon } from './DuckParts';
 
 /** Vertical (rotated 90°) section cap rendered to the LEFT of the section's rows. */
-export function SectionSpine({ styleId, accent, tokens, number, title, roundBottomLeft = 0 }) {
+export function SectionSpine({
+  styleId,
+  accent,
+  tokens,
+  number,
+  title,
+  roundBottomLeft = 0,
+  duckMode = false,
+}) {
   let wrap = { backgroundColor: accent, color: '#ffffff' };
   if (styleId === 'rotated-outline') {
     wrap = {
@@ -31,6 +40,19 @@ export function SectionSpine({ styleId, accent, tokens, number, title, roundBott
     wrap = {
       backgroundColor: tokens.stickyAltBg,
       borderRight: `4px solid ${accent}`,
+      color: tokens.textMain,
+    };
+  } else if (styleId === 'rotated-accent-notch') {
+    wrap = {
+      backgroundColor: `${accent}18`,
+      borderTop: `4px solid ${accent}`,
+      borderRight: `1.5px solid ${accent}55`,
+      color: tokens.textMain,
+    };
+  } else if (styleId === 'rotated-minimal') {
+    wrap = {
+      backgroundColor: 'transparent',
+      borderRight: `1.5px solid ${tokens.gridBorder}`,
       color: tokens.textMain,
     };
   }
@@ -76,16 +98,16 @@ export function SectionSpine({ styleId, accent, tokens, number, title, roundBott
             <span
               data-export-text="true"
               style={{ backgroundColor: accent }}
-              className={`mt-2 rounded-full flex items-center justify-center text-[10px] font-extrabold text-white shrink-0 ${
-                number ? 'w-6 h-6' : 'w-2.5 h-2.5'
+                number ? 'w-6 h-6' : duckMode ? 'w-6 h-6 bg-amber-400 p-0.5' : 'w-2.5 h-2.5'
               }`}
             >
-              {number || ''}
-            </span>
-          )}
-          {text}
-        </div>
+          {number || (duckMode ? <YellowDuckIcon size={16} /> : '')}
+        </span>
       )}
+      {text}
     </div>
+  )
+}
+    </div >
   );
 }

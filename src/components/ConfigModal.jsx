@@ -1,7 +1,13 @@
 import { ArrowRight, Eye, Sliders, X } from 'lucide-react';
 import ConfigPreview from './ConfigPreview';
 import { PERIOD_TYPES, PRESET_THEMES } from '../constants/themes';
-import { applyEffectToggle, normalizeDesign } from '../constants/designOptions';
+import {
+  DUCK_THEME_PALETTE,
+  applyEffectToggle,
+  getDuckModeDesign,
+  getRandomDesignConfig,
+  normalizeDesign,
+} from '../constants/designOptions';
 import { calculatePeriods } from '../utils/dateUtils';
 import { getCanvasTokens } from './canvasStyles';
 import { getTodayDateString } from '../data/defaultState';
@@ -10,6 +16,7 @@ import { useEffect, useRef, useState } from 'react';
 import { publishCursorTheme } from '../utils/cursorTheme';
 import useDialogBehavior from '../hooks/useDialogBehavior';
 import { SectionTitle } from './config/primitives';
+import { YellowDuckIcon } from './parts/DuckParts';
 import { FIXED_LENGTH_PERIODS, NAV_GROUPS, inputCls } from './config/navConfig';
 import { createSwatches } from './config/swatches';
 import TimelineTab from './config/TimelineTab';
@@ -17,6 +24,7 @@ import BannerTab from './config/BannerTab';
 import ThemesTab from './config/ThemesTab';
 import FontsTab from './config/FontsTab';
 import EffectsTab from './config/EffectsTab';
+import HeaderTab from './config/HeaderTab';
 import PeriodTab from './config/PeriodTab';
 import SectionTab from './config/SectionTab';
 import SubsectionTab from './config/SubsectionTab';
@@ -87,11 +95,11 @@ export default function ConfigModal({
     themeId === 'custom'
       ? customTheme
       : {
-          baseMode: selectedPreset?.isLight ? 'light' : 'dark',
-          primary: selectedPreset?.primary || '#6366f1',
-          secondary: selectedPreset?.secondary || '#0f172a',
-          accents: selectedPreset?.accents || ['#818cf8', '#ec4899', '#14b8a6', '#f59e0b'],
-        };
+        baseMode: selectedPreset?.isLight ? 'light' : 'dark',
+        primary: selectedPreset?.primary || '#6366f1',
+        secondary: selectedPreset?.secondary || '#0f172a',
+        accents: selectedPreset?.accents || ['#818cf8', '#ec4899', '#14b8a6', '#f59e0b'],
+      };
 
   // Preview the draft canvas theme on the custom cursor while this modal is open.
   useEffect(() => {
@@ -190,6 +198,42 @@ export default function ConfigModal({
     }));
   };
 
+  const handleRandomizeDesign = () => {
+    const randomized = getRandomDesignConfig();
+    setThemeId(randomized.themeId);
+    setFontStyle(randomized.fontStyle);
+    setDesign((prev) => ({
+      ...prev,
+      duckMode: false,
+      headerStyle: randomized.headerStyle,
+      periodHeaderStyle: randomized.periodHeaderStyle,
+      sectionStyle: randomized.sectionStyle,
+      subSectionStyle: randomized.subSectionStyle,
+      taskStyle: randomized.taskStyle,
+      itemStyle: randomized.itemStyle,
+      canvasCorners: randomized.canvasCorners,
+      numberingStyle: randomized.numberingStyle,
+      milestone: {
+        ...prev.milestone,
+        shape: randomized.milestoneShape,
+      },
+    }));
+  };
+
+  const handleToggleDuckMode = () => {
+    if (design?.duckMode) {
+      setDesign((prev) => ({
+        ...prev,
+        duckMode: false,
+        headerStyle: 'gradient-banner',
+      }));
+    } else {
+      setThemeId('custom');
+      setCustomTheme(DUCK_THEME_PALETTE);
+      setDesign((prev) => getDuckModeDesign(prev));
+    }
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     onSaveConfig(draftConfig);
@@ -242,6 +286,8 @@ export default function ConfigModal({
     handlePeriodTypeChange,
     handleAccentChange,
     handleCustomBaseModeChange,
+    handleRandomizeDesign,
+    handleToggleDuckMode,
     handleSubmit,
     isCreatingNew,
     onClose,
@@ -313,11 +359,10 @@ export default function ConfigModal({
                         type="button"
                         onClick={() => setActiveTab(t.id)}
                         data-testid={`config-tab-${t.id}`}
-                        className={`w-full flex items-center gap-2 px-2.5 py-2 rounded-xl text-xs font-semibold text-left transition-all ${
-                          active
+                        className={`w-full flex items-center gap-2 px-2.5 py-2 rounded-xl text-xs font-semibold text-left transition-all ${active
                             ? 'bg-indigo-600 text-white shadow-sm'
                             : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-slate-800'
-                        }`}
+                          }`}
                       >
                         <Icon className="w-3.5 h-3.5 shrink-0" />
                         <span>{t.label}</span>
@@ -343,50 +388,93 @@ export default function ConfigModal({
                 ))}
               </select>
 
-              {/* TIMELINE */}
-              {activeTab === 'timeline' && <TimelineTab ctx={ctx} />}
+              {/* Active Duck Mode Banner */}
+              {design?.duckMode && (
+                <div
+                  data-testid="ultimate-duck-mode-banner"
+                  className="p-4 rounded-2xl border-2 border-amber-500/60 bg-gradient-to-r from-amber-500/15 via-emerald-500/10 to-sky-500/15 flex items-center justify-between gap-4 shadow-sm"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <YellowDuckIcon size={28} wake />
+                    <div>
+                      <div className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                        <span>Ultimate Duck Mode Active</span>
+                        <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-500/30">
+                          Orchestrated
+                        </span>
+                      </div>
+                      <div className="text-[11px] text-slate-600 dark:text-slate-300">
+                        Visual styling is curated by the Duck Design System (Pond palette, floating
+                        duck header, duck egg spine, rippled bars). Conflicting options are locked.
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleToggleDuckMode}
+                    data-testid="disable-duck-mode-btn"
+                    className="shrink-0 px-3 py-1.5 rounded-xl text-xs font-semibold bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 border border-amber-500/40 shadow-xs transition-colors cursor-pointer"
+                  >
+                    Disable Duck Mode
+                  </button>
+                </div>
+              )}
 
-              {/* HEADER DETAILS */}
-              {activeTab === 'banner' && <BannerTab ctx={ctx} />}
+              <div
+                className={
+                  design?.duckMode && !['timeline', 'banner', 'themes'].includes(activeTab)
+                    ? 'pointer-events-none opacity-50 select-none'
+                    : ''
+                }
+              >
+                {/* TIMELINE */}
+                {activeTab === 'timeline' && <TimelineTab ctx={ctx} />}
 
-              {/* THEMES */}
-              {activeTab === 'themes' && <ThemesTab ctx={ctx} />}
+                {/* HEADER DETAILS */}
+                {activeTab === 'banner' && <BannerTab ctx={ctx} />}
 
-              {/* FONTS */}
-              {activeTab === 'fonts' && <FontsTab ctx={ctx} />}
+                {/* THEMES */}
+                {activeTab === 'themes' && <ThemesTab ctx={ctx} />}
 
-              {/* EFFECTS */}
-              {activeTab === 'effects' && <EffectsTab ctx={ctx} />}
+                {/* FONTS */}
+                {activeTab === 'fonts' && <FontsTab ctx={ctx} />}
 
-              {/* PERIOD HEADERS */}
-              {activeTab === 'period' && <PeriodTab ctx={ctx} />}
+                {/* EFFECTS */}
+                {activeTab === 'effects' && <EffectsTab ctx={ctx} />}
 
-              {/* SECTIONS */}
-              {activeTab === 'section' && <SectionTab ctx={ctx} />}
+                {/* CANVAS HEADER */}
+                {activeTab === 'header' && <HeaderTab ctx={ctx} />}
 
-              {/* SUB-SECTIONS */}
-              {activeTab === 'subsection' && <SubsectionTab ctx={ctx} />}
+                {/* PERIOD HEADERS */}
+                {activeTab === 'period' && <PeriodTab ctx={ctx} />}
 
-              {/* TASKS */}
-              {activeTab === 'task' && <TaskTab ctx={ctx} />}
+                {/* SECTIONS */}
+                {activeTab === 'section' && <SectionTab ctx={ctx} />}
 
-              {/* NUMBERING */}
-              {activeTab === 'numbering' && <NumberingTab ctx={ctx} />}
+                {/* SUB-SECTIONS */}
+                {activeTab === 'subsection' && <SubsectionTab ctx={ctx} />}
 
-              {/* BARS */}
-              {activeTab === 'bars' && <BarsTab ctx={ctx} />}
+                {/* TASKS */}
+                {activeTab === 'task' && <TaskTab ctx={ctx} />}
 
-              {/* MILESTONES */}
-              {activeTab === 'milestones' && <MilestonesTab ctx={ctx} />}
+                {/* NUMBERING */}
+                {activeTab === 'numbering' && <NumberingTab ctx={ctx} />}
 
-              {/* LEGEND */}
-              {activeTab === 'legend' && <LegendTab ctx={ctx} />}
+                {/* BARS */}
+                {activeTab === 'bars' && <BarsTab ctx={ctx} />}
 
-              {/* CONDENSED */}
-              {activeTab === 'condensed' && <CondensedTab ctx={ctx} />}
+                {/* MILESTONES */}
+                {activeTab === 'milestones' && <MilestonesTab ctx={ctx} />}
 
-              {/* GRID & DISPLAY */}
-              {activeTab === 'grid' && <GridTab ctx={ctx} />}
+                {/* LEGEND */}
+                {activeTab === 'legend' && <LegendTab ctx={ctx} />}
+
+                {/* CONDENSED */}
+                {activeTab === 'condensed' && <CondensedTab ctx={ctx} />}
+
+                {/* GRID & DISPLAY */}
+                {activeTab === 'grid' && <GridTab ctx={ctx} />}
+              </div>
             </div>
 
             {/* Live preview */}
@@ -400,7 +488,7 @@ export default function ConfigModal({
                   Updates as you click
                 </span>
               </div>
-              <div className="flex-1 min-h-0 overflow-y-auto px-5 pb-5">
+              <div className="flex-1 min-h-0 overflow-y-auto [scrollbar-gutter:stable] px-5 pb-5">
                 <ConfigPreview draftConfig={draftConfig} />
               </div>
             </div>

@@ -350,6 +350,7 @@ export default function TaskRow({
           styleId={taskStyle}
           level="task"
           accent={accentDotColor}
+          duckMode={Boolean(design?.duckMode)}
           badge={
             taskNumberLabel ? (
               <NumBadge
