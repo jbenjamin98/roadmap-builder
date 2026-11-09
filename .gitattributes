@@ -1,0 +1,8 @@
+# Set default behaviour to automatically normalize line endings and use LF in repository
+* text=auto eol=lf
+
+# Explicitly declare text files that must retain Windows CRLF line endings
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
