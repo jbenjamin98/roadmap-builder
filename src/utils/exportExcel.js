@@ -54,6 +54,7 @@ const colLetter = (n) => {
   return s;
 };
 
+/** @type {Partial<import('exceljs').Borders>} */
 const thinBorder = {
   top: { style: 'thin', color: { argb: 'FFD1D5DB' } },
   left: { style: 'thin', color: { argb: 'FFD1D5DB' } },
@@ -102,9 +103,7 @@ export async function buildRoadmapXlsx(roadmapState) {
     banner.subtitle,
     banner.owner ? `Owner: ${banner.owner}` : '',
     banner.version,
-    periods.length
-      ? `${periods[0].startDate} – ${periods[periods.length - 1].endDate}`
-      : '',
+    periods.length ? `${periods[0].startDate} – ${periods[periods.length - 1].endDate}` : '',
   ]
     .filter(Boolean)
     .join('   •   ');
@@ -180,8 +179,8 @@ export async function buildRoadmapXlsx(roadmapState) {
           timelineItems
             .filter((item) => item.taskId === task.id)
             .forEach((item) => {
-              const category =
-                legend.find((l) => l.id === item.legendId) || legend[0] || {
+              const category = legend.find((l) => l.id === item.legendId) ||
+                legend[0] || {
                   label: 'General',
                   color: tokens.primary,
                 };
@@ -226,7 +225,12 @@ export async function buildRoadmapXlsx(roadmapState) {
                 size: 10,
                 color: { argb: category.isStriped ? 'FF0F172A' : textOn(category.color) },
               };
-              target.alignment = { horizontal: 'left', vertical: 'middle', wrapText: true, indent: 1 };
+              target.alignment = {
+                horizontal: 'left',
+                vertical: 'middle',
+                wrapText: true,
+                indent: 1,
+              };
             });
 
           rowNum += 1;
@@ -265,4 +269,3 @@ export async function buildRoadmapXlsx(roadmapState) {
 }
 
 export { colLetter };
-

@@ -10,15 +10,21 @@ const OUT = './e2e-output';
 fs.mkdirSync(OUT, { recursive: true });
 
 const browser = await chromium.launch();
-const ctx = await browser.newContext({ viewport: { width: 1920, height: 1080 }, acceptDownloads: true });
+const ctx = await browser.newContext({
+  viewport: { width: 1920, height: 1080 },
+  acceptDownloads: true,
+});
 const page = await ctx.newPage();
 const errors = [];
 page.on('pageerror', (e) => errors.push('pageerror: ' + e.message));
-page.on('console', (m) => { if (m.type() === 'error') errors.push('console: ' + m.text()); });
+page.on('console', (m) => {
+  if (m.type() === 'error') errors.push('console: ' + m.text());
+});
 
 await page.goto('http://127.0.0.1:4173/');
 await page.waitForSelector('[data-testid="create-roadmap-btn"]', { timeout: 15000 });
-await page.click('[data-testid="create-roadmap-btn"]');
+// The button idles with a bobbing animation, so Playwright's "stable" check can flake.
+await page.locator('[data-testid="create-roadmap-btn"]').click({ force: true });
 await page.waitForSelector('[data-testid="config-modal"]');
 await page.fill('[data-testid="config-roadmap-name"]', 'Smoke Test Roadmap');
 await page.screenshot({ path: `${OUT}/01-config-modal.png` });
@@ -31,6 +37,7 @@ await page.click('[data-testid="config-tab-effects"]');
 await page.screenshot({ path: `${OUT}/02-config-effects.png` });
 await page.click('[data-testid="save-config-btn"]');
 await page.waitForSelector('[data-testid="roadmap-export-canvas"]');
+await page.keyboard.press('Escape'); // first-run "your work is a temporary draft" notice
 await page.screenshot({ path: `${OUT}/03-workspace.png` });
 
 // draw a bar over periods 2-3 on task-1
@@ -52,7 +59,10 @@ const item = page.locator('[data-testid^="timeline-item-"]').first();
 const clickBox = await item.boundingBox();
 await page.mouse.click(clickBox.x + clickBox.width / 2, clickBox.y + clickBox.height / 2);
 await page.waitForTimeout(300);
-console.log('popover after clicking bar:', await page.locator('[data-testid="timeline-item-popover"]').count());
+console.log(
+  'popover after clicking bar:',
+  await page.locator('[data-testid="timeline-item-popover"]').count()
+);
 await page.mouse.click(1100, 950);
 await page.waitForTimeout(200);
 
@@ -70,8 +80,22 @@ await page.screenshot({ path: `${OUT}/05-resizing.png` });
 await page.mouse.up();
 await page.waitForTimeout(300);
 const after = await page.locator('[data-testid^="timeline-item-"]').first().boundingBox();
-console.log('bar before', Math.round(before.x), Math.round(before.width), 'after', Math.round(after.x), Math.round(after.width), 'colW', Math.round(colW));
-console.log('left edge moved left:', after.x < before.x - colW * 0.8, ' right edge fixed:', Math.abs((after.x + after.width) - (before.x + before.width)) < 3);
+console.log(
+  'bar before',
+  Math.round(before.x),
+  Math.round(before.width),
+  'after',
+  Math.round(after.x),
+  Math.round(after.width),
+  'colW',
+  Math.round(colW)
+);
+console.log(
+  'left edge moved left:',
+  after.x < before.x - colW * 0.8,
+  ' right edge fixed:',
+  Math.abs(after.x + after.width - (before.x + before.width)) < 3
+);
 await page.screenshot({ path: `${OUT}/06-after-resize.png` });
 
 // export modal

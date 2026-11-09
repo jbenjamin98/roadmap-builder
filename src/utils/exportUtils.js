@@ -2,9 +2,7 @@ import { domToBlob } from 'modern-screenshot';
 
 /** Resolves after the browser has painted twice (lets React commit mode changes). */
 export const nextPaint = () =>
-  new Promise((resolve) =>
-    requestAnimationFrame(() => requestAnimationFrame(resolve))
-  );
+  new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
 
 // Browsers cap canvas size (about 16k px per side and ~270M px total); stay well inside it.
 const MAX_SIDE = 16000;
@@ -28,6 +26,8 @@ const boxSize = (node) => {
  *
  * It tries progressively simpler settings so one failing feature (web-font embedding,
  * very large output) cannot stop the export, and throws the last real error if all fail.
+ * @param {HTMLElement} node
+ * @param {{ backgroundColor?: string, scale?: number }} [options]
  */
 export async function renderRoadmapPng(node, { backgroundColor, scale = 2 } = {}) {
   node.setAttribute('data-exporting', 'true');

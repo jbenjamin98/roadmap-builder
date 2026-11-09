@@ -1,45 +1,101 @@
-import { useState, useEffect } from 'react';
-import { arrayMove } from '@dnd-kit/sortable';
-import LandingPage from './components/LandingPage';
-import ConfigModal from './components/ConfigModal';
-import RoadmapWorkspace from './components/RoadmapWorkspace';
-import CustomCursor from './components/CustomCursor';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import SmallScreenGuard from './components/SmallScreenGuard';
-import { normalizeDesign } from './constants/designOptions';
-import {
-  loadRoadmapState,
-  saveRoadmapState,
-  normalizeRoadmapState,
-  createBlankRoadmapState,
-  loadUiThemeMode,
-  saveUiThemeMode,
-} from './data/defaultState';
+import CustomCursor from './components/CustomCursor';
+import ToastHost from './components/ToastHost';
+import RecoveryBanner from './components/backup/RecoveryBanner';
+import DraftNoticeDialog from './components/backup/DraftNoticeDialog';
+import DriveBackupProvider from './components/backup/DriveBackupProvider';
+import ConfirmDialog from './components/ui/ConfirmDialog';
+import useRoadmapState from './hooks/useRoadmapState';
+import { RoadmapContext } from './state/roadmapContext';
+import { hasSeenDraftNotice, markDraftNoticeSeen } from './data/persistence';
+import { loadUiThemeMode, saveUiThemeMode } from './data/defaultState';
+import { downloadRoadmapJson } from './utils/download';
+import { showToast } from './utils/toast';
+
+// Heavy views are code-split so the first paint only loads what the current view needs.
+const LandingPage = lazy(() => import('./components/LandingPage'));
+const ConfigModal = lazy(() => import('./components/ConfigModal'));
+const RoadmapWorkspace = lazy(() => import('./components/RoadmapWorkspace'));
+
+const isEditableTarget = (el) =>
+  el instanceof HTMLElement &&
+  (el.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName));
 
 export default function App() {
-  const [roadmapState, setRoadmapState] = useState(() => loadRoadmapState());
+  const roadmap = useRoadmapState();
+  const {
+    roadmapState,
+    importRoadmap,
+    createRoadmap,
+    updateConfig,
+    undo,
+    redo,
+    hasUnbackedChanges,
+    markBackedUp,
+    recovery,
+    restoreBackup,
+    dismissRecovery,
+  } = roadmap;
+
   const [currentView, setCurrentView] = useState('landing'); // 'landing' | 'workspace'
   const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
   const [isCreatingNew, setIsCreatingNew] = useState(false);
   const [themeMode, setThemeMode] = useState(() => loadUiThemeMode());
+  // Set when the user is about to replace an un-backed-up roadmap: { verb, apply }.
+  const [pendingReplace, setPendingReplace] = useState(null);
+  const [showDraftNotice, setShowDraftNotice] = useState(false);
 
   // Sync light/dark class on <html>
   useEffect(() => {
-    const root = document.documentElement;
-    if (themeMode === 'dark') {
-      root.classList.add('dark');
-    } else {
-      root.classList.remove('dark');
-    }
+    document.documentElement.classList.toggle('dark', themeMode === 'dark');
     saveUiThemeMode(themeMode);
   }, [themeMode]);
 
-  // Persist active roadmap state to localStorage
+  // Preload editor and modal chunks immediately so opening the modal or switching views is instant.
   useEffect(() => {
-    saveRoadmapState(roadmapState);
-  }, [roadmapState]);
+    import('./components/RoadmapWorkspace');
+    import('./components/ConfigModal');
+  }, []);
 
-  const makeId = (prefix) =>
-    `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+  // Ctrl/Cmd+Z, Ctrl/Cmd+Shift+Z and Ctrl+Y. Native undo wins inside text fields.
+  useEffect(() => {
+    if (currentView !== 'workspace') return undefined;
+    const onKeyDown = (e) => {
+      if (!(e.ctrlKey || e.metaKey) || e.altKey || isEditableTarget(e.target)) return;
+      const key = e.key.toLowerCase();
+      if (key === 'z' && !e.shiftKey) {
+        e.preventDefault();
+        undo();
+      } else if ((key === 'z' && e.shiftKey) || key === 'y') {
+        e.preventDefault();
+        redo();
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [currentView, undo, redo]);
+
+  // Warn before leaving only when there is work that exists nowhere but this browser.
+  useEffect(() => {
+    if (!hasUnbackedChanges) return undefined;
+    const onBeforeUnload = (e) => {
+      e.preventDefault();
+      e.returnValue = '';
+    };
+    window.addEventListener('beforeunload', onBeforeUnload);
+    return () => window.removeEventListener('beforeunload', onBeforeUnload);
+  }, [hasUnbackedChanges]);
+
+  const enterWorkspace = () => {
+    setCurrentView('workspace');
+    if (!hasSeenDraftNotice()) setShowDraftNotice(true);
+  };
+
+  const closeDraftNotice = () => {
+    markDraftNoticeSeen();
+    setShowDraftNotice(false);
+  };
 
   // View A -> Trigger View B (Blank Configuration Modal)
   const handleTriggerCreateRoadmap = () => {
@@ -47,405 +103,150 @@ export default function App() {
     setIsConfigModalOpen(true);
   };
 
-  // View A -> Upload JSON creates/updates a roadmap and routes to editor
+  const applyImport = (parsedJson) => {
+    importRoadmap(parsedJson);
+    enterWorkspace();
+    showToast({ message: 'Roadmap imported.', tone: 'success' });
+  };
+
+  // View A -> Upload JSON creates/updates a roadmap and routes to editor.
+  // Replacing work that has no backup asks first, so nothing is lost by accident.
   const handleUploadRoadmapJson = (parsedJson) => {
-    const normalized = normalizeRoadmapState(parsedJson, { forceNewId: !parsedJson.id });
-    saveRoadmapState(normalized);
-    setRoadmapState(normalized);
-    setCurrentView('workspace');
+    if (hasUnbackedChanges)
+      setPendingReplace({ verb: 'Importing', apply: () => applyImport(parsedJson) });
+    else applyImport(parsedJson);
   };
 
   // Save Configuration from ConfigModal (View B)
-  const handleSaveConfig = (updatedConfig) => {
-    if (isCreatingNew) {
-      const freshState = createBlankRoadmapState(updatedConfig);
-      saveRoadmapState(freshState);
-      setRoadmapState(freshState);
-    } else {
-      setRoadmapState((prev) => {
-        const nextState = {
-          ...prev,
-          config: {
-            ...prev.config,
-            ...updatedConfig,
-            previewSettings: {
-              ...(prev.config?.previewSettings || {}),
-              ...(updatedConfig.previewSettings || {}),
-            },
-            design: normalizeDesign({
-              ...(prev.config?.design || {}),
-              ...(updatedConfig.design || {}),
-            }),
-          },
-        };
-        saveRoadmapState(nextState);
-        return nextState;
-      });
-    }
+  const finishSaveConfig = (updatedConfig) => {
+    if (isCreatingNew) createRoadmap(updatedConfig);
+    else updateConfig(updatedConfig);
 
     setIsConfigModalOpen(false);
     setIsCreatingNew(false);
-    setCurrentView('workspace');
+    enterWorkspace();
   };
 
-  // Legend CRUD
-  const handleAddLegendCategory = ({ label, color, gradient, hasBorder, borderColor, isStriped }) => {
-    setRoadmapState((prev) => ({
-      ...prev,
-      legend: [
-        ...prev.legend,
-        {
-          id: makeId('leg'),
-          label,
-          color,
-          gradient,
-          hasBorder: Boolean(hasBorder),
-          borderColor: borderColor || '#ffffff',
-          isStriped: Boolean(isStriped),
-        },
-      ],
-    }));
-  };
-
-  const handleUpdateLegendCategory = (legendId, updates) => {
-    setRoadmapState((prev) => ({
-      ...prev,
-      legend: prev.legend.map((cat) =>
-        cat.id === legendId ? { ...cat, ...updates } : cat
-      ),
-    }));
-  };
-
-  const handleDeleteLegendCategory = (legendId) => {
-    setRoadmapState((prev) => {
-      const remaining = prev.legend.filter((c) => c.id !== legendId);
-      const fallbackId = remaining[0]?.id;
-      return {
-        ...prev,
-        legend: remaining,
-        timelineItems: prev.timelineItems.map((item) =>
-          item.legendId === legendId ? { ...item, legendId: fallbackId } : item
-        ),
-      };
-    });
-  };
-
-  // Sections CRUD & Reordering
-  const handleAddSection = () => {
-    const newSecId = makeId('sec');
-    const newSubId = makeId('sub');
-    const newTaskId = makeId('task');
-
-    setRoadmapState((prev) => ({
-      ...prev,
-      sections: [
-        ...prev.sections,
-        {
-          id: newSecId,
-          title: `New Section ${prev.sections.length + 1}`,
-          subSections: [
-            {
-              id: newSubId,
-              title: 'Primary Workstream',
-            },
-          ],
-        },
-      ],
-      tasks: [
-        ...prev.tasks,
-        {
-          id: newTaskId,
-          subSectionId: newSubId,
-          title: 'Key Deliverable',
-        },
-      ],
-    }));
-  };
-
-  const handleUpdateSectionTitle = (sectionId, title) => {
-    setRoadmapState((prev) => ({
-      ...prev,
-      sections: prev.sections.map((sec) =>
-        sec.id === sectionId ? { ...sec, title } : sec
-      ),
-    }));
-  };
-
-  const handleDeleteSection = (sectionId) => {
-    setRoadmapState((prev) => {
-      const targetSec = prev.sections.find((s) => s.id === sectionId);
-      const subIds = new Set(
-        (targetSec?.subSections || []).map((sub) => sub.id)
-      );
-      const taskIdsToRemove = new Set(
-        prev.tasks.filter((t) => subIds.has(t.subSectionId)).map((t) => t.id)
-      );
-
-      return {
-        ...prev,
-        sections: prev.sections.filter((s) => s.id !== sectionId),
-        tasks: prev.tasks.filter((t) => !subIds.has(t.subSectionId)),
-        timelineItems: prev.timelineItems.filter(
-          (i) => !taskIdsToRemove.has(i.taskId)
-        ),
-      };
-    });
-  };
-
-  const handleReorderSections = (activeId, overId) => {
-    setRoadmapState((prev) => {
-      const oldIndex = prev.sections.findIndex((s) => s.id === activeId);
-      const newIndex = prev.sections.findIndex((s) => s.id === overId);
-      if (oldIndex === -1 || newIndex === -1) return prev;
-      return {
-        ...prev,
-        sections: arrayMove(prev.sections, oldIndex, newIndex),
-      };
-    });
-  };
-
-  // Sub-sections CRUD & Reordering
-  const handleAddSubSection = (sectionId) => {
-    const newSubId = makeId('sub');
-    const newTaskId = makeId('task');
-
-    setRoadmapState((prev) => ({
-      ...prev,
-      sections: prev.sections.map((sec) =>
-        sec.id === sectionId
-          ? {
-              ...sec,
-              subSections: [
-                ...sec.subSections,
-                {
-                  id: newSubId,
-                  title: `Workstream ${sec.subSections.length + 1}`,
-                },
-              ],
-            }
-          : sec
-      ),
-      tasks: [
-        ...prev.tasks,
-        {
-          id: newTaskId,
-          subSectionId: newSubId,
-          title: 'New Initiative Task',
-        },
-      ],
-    }));
-  };
-
-  const handleUpdateSubSectionTitle = (sectionId, subSectionId, title) => {
-    setRoadmapState((prev) => ({
-      ...prev,
-      sections: prev.sections.map((sec) =>
-        sec.id === sectionId
-          ? {
-              ...sec,
-              subSections: sec.subSections.map((sub) =>
-                sub.id === subSectionId ? { ...sub, title } : sub
-              ),
-            }
-          : sec
-      ),
-    }));
-  };
-
-  const handleDeleteSubSection = (sectionId, subSectionId) => {
-    setRoadmapState((prev) => {
-      const taskIdsToRemove = new Set(
-        prev.tasks
-          .filter((t) => t.subSectionId === subSectionId)
-          .map((t) => t.id)
-      );
-
-      return {
-        ...prev,
-        sections: prev.sections.map((sec) =>
-          sec.id === sectionId
-            ? {
-                ...sec,
-                subSections: sec.subSections.filter(
-                  (sub) => sub.id !== subSectionId
-                ),
-              }
-            : sec
-        ),
-        tasks: prev.tasks.filter((t) => t.subSectionId !== subSectionId),
-        timelineItems: prev.timelineItems.filter(
-          (i) => !taskIdsToRemove.has(i.taskId)
-        ),
-      };
-    });
-  };
-
-  const handleReorderSubSections = (sectionId, activeId, overId) => {
-    setRoadmapState((prev) => ({
-      ...prev,
-      sections: prev.sections.map((sec) => {
-        if (sec.id !== sectionId) return sec;
-        const oldIndex = sec.subSections.findIndex((s) => s.id === activeId);
-        const newIndex = sec.subSections.findIndex((s) => s.id === overId);
-        if (oldIndex === -1 || newIndex === -1) return sec;
-        return {
-          ...sec,
-          subSections: arrayMove(sec.subSections, oldIndex, newIndex),
-        };
-      }),
-    }));
-  };
-
-  // Tasks CRUD & Reordering
-  const handleAddTask = (subSectionId) => {
-    const newTaskId = makeId('task');
-    setRoadmapState((prev) => ({
-      ...prev,
-      tasks: [
-        ...prev.tasks,
-        {
-          id: newTaskId,
-          subSectionId,
-          title: 'New Task / Activity',
-        },
-      ],
-    }));
-  };
-
-  const handleUpdateTaskTitle = (taskId, title) => {
-    setRoadmapState((prev) => ({
-      ...prev,
-      tasks: prev.tasks.map((t) => (t.id === taskId ? { ...t, title } : t)),
-    }));
-  };
-
-  const handleDeleteTask = (taskId) => {
-    setRoadmapState((prev) => ({
-      ...prev,
-      tasks: prev.tasks.filter((t) => t.id !== taskId),
-      timelineItems: prev.timelineItems.filter((i) => i.taskId !== taskId),
-    }));
-  };
-
-  const handleReorderTasks = (subSectionId, activeId, overId) => {
-    setRoadmapState((prev) => {
-      const subTasks = prev.tasks.filter((t) => t.subSectionId === subSectionId);
-      const oldIndex = subTasks.findIndex((t) => t.id === activeId);
-      const newIndex = subTasks.findIndex((t) => t.id === overId);
-      if (oldIndex === -1 || newIndex === -1) return prev;
-
-      const reorderedSubTasks = arrayMove(subTasks, oldIndex, newIndex);
-      let pointer = 0;
-      const nextTasks = prev.tasks.map((t) =>
-        t.subSectionId === subSectionId ? reorderedSubTasks[pointer++] : t
-      );
-
-      return {
-        ...prev,
-        tasks: nextTasks,
-      };
-    });
-  };
-
-  // Timeline Items CRUD
-  const handleAddTimelineItem = (itemData) => {
-    const newId = makeId('item');
-    setRoadmapState((prev) => ({
-      ...prev,
-      timelineItems: [
-        ...prev.timelineItems,
-        {
-          id: newId,
-          taskId: itemData.taskId,
-          startPeriod: Math.max(1, Number(itemData.startPeriod) || 1),
-          duration: Math.max(1, Number(itemData.duration) || 1),
-          type: itemData.type === 'milestone' ? 'milestone' : 'bar',
-          legendId: itemData.legendId || prev.legend[0]?.id,
-          label: itemData.label ?? '',
-          hasEndMilestone: Boolean(itemData.hasEndMilestone),
-        },
-      ],
-    }));
-    return newId;
-  };
-
-  const handleUpdateTimelineItem = (itemId, updates) => {
-    setRoadmapState((prev) => ({
-      ...prev,
-      timelineItems: prev.timelineItems.map((item) =>
-        item.id === itemId ? { ...item, ...updates } : item
-      ),
-    }));
-  };
-
-  const handleDeleteTimelineItem = (itemId) => {
-    setRoadmapState((prev) => ({
-      ...prev,
-      timelineItems: prev.timelineItems.filter((item) => item.id !== itemId),
-    }));
+  const handleSaveConfig = (updatedConfig) => {
+    // A new roadmap replaces the current one and has its own undo history, so ask first.
+    if (isCreatingNew && hasUnbackedChanges) {
+      setPendingReplace({
+        verb: 'Creating a new roadmap',
+        apply: () => finishSaveConfig(updatedConfig),
+      });
+      return;
+    }
+    finishSaveConfig(updatedConfig);
   };
 
   return (
-    <>
-      <SmallScreenGuard />
-      <CustomCursor
-        themeMode={themeMode}
-        isWorkspace={currentView === 'workspace'}
-        roadmapTheme={roadmapState.config?.theme}
-      />
-      {currentView === 'landing' ? (
-        <LandingPage
-          onCreateRoadmap={handleTriggerCreateRoadmap}
-          onUploadRoadmap={handleUploadRoadmapJson}
+    <RoadmapContext.Provider value={roadmap}>
+      <DriveBackupProvider>
+        <SmallScreenGuard />
+        <CustomCursor
           themeMode={themeMode}
-          onChangeThemeMode={setThemeMode}
+          isWorkspace={currentView === 'workspace'}
+          roadmapTheme={roadmapState.config?.theme}
         />
-      ) : (
-        <RoadmapWorkspace
-          roadmapState={roadmapState}
-          onOpenConfigModal={() => {
-            setIsCreatingNew(false);
-            setIsConfigModalOpen(true);
-          }}
-          onNavigateHome={() => {
-            setCurrentView('landing');
-          }}
-          onAddLegendCategory={handleAddLegendCategory}
-          onUpdateLegendCategory={handleUpdateLegendCategory}
-          onDeleteLegendCategory={handleDeleteLegendCategory}
-          onAddSection={handleAddSection}
-          onUpdateSectionTitle={handleUpdateSectionTitle}
-          onDeleteSection={handleDeleteSection}
-          onReorderSections={handleReorderSections}
-          onAddSubSection={handleAddSubSection}
-          onUpdateSubSectionTitle={handleUpdateSubSectionTitle}
-          onDeleteSubSection={handleDeleteSubSection}
-          onReorderSubSections={handleReorderSubSections}
-          onAddTask={handleAddTask}
-          onUpdateTaskTitle={handleUpdateTaskTitle}
-          onDeleteTask={handleDeleteTask}
-          onReorderTasks={handleReorderTasks}
-          onAddTimelineItem={handleAddTimelineItem}
-          onUpdateTimelineItem={handleUpdateTimelineItem}
-          onDeleteTimelineItem={handleDeleteTimelineItem}
-          themeMode={themeMode}
-          onChangeThemeMode={setThemeMode}
-        />
-      )}
+        <ToastHost />
+        <RecoveryBanner recovery={recovery} onRestore={restoreBackup} onDismiss={dismissRecovery} />
+        <Suspense fallback={null}>
+          {currentView === 'landing' ? (
+            <LandingPage
+              onCreateRoadmap={handleTriggerCreateRoadmap}
+              onUploadRoadmap={handleUploadRoadmapJson}
+              onDriveRoadmapOpened={enterWorkspace}
+              continueRoadmap={
+                roadmap.persistable ? { name: roadmapState.config?.name, hasUnbackedChanges } : null
+              }
+              onContinueRoadmap={enterWorkspace}
+              themeMode={themeMode}
+              onChangeThemeMode={setThemeMode}
+            />
+          ) : (
+            <RoadmapWorkspace
+              onOpenConfigModal={() => {
+                setIsCreatingNew(false);
+                setIsConfigModalOpen(true);
+              }}
+              onNavigateHome={() => {
+                setCurrentView('landing');
+              }}
+              themeMode={themeMode}
+              onChangeThemeMode={setThemeMode}
+            />
+          )}
+        </Suspense>
 
-      {isConfigModalOpen && (
-        <ConfigModal
-          key={isCreatingNew ? 'create-blank' : `edit-${roadmapState.id}`}
-          isOpen={isConfigModalOpen}
-          onClose={() => {
-            setIsConfigModalOpen(false);
-            setIsCreatingNew(false);
-          }}
-          initialConfig={isCreatingNew ? null : roadmapState.config}
-          onSaveConfig={handleSaveConfig}
-          isCreatingNew={isCreatingNew}
-        />
-      )}
-    </>
+        <Suspense
+          fallback={
+            <div
+              className="fixed inset-0 z-[200] bg-slate-900/65 dark:bg-slate-950/85 backdrop-blur-md pointer-events-none"
+              aria-hidden="true"
+            />
+          }
+        >
+          {isConfigModalOpen && (
+            <ConfigModal
+              key={isCreatingNew ? 'create-blank' : `edit-${roadmapState.id}`}
+              isOpen={isConfigModalOpen}
+              onClose={() => {
+                setIsConfigModalOpen(false);
+                setIsCreatingNew(false);
+              }}
+              initialConfig={isCreatingNew ? null : roadmapState.config}
+              onSaveConfig={handleSaveConfig}
+              isCreatingNew={isCreatingNew}
+            />
+          )}
+        </Suspense>
+
+        {showDraftNotice && currentView === 'workspace' && (
+          <DraftNoticeDialog
+            onContinue={closeDraftNotice}
+            onDownload={() => {
+              downloadRoadmapJson(roadmapState);
+              markBackedUp('download');
+              closeDraftNotice();
+            }}
+          />
+        )}
+
+        {pendingReplace && (
+          <ConfirmDialog
+            testId="import-confirm"
+            title="Replace your current roadmap?"
+            description={`Your current roadmap has changes that are not backed up. ${pendingReplace.verb} replaces it.`}
+            onCancel={() => setPendingReplace(null)}
+            actions={[
+              { label: 'Cancel', onClick: () => setPendingReplace(null) },
+              {
+                label: 'Replace anyway',
+                variant: 'danger',
+                testId: 'import-replace-btn',
+                onClick: () => {
+                  const { apply } = pendingReplace;
+                  setPendingReplace(null);
+                  apply();
+                },
+              },
+              {
+                label: 'Download current, then replace',
+                variant: 'primary',
+                autoFocus: true,
+                testId: 'import-backup-replace-btn',
+                onClick: () => {
+                  const { apply } = pendingReplace;
+                  downloadRoadmapJson(roadmapState);
+                  markBackedUp('download');
+                  setPendingReplace(null);
+                  apply();
+                },
+              },
+            ]}
+          />
+        )}
+      </DriveBackupProvider>
+    </RoadmapContext.Provider>
   );
 }

@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   Eye,
   Edit3,
@@ -7,6 +7,9 @@ import {
   Home,
   Check,
   Loader2,
+  Undo2,
+  Redo2,
+  PanelLeft,
 } from 'lucide-react';
 import Sidebar from './Sidebar';
 import TimelineGrid from './TimelineGrid';
@@ -16,33 +19,42 @@ import { getCanvasTokens } from './canvasStyles';
 import { resolveMilestoneDesign } from './styleHelpers';
 import { buildRoadmapXlsx } from '../utils/exportExcel';
 import { nextPaint, printRoadmapPdf, renderRoadmapPng } from '../utils/exportUtils';
+import { downloadBlob, downloadRoadmapJson, slugifyName } from '../utils/download';
+import { loadFont } from '../constants/fontLoaders';
+import { useRoadmap } from '../state/roadmapContext';
+import BackupChip from './backup/BackupChip';
+import BackupNagBanner from './backup/BackupNagBanner';
 
 export default function RoadmapWorkspace({
-  roadmapState,
   onOpenConfigModal,
   onNavigateHome,
-  onAddLegendCategory,
-  onUpdateLegendCategory,
-  onDeleteLegendCategory,
-  onAddSection,
-  onUpdateSectionTitle,
-  onDeleteSection,
-  onReorderSections,
-  onAddSubSection,
-  onUpdateSubSectionTitle,
-  onDeleteSubSection,
-  onReorderSubSections,
-  onAddTask,
-  onUpdateTaskTitle,
-  onDeleteTask,
-  onReorderTasks,
-  onAddTimelineItem,
-  onUpdateTimelineItem,
-  onDeleteTimelineItem,
   themeMode,
   onChangeThemeMode,
 }) {
+  const { roadmapState, actions, undo, redo, canUndo, canRedo, markBackedUp } = useRoadmap();
+  const {
+    onAddLegendCategory,
+    onUpdateLegendCategory,
+    onDeleteLegendCategory,
+    onAddSection,
+    onUpdateSectionTitle,
+    onDeleteSection,
+    onReorderSections,
+    onAddSubSection,
+    onUpdateSubSectionTitle,
+    onDeleteSubSection,
+    onReorderSubSections,
+    onAddTask,
+    onUpdateTaskTitle,
+    onDeleteTask,
+    onReorderTasks,
+    onAddTimelineItem,
+    onUpdateTimelineItem,
+    onDeleteTimelineItem,
+  } = actions;
   const [mode, setMode] = useState('editor'); // 'editor' | 'preview'
+  // Below the `lg` breakpoint the sidebar becomes an overlay drawer so the timeline keeps the screen.
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [exportStatus, setExportStatus] = useState('');
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
@@ -51,36 +63,16 @@ export default function RoadmapWorkspace({
 
   const isPreview = mode === 'preview';
   const { config, legend, sections, tasks, timelineItems } = roadmapState;
+  const tokens = getCanvasTokens(config);
+  const primaryColor = tokens.primary;
+  const accents = tokens.accents;
 
-  const slugifyName = (name) =>
-    String(name || 'roadmap')
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/(^-|-$)/g, '') || 'roadmap';
-
-  const triggerJsonDownload = (baseSlug) => {
-    const dataStr = JSON.stringify(roadmapState, null, 2);
-    const blob = new Blob([dataStr], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${baseSlug}.json`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-  };
-
-  const triggerBlobDownload = (blob, filename) => {
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-  };
+  useEffect(() => {
+    if (!sidebarOpen) return undefined;
+    const onKey = (e) => e.key === 'Escape' && setSidebarOpen(false);
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [sidebarOpen]);
 
   const pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -98,7 +90,8 @@ export default function RoadmapWorkspace({
     try {
       if (selection.json) {
         setExportStatus('Exporting JSON...');
-        triggerJsonDownload(baseSlug);
+        downloadRoadmapJson(roadmapState, baseSlug);
+        markBackedUp('download');
         done.push('JSON');
         await pause(250);
       }
@@ -107,7 +100,7 @@ export default function RoadmapWorkspace({
         setExportStatus('Building Excel file...');
         try {
           const blob = await buildRoadmapXlsx(roadmapState);
-          triggerBlobDownload(blob, `${baseSlug}.xlsx`);
+          downloadBlob(blob, `${baseSlug}.xlsx`);
           done.push('Excel');
         } catch (err) {
           console.error('Failed to export Excel:', err);
@@ -118,6 +111,7 @@ export default function RoadmapWorkspace({
 
       if ((selection.png || selection.pdf) && exportCanvasRef.current) {
         setMode('preview');
+        await loadFont(config.fontStyle); // never capture a fallback font
         await nextPaint();
 
         if (selection.png) {
@@ -127,7 +121,7 @@ export default function RoadmapWorkspace({
               backgroundColor: config?.theme?.secondary || '#0f172a',
               scale: 2,
             });
-            triggerBlobDownload(blob, `${baseSlug}.png`);
+            downloadBlob(blob, `${baseSlug}.png`);
             done.push('PNG');
           } catch (err) {
             console.error('Failed to export PNG:', err);
@@ -160,7 +154,15 @@ export default function RoadmapWorkspace({
   };
 
   return (
-    <div className="min-h-screen h-screen flex flex-col bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100 overflow-hidden transition-colors">
+    <div
+      style={{
+        '--scrollbar-primary': primaryColor,
+        '--scrollbar-accent': accents?.[0] || primaryColor,
+        '--scrollbar-thumb-subtle': `${primaryColor}66`,
+        '--scrollbar-thumb-subtle-hover': primaryColor,
+      }}
+      className="min-h-screen h-screen flex flex-col bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100 overflow-hidden transition-colors"
+    >
       {/* Top Workspace Control Bar */}
       <header className="px-4 sm:px-6 py-3 bg-white dark:bg-slate-900/95 border-b border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3 shrink-0 z-30 shadow-sm">
         {/* Left Navigation & Title */}
@@ -174,6 +176,21 @@ export default function RoadmapWorkspace({
             <Home className="w-4 h-4" />
           </button>
 
+          {!isPreview && (
+            <button
+              type="button"
+              onClick={() => setSidebarOpen((v) => !v)}
+              aria-expanded={sidebarOpen}
+              aria-controls="workspace-sidebar"
+              data-testid="sidebar-toggle-btn"
+              className="lg:hidden inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-100 px-2.5 py-2 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-200 dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-200 dark:hover:bg-slate-800"
+              title="Show or hide the rows sidebar"
+            >
+              <PanelLeft className="w-4 h-4" aria-hidden="true" />
+              <span>Rows</span>
+            </button>
+          )}
+
           <div className="min-w-0">
             <div className="flex items-center gap-2">
               <h2 className="font-bold text-sm sm:text-base text-slate-900 dark:text-white truncate max-w-xs sm:max-w-md">
@@ -184,7 +201,8 @@ export default function RoadmapWorkspace({
               </span>
             </div>
             <div className="text-[11px] text-slate-500 dark:text-slate-400 hidden sm:block">
-              {sections.length} Sections • {tasks.length} Tasks • {timelineItems.length} Timeline Items
+              {sections.length} Sections • {tasks.length} Tasks • {timelineItems.length} Timeline
+              Items
             </div>
           </div>
         </div>
@@ -229,6 +247,33 @@ export default function RoadmapWorkspace({
             </span>
           )}
 
+          <div className="flex items-center gap-1" role="group" aria-label="History">
+            <button
+              type="button"
+              onClick={undo}
+              disabled={!canUndo}
+              data-testid="undo-btn"
+              aria-label="Undo"
+              title="Undo (Ctrl+Z)"
+              className="rounded-xl border border-slate-200 bg-slate-100 p-2 text-slate-700 transition-colors hover:bg-slate-200 disabled:opacity-40 disabled:hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 dark:disabled:hover:bg-slate-800"
+            >
+              <Undo2 className="h-3.5 w-3.5" aria-hidden="true" />
+            </button>
+            <button
+              type="button"
+              onClick={redo}
+              disabled={!canRedo}
+              data-testid="redo-btn"
+              aria-label="Redo"
+              title="Redo (Ctrl+Shift+Z)"
+              className="rounded-xl border border-slate-200 bg-slate-100 p-2 text-slate-700 transition-colors hover:bg-slate-200 disabled:opacity-40 disabled:hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 dark:disabled:hover:bg-slate-800"
+            >
+              <Redo2 className="h-3.5 w-3.5" aria-hidden="true" />
+            </button>
+          </div>
+
+          <BackupChip />
+
           <ThemeModeToggle themeMode={themeMode} onChangeThemeMode={onChangeThemeMode} />
 
           <button
@@ -260,34 +305,41 @@ export default function RoadmapWorkspace({
         </div>
       </header>
 
+      <BackupNagBanner />
+
       {/* Main Workspace Split Pane: Left Sidebar (Editor only) + Right Timeline Grid */}
-      <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
+      <div className="relative flex-1 min-h-0 flex flex-row overflow-hidden">
         {!isPreview && (
-          <Sidebar
-            legend={legend}
-            sections={sections}
-            tasks={tasks}
-            theme={config.theme}
-            milestoneDesign={resolveMilestoneDesign(
-              config.design?.milestone,
-              getCanvasTokens(config)
-            )}
-            onAddLegendCategory={onAddLegendCategory}
-            onUpdateLegendCategory={onUpdateLegendCategory}
-            onDeleteLegendCategory={onDeleteLegendCategory}
-            onAddSection={onAddSection}
-            onUpdateSectionTitle={onUpdateSectionTitle}
-            onDeleteSection={onDeleteSection}
-            onReorderSections={onReorderSections}
-            onAddSubSection={onAddSubSection}
-            onUpdateSubSectionTitle={onUpdateSubSectionTitle}
-            onDeleteSubSection={onDeleteSubSection}
-            onReorderSubSections={onReorderSubSections}
-            onAddTask={onAddTask}
-            onUpdateTaskTitle={onUpdateTaskTitle}
-            onDeleteTask={onDeleteTask}
-            onReorderTasks={onReorderTasks}
-          />
+          <div
+            id="workspace-sidebar"
+            className={`${sidebarOpen ? 'flex' : 'hidden'} lg:flex absolute lg:static inset-y-0 left-0 z-20 lg:z-auto w-[min(22rem,90vw)] lg:w-auto shrink-0 shadow-2xl lg:shadow-none`}
+          >
+            <Sidebar
+              legend={legend}
+              sections={sections}
+              tasks={tasks}
+              theme={config.theme}
+              milestoneDesign={resolveMilestoneDesign(
+                config.design?.milestone,
+                getCanvasTokens(config)
+              )}
+              onAddLegendCategory={onAddLegendCategory}
+              onUpdateLegendCategory={onUpdateLegendCategory}
+              onDeleteLegendCategory={onDeleteLegendCategory}
+              onAddSection={onAddSection}
+              onUpdateSectionTitle={onUpdateSectionTitle}
+              onDeleteSection={onDeleteSection}
+              onReorderSections={onReorderSections}
+              onAddSubSection={onAddSubSection}
+              onUpdateSubSectionTitle={onUpdateSubSectionTitle}
+              onDeleteSubSection={onDeleteSubSection}
+              onReorderSubSections={onReorderSubSections}
+              onAddTask={onAddTask}
+              onUpdateTaskTitle={onUpdateTaskTitle}
+              onDeleteTask={onDeleteTask}
+              onReorderTasks={onReorderTasks}
+            />
+          </div>
         )}
 
         <TimelineGrid

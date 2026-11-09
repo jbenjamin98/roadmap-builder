@@ -10,18 +10,14 @@ import {
 import {
   SortableContext,
   sortableKeyboardCoordinates,
-  useSortable,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
 import {
-  GripVertical,
   Plus,
   Trash2,
   Tag,
   FolderPlus,
   Layers,
-  CheckSquare,
   Palette,
   ChevronDown,
   ChevronRight,
@@ -31,403 +27,8 @@ import {
 } from 'lucide-react';
 import MilestoneMarker from './MilestoneMarker';
 import { getCategoryBackground } from './canvasStyles';
-import { LEGEND_PRESET_STYLES } from '../constants/themes';
-
-function SortableSectionItem({
-  section,
-  tasks,
-  isCollapsed,
-  onToggleCollapse,
-  collapsedSubSections,
-  onToggleSubSectionCollapse,
-  onUpdateSectionTitle,
-  onDeleteSection,
-  onAddSubSection,
-  onUpdateSubSectionTitle,
-  onDeleteSubSection,
-  onReorderSubSections,
-  onAddTask,
-  onUpdateTaskTitle,
-  onDeleteTask,
-  onReorderTasks,
-  theme,
-}) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: section.id });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    zIndex: isDragging ? 30 : 'auto',
-  };
-
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
-  );
-
-  const handleSubSectionDragEnd = (event) => {
-    const { active, over } = event;
-    if (!over || active.id === over.id) return;
-    onReorderSubSections(section.id, active.id, over.id);
-  };
-
-  return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      className={`rounded-2xl border transition-all ${
-        isDragging
-          ? 'bg-slate-100 dark:bg-slate-800/95 border-indigo-400 shadow-xl ring-2 ring-indigo-500/30'
-          : 'bg-slate-50/90 dark:bg-slate-900/75 border-slate-200 dark:border-slate-800/90'
-      }`}
-    >
-      {/* Section Header */}
-      <div
-        className={`flex items-center gap-1.5 px-2.5 py-2 ${
-          isCollapsed ? 'rounded-2xl' : 'rounded-t-2xl border-b border-slate-200 dark:border-slate-800/80'
-        }`}
-        style={{
-          background: `linear-gradient(90deg, ${theme?.primary || '#6366f1'}22 0%, transparent 100%)`,
-        }}
-      >
-        <button
-          type="button"
-          {...attributes}
-          {...listeners}
-          className="p-0.5 text-slate-400 hover:text-slate-700 dark:hover:text-white cursor-grab active:cursor-grabbing rounded shrink-0"
-          title="Drag to reorder section"
-        >
-          <GripVertical className="w-4 h-4" />
-        </button>
-
-        <button
-          type="button"
-          onClick={onToggleCollapse}
-          data-testid={`toggle-section-${section.id}`}
-          className="p-0.5 rounded text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors shrink-0"
-          title={isCollapsed ? 'Expand section' : 'Collapse section'}
-        >
-          {isCollapsed ? (
-            <ChevronRight className="w-4 h-4" />
-          ) : (
-            <ChevronDown className="w-4 h-4" />
-          )}
-        </button>
-
-        <input
-          type="text"
-          value={section.title}
-          onChange={(e) => onUpdateSectionTitle(section.id, e.target.value)}
-          className="flex-1 min-w-0 bg-transparent text-xs font-bold text-slate-900 dark:text-white focus:outline-none focus:bg-white dark:focus:bg-slate-950/70 focus:px-2 py-0.5 rounded transition-all"
-          placeholder="Section Title..."
-        />
-
-
-        <button
-          type="button"
-          onClick={() => onAddSubSection(section.id)}
-          className="inline-flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-1 rounded-lg bg-white dark:bg-slate-800/90 hover:bg-indigo-50 dark:hover:bg-indigo-600/30 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700/70 transition-colors shrink-0"
-          title="Add Sub-section"
-        >
-          <Plus className="w-3 h-3" />
-          <span>Sub-section</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => {
-            if (
-              window.confirm(
-                `Delete the section "${section.title || 'Untitled'}" and everything inside it (sub-sections, tasks and timeline items)? This cannot be undone.`
-              )
-            ) {
-              onDeleteSection(section.id);
-            }
-          }}
-          className="p-1 text-slate-400 hover:text-rose-500 dark:hover:text-rose-400 transition-colors shrink-0"
-          title="Delete Section"
-        >
-          <Trash2 className="w-3.5 h-3.5" />
-        </button>
-      </div>
-
-      {/* Sub-sections Sortable List */}
-      {!isCollapsed && (
-        <div className="p-2.5 space-y-2">
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handleSubSectionDragEnd}
-          >
-            <SortableContext
-              items={section.subSections.map((s) => s.id)}
-              strategy={verticalListSortingStrategy}
-            >
-              {section.subSections.map((sub) => (
-                <SortableSubSectionItem
-                  key={sub.id}
-                  sectionId={section.id}
-                  subSection={sub}
-                  tasks={tasks.filter((t) => t.subSectionId === sub.id)}
-                  isCollapsed={collapsedSubSections.has(sub.id)}
-                  onToggleCollapse={() => onToggleSubSectionCollapse(sub.id)}
-                  onUpdateSubSectionTitle={onUpdateSubSectionTitle}
-                  onDeleteSubSection={onDeleteSubSection}
-                  onAddTask={onAddTask}
-                  onUpdateTaskTitle={onUpdateTaskTitle}
-                  onDeleteTask={onDeleteTask}
-                  onReorderTasks={onReorderTasks}
-                />
-              ))}
-            </SortableContext>
-          </DndContext>
-
-          {section.subSections.length === 0 && (
-            <div className="text-center py-2 text-[11px] text-slate-500">
-              No sub-sections yet.{' '}
-              <button
-                type="button"
-                onClick={() => onAddSubSection(section.id)}
-                className="text-indigo-600 dark:text-indigo-400 hover:underline"
-              >
-                + Add Sub-section
-              </button>
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function SortableSubSectionItem({
-  sectionId,
-  subSection,
-  tasks,
-  isCollapsed,
-  onToggleCollapse,
-  onUpdateSubSectionTitle,
-  onDeleteSubSection,
-  onAddTask,
-  onUpdateTaskTitle,
-  onDeleteTask,
-  onReorderTasks,
-}) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: subSection.id });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    zIndex: isDragging ? 25 : 'auto',
-  };
-
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
-  );
-
-  const handleTaskDragEnd = (event) => {
-    const { active, over } = event;
-    if (!over || active.id === over.id) return;
-    onReorderTasks(subSection.id, active.id, over.id);
-  };
-
-  return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      className={`rounded-xl border p-2 transition-all ${
-        isDragging
-          ? 'bg-slate-100 dark:bg-slate-800 border-fuchsia-400 shadow-lg'
-          : 'bg-white dark:bg-slate-950/60 border-slate-200 dark:border-slate-800/80'
-      }`}
-    >
-      {/* Sub-section Row */}
-      <div
-        className={`flex items-center gap-1 ${
-          isCollapsed ? '' : 'pb-1.5 mb-1.5 border-b border-slate-200 dark:border-slate-800/60'
-        }`}
-      >
-        <button
-          type="button"
-          {...attributes}
-          {...listeners}
-          className="p-0.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 cursor-grab active:cursor-grabbing shrink-0"
-          title="Drag to reorder sub-section"
-        >
-          <GripVertical className="w-3.5 h-3.5" />
-        </button>
-
-        <button
-          type="button"
-          onClick={onToggleCollapse}
-          data-testid={`toggle-subsection-${subSection.id}`}
-          className="p-0.5 rounded text-slate-400 hover:text-slate-800 dark:hover:text-white transition-colors shrink-0"
-          title={isCollapsed ? 'Expand sub-section' : 'Collapse sub-section'}
-        >
-          {isCollapsed ? (
-            <ChevronRight className="w-3.5 h-3.5" />
-          ) : (
-            <ChevronDown className="w-3.5 h-3.5" />
-          )}
-        </button>
-
-        <input
-          type="text"
-          value={subSection.title}
-          onChange={(e) =>
-            onUpdateSubSectionTitle(sectionId, subSection.id, e.target.value)
-          }
-          className="flex-1 min-w-0 bg-transparent text-xs font-semibold text-slate-800 dark:text-slate-200 focus:outline-none focus:bg-slate-100 dark:focus:bg-slate-900 focus:px-1.5 py-0.5 rounded"
-          placeholder="Sub-section Name..."
-        />
-
-        {isCollapsed && (
-          <span className="text-[10px] text-slate-400 font-mono shrink-0">
-            ({tasks.length})
-          </span>
-        )}
-
-        <button
-          type="button"
-          onClick={() => onAddTask(subSection.id)}
-          className="inline-flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0.5 rounded bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-700 dark:text-indigo-300 border border-indigo-500/30 transition-colors shrink-0"
-          title="Add Task to this Sub-section"
-        >
-          <Plus className="w-2.5 h-2.5" />
-          <span>Task</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => {
-            if (
-              window.confirm(
-                `Delete the sub-section "${subSection.title || 'Untitled'}" and all of its tasks and timeline items? This cannot be undone.`
-              )
-            ) {
-              onDeleteSubSection(sectionId, subSection.id);
-            }
-          }}
-          className="p-0.5 text-slate-400 hover:text-rose-500 dark:hover:text-rose-400 transition-colors shrink-0"
-          title="Delete Sub-section"
-        >
-          <Trash2 className="w-3 h-3" />
-        </button>
-      </div>
-
-      {/* Tasks Sortable List */}
-      {!isCollapsed && (
-        <div className="space-y-1.5 pl-2">
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handleTaskDragEnd}
-          >
-            <SortableContext
-              items={tasks.map((t) => t.id)}
-              strategy={verticalListSortingStrategy}
-            >
-              {tasks.map((task) => (
-                <SortableTaskItem
-                  key={task.id}
-                  task={task}
-                  onUpdateTaskTitle={onUpdateTaskTitle}
-                  onDeleteTask={onDeleteTask}
-                />
-              ))}
-            </SortableContext>
-          </DndContext>
-
-          {tasks.length === 0 && (
-            <div className="text-[11px] text-slate-500 py-1 pl-2">
-              No tasks.{' '}
-              <button
-                type="button"
-                onClick={() => onAddTask(subSection.id)}
-                className="text-indigo-600 dark:text-indigo-400 hover:underline"
-              >
-                + Add Task
-              </button>
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function SortableTaskItem({ task, onUpdateTaskTitle, onDeleteTask }) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: task.id });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    zIndex: isDragging ? 20 : 'auto',
-  };
-
-  return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      className={`flex items-center gap-1.5 px-2 py-1.5 rounded-lg border text-xs transition-all ${
-        isDragging
-          ? 'bg-slate-100 dark:bg-slate-800 border-teal-400 shadow-md'
-          : 'bg-slate-50 dark:bg-slate-900/90 border-slate-200 dark:border-slate-800/80 hover:border-slate-300 dark:hover:border-slate-700'
-      }`}
-    >
-      <button
-        type="button"
-        {...attributes}
-        {...listeners}
-        className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 cursor-grab active:cursor-grabbing shrink-0"
-        title="Drag to reorder task"
-      >
-        <GripVertical className="w-3.5 h-3.5" />
-      </button>
-
-      <CheckSquare className="w-3 h-3 text-teal-600 dark:text-teal-400 shrink-0" />
-
-      <input
-        type="text"
-        value={task.title}
-        onChange={(e) => onUpdateTaskTitle(task.id, e.target.value)}
-        className="flex-1 min-w-0 bg-transparent text-slate-800 dark:text-slate-200 text-xs focus:outline-none focus:bg-white dark:focus:bg-slate-950 focus:px-1.5 py-0.5 rounded"
-        placeholder="Task / Activity name..."
-      />
-
-      <button
-        type="button"
-        onClick={() => onDeleteTask(task.id)}
-        className="text-slate-400 hover:text-rose-500 dark:hover:text-rose-400 p-0.5 transition-colors shrink-0"
-        title="Delete Task"
-      >
-        <Trash2 className="w-3 h-3" />
-      </button>
-    </div>
-  );
-}
+import { getThemeLegendPresets } from '../constants/legendPresets';
+import SortableSectionItem from './sidebar/SortableSectionItem';
 
 export default function Sidebar({
   legend,
@@ -452,9 +53,7 @@ export default function Sidebar({
   onReorderTasks,
 }) {
   const [newLegendLabel, setNewLegendLabel] = useState('');
-  const [newLegendColor, setNewLegendColor] = useState(
-    theme?.accents?.[0] || '#6366f1'
-  );
+  const [newLegendColor, setNewLegendColor] = useState(theme?.accents?.[0] || '#6366f1');
   const [newLegendGradient, setNewLegendGradient] = useState('');
   const [newLegendHasBorder, setNewLegendHasBorder] = useState(false);
   const [newLegendBorderColor, setNewLegendBorderColor] = useState('#ffffff');
@@ -505,8 +104,7 @@ export default function Sidebar({
   const allSectionIds = sections.map((s) => s.id);
   const allSubSectionIds = sections.flatMap((s) => s.subSections.map((sub) => sub.id));
   const areAllCollapsed =
-    allSectionIds.length > 0 &&
-    allSectionIds.every((id) => collapsedSections.has(id));
+    allSectionIds.length > 0 && allSectionIds.every((id) => collapsedSections.has(id));
 
   const handleToggleCollapseAll = () => {
     if (areAllCollapsed) {
@@ -544,7 +142,7 @@ export default function Sidebar({
 
   return (
     <aside
-      className="w-full lg:w-88 xl:w-96 shrink-0 bg-white dark:bg-slate-900/90 border-r border-slate-200 dark:border-slate-800/90 flex flex-col h-full select-none overflow-y-auto transition-colors"
+      className="w-full lg:w-80 xl:w-96 shrink-0 bg-white dark:bg-slate-900/90 border-r border-slate-200 dark:border-slate-800/90 flex flex-col h-full select-none overflow-y-auto transition-colors"
       data-testid="editor-sidebar"
     >
       {/* Top Drag-and-Drop Milestone Palette Callout */}
@@ -577,9 +175,7 @@ export default function Sidebar({
               />
             </div>
             <div>
-              <div className="text-xs font-bold text-amber-900 dark:text-amber-200">
-                Milestone
-              </div>
+              <div className="text-xs font-bold text-amber-900 dark:text-amber-200">Milestone</div>
               <div className="text-[10px] text-amber-700/80 dark:text-amber-300/70">
                 Drop on period
               </div>
@@ -601,9 +197,7 @@ export default function Sidebar({
               <Sparkles className="w-4 h-4 text-indigo-600 dark:text-indigo-400 group-hover:scale-110 transition-transform" />
             </div>
             <div>
-              <div className="text-xs font-bold text-indigo-900 dark:text-indigo-200">
-                Task Bar
-              </div>
+              <div className="text-xs font-bold text-indigo-900 dark:text-indigo-200">Task Bar</div>
               <div className="text-[10px] text-indigo-700/80 dark:text-indigo-300/70">
                 Draw or drop
               </div>
@@ -647,9 +241,7 @@ export default function Sidebar({
                       {/* Swatch Button to toggle style editor */}
                       <button
                         type="button"
-                        onClick={() =>
-                          setEditingLegendId(isEditingStyle ? null : cat.id)
-                        }
+                        onClick={() => setEditingLegendId(isEditingStyle ? null : cat.id)}
                         className="w-6 h-6 rounded-lg shrink-0 cursor-pointer shadow-sm transition-transform hover:scale-105"
                         style={{
                           background: getCategoryBackground(cat),
@@ -662,19 +254,16 @@ export default function Sidebar({
 
                       <input
                         type="text"
+                        aria-label="Legend category name"
                         value={cat.label}
-                        onChange={(e) =>
-                          onUpdateLegendCategory(cat.id, { label: e.target.value })
-                        }
+                        onChange={(e) => onUpdateLegendCategory(cat.id, { label: e.target.value })}
                         className="flex-1 min-w-0 bg-transparent text-xs font-medium text-slate-800 dark:text-slate-200 focus:outline-none focus:bg-white dark:focus:bg-slate-900 px-1.5 py-0.5 rounded"
                       />
 
                       {/* Style Editor Toggle Button */}
                       <button
                         type="button"
-                        onClick={() =>
-                          setEditingLegendId(isEditingStyle ? null : cat.id)
-                        }
+                        onClick={() => setEditingLegendId(isEditingStyle ? null : cat.id)}
                         data-testid={`edit-legend-style-${cat.id}`}
                         className={`p-1 rounded-lg transition-colors ${
                           isEditingStyle
@@ -707,7 +296,7 @@ export default function Sidebar({
                             Preset Styles & Custom Fill
                           </div>
                           <div className="flex flex-wrap items-center gap-1.5">
-                            {LEGEND_PRESET_STYLES.map((preset) => (
+                            {getThemeLegendPresets(theme).map((preset) => (
                               <button
                                 key={preset.name}
                                 type="button"

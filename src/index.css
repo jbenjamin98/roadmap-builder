@@ -12,7 +12,8 @@
 }
 
 @keyframes duckBob {
-  0%, 100% {
+  0%,
+  100% {
     transform: translateY(0px) rotate(0deg);
   }
   25% {
@@ -111,7 +112,8 @@
 }
 
 @keyframes footWaddleLeft {
-  0%, 100% {
+  0%,
+  100% {
     transform: translateY(0px) rotate(-8deg);
   }
   50% {
@@ -120,7 +122,8 @@
 }
 
 @keyframes footWaddleRight {
-  0%, 100% {
+  0%,
+  100% {
     transform: translateY(-9px) rotate(-14deg);
   }
   50% {
@@ -198,22 +201,27 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(100, 116, 139, 0.4);
+  background: var(--scrollbar-thumb-subtle, rgba(100, 116, 139, 0.4));
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(100, 116, 139, 0.65);
+  background: var(--scrollbar-thumb-subtle-hover, rgba(100, 116, 139, 0.65));
 }
-
 
 .animate-egg-wobble {
   animation: eggWobble 0.85s ease-in-out;
 }
 
 @keyframes eggCrackDraw {
-  0% { stroke-dashoffset: 100; opacity: 0.9; }
-  100% { stroke-dashoffset: 0; opacity: 1; }
+  0% {
+    stroke-dashoffset: 100;
+    opacity: 0.9;
+  }
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
 }
 
 .egg-crack {
@@ -223,9 +231,19 @@
 }
 
 @keyframes eggBurst {
-  0%, 60% { opacity: 0; transform: scale(0.4); }
-  80% { opacity: 0.95; transform: scale(1.2); }
-  100% { opacity: 0; transform: scale(1.8); }
+  0%,
+  60% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  80% {
+    opacity: 0.95;
+    transform: scale(1.2);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.8);
+  }
 }
 
 .egg-burst {
@@ -234,11 +252,23 @@
 }
 
 @keyframes duckFlyIn {
-  0% { transform: translate(var(--fx, 0px), -380px) scale(0.12); opacity: 0; }
-  12% { opacity: 1; }
-  60% { transform: translate(calc(var(--fx, 0px) * 0.25), -60px) scale(0.8); }
-  80% { transform: translate(0, -18px) scale(1.05); }
-  100% { transform: translate(0, 0) scale(1); opacity: 1; }
+  0% {
+    transform: translate(var(--fx, 0px), -380px) scale(0.12);
+    opacity: 0;
+  }
+  12% {
+    opacity: 1;
+  }
+  60% {
+    transform: translate(calc(var(--fx, 0px) * 0.25), -60px) scale(0.8);
+  }
+  80% {
+    transform: translate(0, -18px) scale(1.05);
+  }
+  100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 1;
+  }
 }
 
 .animate-duck-fly {
@@ -246,8 +276,13 @@
 }
 
 @keyframes wingFlap {
-  0%, 100% { transform: rotate(35deg) scale(1.9, 0.5); }
-  50% { transform: rotate(-75deg) scale(1.9, 1.3); }
+  0%,
+  100% {
+    transform: rotate(35deg) scale(1.9, 0.5);
+  }
+  50% {
+    transform: rotate(-75deg) scale(1.9, 1.3);
+  }
 }
 
 .duck-wing-flap {
@@ -255,10 +290,15 @@
   animation: wingFlap 0.22s ease-in-out infinite;
 }
 
-
 @keyframes splashRing {
-  0% { transform: scale(0.2); opacity: 0.95; }
-  100% { transform: scale(1.9); opacity: 0; }
+  0% {
+    transform: scale(0.2);
+    opacity: 0.95;
+  }
+  100% {
+    transform: scale(1.9);
+    opacity: 0;
+  }
 }
 
 .splash-ring {
@@ -267,21 +307,41 @@
 }
 
 @keyframes splashDrop {
-  0% { transform: translate(0, 0) scale(1); opacity: 1; }
-  55% { transform: translate(calc(var(--dx) * 0.7), var(--dy)) scale(1); opacity: 1; }
-  100% { transform: translate(var(--dx), 14px) scale(0.4); opacity: 0; }
+  0% {
+    transform: translate(0, 0) scale(1);
+    opacity: 1;
+  }
+  55% {
+    transform: translate(calc(var(--dx) * 0.7), var(--dy)) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(var(--dx), 14px) scale(0.4);
+    opacity: 0;
+  }
 }
 
 .splash-drop {
   animation: splashDrop 0.8s ease-out both;
 }
 
-
 @keyframes duckDiveUnder {
-  0% { transform: translateY(0) scale(1); opacity: 1; }
-  25% { transform: translateY(46px) scale(0.85); opacity: 0.18; }
-  75% { transform: translateY(46px) scale(0.85); opacity: 0.18; }
-  100% { transform: translateY(0) scale(1); opacity: 1; }
+  0% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+  25% {
+    transform: translateY(46px) scale(0.85);
+    opacity: 0.18;
+  }
+  75% {
+    transform: translateY(46px) scale(0.85);
+    opacity: 0.18;
+  }
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
 }
 
 .animate-duck-dive-under {
@@ -289,31 +349,54 @@
 }
 
 @keyframes duckDiveTail {
-  0% { transform: rotate(0deg) translateY(0); }
-  22% { transform: rotate(150deg) translateY(18px); }
-  78% { transform: rotate(150deg) translateY(18px); }
-  100% { transform: rotate(0deg) translateY(0); }
+  0% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+  14%,
+  86% {
+    transform: translateY(30px) scale(0.6);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
 }
 
 .animate-duck-dive-tail {
-  transform-origin: 50% 70%;
   animation: duckDiveTail 2.7s ease-in-out both;
 }
 
 @keyframes legWiggle {
-  0%, 100% { transform: rotate(-22deg); }
-  50% { transform: rotate(22deg); }
+  0%,
+  100% {
+    transform: rotate(-22deg);
+  }
+  50% {
+    transform: rotate(22deg);
+  }
 }
 
 .duck-leg-wiggle {
   animation: legWiggle 0.26s ease-in-out infinite;
 }
 
-
 @keyframes duckShadow {
-  0%, 8% { opacity: 0; transform: scale(0.4); }
-  22%, 80% { opacity: 1; transform: scale(1); }
-  100% { opacity: 0; transform: scale(0.5); }
+  0%,
+  8% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  22%,
+  80% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.5);
+  }
 }
 
 .duck-shadow {
@@ -322,9 +405,21 @@
 }
 
 @keyframes duckLegsUp {
-  0%, 20% { transform: translateY(26px); opacity: 0; }
-  34%, 76% { transform: translateY(0); opacity: 1; }
-  92%, 100% { transform: translateY(26px); opacity: 0; }
+  0%,
+  20% {
+    transform: translateY(26px);
+    opacity: 0;
+  }
+  34%,
+  76% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  92%,
+  100% {
+    transform: translateY(26px);
+    opacity: 0;
+  }
 }
 
 .duck-legs-up {
@@ -332,57 +427,197 @@
 }
 
 @keyframes duckDiveUnder {
-  0% { transform: translateY(0) scale(1); opacity: 1; }
-  14%, 86% { transform: translateY(30px) scale(0.6); opacity: 0; }
-  100% { transform: translateY(0) scale(1); opacity: 1; }
+  0% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+  14%,
+  86% {
+    transform: translateY(30px) scale(0.6);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
 }
 
-
-/* Custom scrollbars for the roadmap canvas (horizontal + vertical) */
+/* Custom scrollbars for the roadmap canvas (horizontal + vertical) matching theme */
 .roadmap-scroll {
   scrollbar-width: auto;
-  scrollbar-color: rgba(99, 102, 241, 0.65) rgba(100, 116, 139, 0.16);
+  scrollbar-color: var(--scrollbar-primary, rgba(99, 102, 241, 0.65))
+    var(--scrollbar-track, rgba(100, 116, 139, 0.16));
 }
 .roadmap-scroll::-webkit-scrollbar {
-  height: 16px;
-  width: 16px;
+  height: 14px;
+  width: 14px;
 }
 .roadmap-scroll::-webkit-scrollbar-track {
-  background: rgba(100, 116, 139, 0.14);
+  background: var(--scrollbar-track, rgba(100, 116, 139, 0.14));
   border-radius: 999px;
 }
 .roadmap-scroll::-webkit-scrollbar-thumb {
-  background: linear-gradient(90deg, #6366f1, #a855f7);
-  border: 4px solid transparent;
+  background: linear-gradient(
+    135deg,
+    var(--scrollbar-primary, #6366f1),
+    var(--scrollbar-accent, #a855f7)
+  );
+  border: 3px solid transparent;
   background-clip: content-box;
   border-radius: 999px;
 }
 .roadmap-scroll::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(90deg, #818cf8, #c084fc);
+  background: linear-gradient(
+    135deg,
+    var(--scrollbar-accent, #a855f7),
+    var(--scrollbar-primary, #6366f1)
+  );
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+.roadmap-scroll::-webkit-scrollbar-thumb:horizontal {
+  background: linear-gradient(
+    90deg,
+    var(--scrollbar-primary, #6366f1),
+    var(--scrollbar-accent, #a855f7)
+  );
+  border: 3px solid transparent;
+  background-clip: content-box;
+  border-radius: 999px;
+}
+.roadmap-scroll::-webkit-scrollbar-thumb:horizontal:hover {
+  background: linear-gradient(
+    90deg,
+    var(--scrollbar-accent, #a855f7),
+    var(--scrollbar-primary, #6366f1)
+  );
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+.roadmap-scroll::-webkit-scrollbar-thumb:vertical {
+  background: linear-gradient(
+    180deg,
+    var(--scrollbar-primary, #6366f1),
+    var(--scrollbar-accent, #a855f7)
+  );
+  border: 3px solid transparent;
+  background-clip: content-box;
+  border-radius: 999px;
+}
+.roadmap-scroll::-webkit-scrollbar-thumb:vertical:hover {
+  background: linear-gradient(
+    180deg,
+    var(--scrollbar-accent, #a855f7),
+    var(--scrollbar-primary, #6366f1)
+  );
+  border: 3px solid transparent;
   background-clip: content-box;
 }
 .roadmap-scroll::-webkit-scrollbar-corner {
   background: transparent;
 }
 
+/* ---- Timeline bar resize handles: Actual Corners + Spaced Line + Big Triangle ---- */
+/* Prevent text selection while dragging or resizing across the document */
+body.is-resizing-horizontal,
+body.is-resizing-horizontal * {
+  user-select: none !important;
+}
+
+/* Prevent hover brackets and handles from displaying on other bars while dragging or resizing any bar */
+body.is-resizing-horizontal .group\/item:not(.is-active-bar) .corner-bracket-svg,
+body.is-resizing-horizontal .group\/item:not(.is-active-bar) .pull-handle-svg,
+body.is-resizing-horizontal .group\/item:not(.is-active-bar) .handle-center {
+  opacity: 0 !important;
+}
+
+/* Ensure hovered or active bars always stack above all sibling bars */
+.react-draggable:hover,
+.react-draggable:has(.group\/item:hover),
+.react-draggable:has(.resize-grip:hover) {
+  z-index: 35 !important;
+}
+
+.react-draggable:has(.resize-grip.is-dragging) {
+  z-index: 45 !important;
+}
+
+.resize-grip .pull-handle-svg,
+.resize-grip .corner-bracket-svg {
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.35));
+  transition:
+    filter 150ms ease,
+    opacity 150ms ease;
+}
+
+.resize-grip .handle-center {
+  transition: transform 180ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.resize-grip .bold-triangle {
+  transition: transform 180ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.resize-grip:hover .pull-handle-svg,
+.resize-grip:hover .corner-bracket-svg {
+  filter: drop-shadow(0 0 2.5px var(--handle-theme, #6366f1))
+    drop-shadow(0 1px 2px rgba(0, 0, 0, 0.35));
+}
+
+.resize-grip:hover .handle-center {
+  transform: translateY(-50%) translateX(1.5px);
+}
+
+.resize-grip.is-dragging .pull-handle-svg,
+.resize-grip.is-dragging .corner-bracket-svg {
+  opacity: 1 !important;
+  filter: drop-shadow(0 0 3px var(--handle-theme, #6366f1))
+    drop-shadow(0 1px 2px rgba(0, 0, 0, 0.35));
+}
+
+.resize-grip.is-dragging .handle-center {
+  /* Subtle, stable deflection without jitter */
+  transform: translateY(-50%) translateX(calc(var(--drag-tension, 0) * 1.5px));
+  transition: none;
+}
+
+.resize-grip.is-dragging .bold-triangle {
+  /* Subtle spring tension along pull axis */
+  transform: translateX(calc(var(--drag-tension, 0) * 3px));
+  transition: none;
+}
+
+.resize-grip.is-dragging .boundary-line {
+  stroke-width: 3px;
+  filter: drop-shadow(0 0 2px var(--handle-theme, #6366f1));
+  transition: none;
+}
+
+.resize-grip.is-dragging .corner-bracket-top,
+.resize-grip.is-dragging .corner-bracket-bottom {
+  stroke-width: 2.25px;
+  filter: drop-shadow(0 0 2px var(--handle-theme, #6366f1));
+  transition: none;
+}
+
 /* ---- Export / print support ---- */
-[data-exporting="true"] .sticky {
+[data-exporting='true'] .sticky {
   position: relative !important;
   left: auto !important;
   top: auto !important;
 }
 /* Font metrics can differ slightly inside the exported image, which made labels wrap at random.
    Keep every label on its own line; only task-bar text (.wrap-ok) may wrap. */
-[data-exporting="true"] [data-export-text]:not(.wrap-ok) {
+[data-exporting='true'] [data-export-text]:not(.wrap-ok) {
   white-space: nowrap !important;
 }
-[data-exporting="true"] [data-testid="canvas-legend-bar"] {
+[data-exporting='true'] [data-testid='canvas-legend-bar'] {
   flex-wrap: nowrap !important;
 }
-[data-exporting="true"] [data-testid="canvas-legend-bar"] > * {
+[data-exporting='true'] [data-testid='canvas-legend-bar'] > * {
   flex-shrink: 0;
 }
-[data-exporting="true"] [data-editor-control="true"] {
+[data-exporting='true'] [data-editor-control='true'] {
   display: none !important;
 }
 #roadmap-print-root {
@@ -409,4 +644,16 @@
 input[type='checkbox'],
 input[type='radio'] {
   accent-color: #6366f1;
+}
+
+/* Respect the OS "reduce motion" setting: keep layout/state changes, drop decorative movement. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
 }

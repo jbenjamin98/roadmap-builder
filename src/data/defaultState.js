@@ -1,8 +1,9 @@
+import { createId } from '../utils/ids';
+import { CURRENT_VERSION, migrateRoadmap } from './migrations';
 import { PRESET_THEMES } from '../constants/themes';
+import { remapLegendForTheme } from '../constants/legendPresets';
 import { getDefaultDesign, normalizeDesign } from '../constants/designOptions';
 
-export const STORAGE_KEY = 'roadmap_builder_state_v1';
-export const SAVED_ROADMAPS_KEY = 'roadmap_builder_saved_list_v1';
 export const UI_THEME_KEY = 'roadmap_builder_ui_theme_v1';
 
 export function getTodayDateString() {
@@ -19,7 +20,8 @@ export function getDefaultLegend() {
       id: 'leg-default',
       label: 'Default',
       color: '#6366f1',
-      gradient: 'linear-gradient(135deg, rgba(99, 102, 241, 0.92) 0%, rgba(139, 92, 246, 0.88) 100%)',
+      gradient:
+        'linear-gradient(135deg, rgba(99, 102, 241, 0.92) 0%, rgba(139, 92, 246, 0.88) 100%)',
       hasBorder: false,
       borderColor: '#ffffff',
       isStriped: false,
@@ -29,12 +31,12 @@ export function getDefaultLegend() {
 
 export function createBlankRoadmapState(customConfig = {}) {
   const defaultTheme = PRESET_THEMES[0];
-  const newId = `rm-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+  const newId = createId('rm');
 
   return {
     id: newId,
     updatedAt: new Date().toISOString(),
-    version: 1,
+    version: CURRENT_VERSION,
     config: {
       name: customConfig.name || 'Untitled Roadmap',
       periodLabel: customConfig.periodLabel || 'Sprints',
@@ -49,14 +51,14 @@ export function createBlankRoadmapState(customConfig = {}) {
         accents: [...defaultTheme.accents],
       },
       previewSettings: {
-        alternateRowHighlighting:
-          customConfig.previewSettings?.alternateRowHighlighting ?? true,
-        subtleGridDemarcations:
-          customConfig.previewSettings?.subtleGridDemarcations ?? true,
+        alternateRowHighlighting: customConfig.previewSettings?.alternateRowHighlighting ?? true,
+        subtleGridDemarcations: customConfig.previewSettings?.subtleGridDemarcations ?? true,
       },
       design: normalizeDesign(customConfig.design),
     },
-    legend: getDefaultLegend(),
+    legend: customConfig.theme
+      ? remapLegendForTheme(getDefaultLegend(), undefined, customConfig.theme)
+      : getDefaultLegend(),
     sections: [
       {
         id: 'sec-1',
@@ -86,7 +88,7 @@ export function getSampleRoadmapState() {
   return {
     id: 'rm-sample-default',
     updatedAt: new Date().toISOString(),
-    version: 1,
+    version: CURRENT_VERSION,
     config: {
       name: 'Platform Evolution & AI Capabilities Roadmap',
       periodLabel: 'Sprints',
@@ -215,14 +217,12 @@ export function getSampleRoadmapState() {
 /**
  * Validates and normalizes a roadmap state object (from localStorage or JSON upload)
  */
-export function normalizeRoadmapState(raw, options = {}) {
+export function normalizeRoadmapState(input, options = {}) {
   const sample = getSampleRoadmapState();
-  if (!raw || typeof raw !== 'object') return sample;
+  if (!input || typeof input !== 'object') return sample;
+  const raw = migrateRoadmap(input);
 
-  const id =
-    options.forceNewId
-      ? `rm-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`
-      : raw.id || `rm-${Date.now().toString(36)}`;
+  const id = options.forceNewId ? createId('rm') : raw.id || createId('rm');
 
   const config = {
     ...sample.config,
@@ -257,20 +257,19 @@ export function normalizeRoadmapState(raw, options = {}) {
         }))
       : sample.legend;
 
-  const sections =
-    Array.isArray(raw.sections)
-      ? raw.sections.map((sec, sIdx) => ({
-          id: sec.id || `sec-${sIdx + 1}`,
-          title: sec.title ?? `Section ${sIdx + 1}`,
-          collapsed: Boolean(sec.collapsed),
-          subSections: Array.isArray(sec.subSections)
-            ? sec.subSections.map((sub, subIdx) => ({
-                id: sub.id || `sub-${sIdx + 1}-${subIdx + 1}`,
-                title: sub.title ?? `Sub-section ${subIdx + 1}`,
-              }))
-            : [],
-        }))
-      : sample.sections;
+  const sections = Array.isArray(raw.sections)
+    ? raw.sections.map((sec, sIdx) => ({
+        id: sec.id || `sec-${sIdx + 1}`,
+        title: sec.title ?? `Section ${sIdx + 1}`,
+        collapsed: Boolean(sec.collapsed),
+        subSections: Array.isArray(sec.subSections)
+          ? sec.subSections.map((sub, subIdx) => ({
+              id: sub.id || `sub-${sIdx + 1}-${subIdx + 1}`,
+              title: sub.title ?? `Sub-section ${subIdx + 1}`,
+            }))
+          : [],
+      }))
+    : sample.sections;
 
   const tasks = Array.isArray(raw.tasks)
     ? raw.tasks.map((t, tIdx) => ({
@@ -296,99 +295,13 @@ export function normalizeRoadmapState(raw, options = {}) {
   return {
     id,
     updatedAt: raw.updatedAt || new Date().toISOString(),
-    version: 1,
+    version: CURRENT_VERSION,
     config,
     legend,
     sections,
     tasks,
     timelineItems,
   };
-}
-
-export function loadRoadmapState() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) {
-      const sample = getSampleRoadmapState();
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(sample));
-      return sample;
-    }
-    const parsed = JSON.parse(raw);
-    return normalizeRoadmapState(parsed);
-  } catch (err) {
-    console.warn('Failed to parse roadmap_builder_state_v1 from localStorage, falling back to sample:', err);
-    const sample = getSampleRoadmapState();
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(sample));
-    } catch {
-      // ignore storage quota errors
-    }
-    return sample;
-  }
-}
-
-export function saveRoadmapState(state) {
-  try {
-    const withTimestamp = {
-      ...state,
-      updatedAt: new Date().toISOString(),
-    };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(withTimestamp));
-    upsertSavedRoadmap(withTimestamp);
-  } catch (err) {
-    console.error('Failed to persist roadmap state to localStorage:', err);
-  }
-}
-
-export function loadSavedRoadmapsList() {
-  try {
-    const raw = localStorage.getItem(SAVED_ROADMAPS_KEY);
-    if (!raw) {
-      const current = loadRoadmapState();
-      const initialList = [current];
-      localStorage.setItem(SAVED_ROADMAPS_KEY, JSON.stringify(initialList));
-      return initialList;
-    }
-    const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
-    return parsed.map((item) => normalizeRoadmapState(item));
-  } catch {
-    return [];
-  }
-}
-
-export function upsertSavedRoadmap(roadmap) {
-  if (!roadmap || !roadmap.id) return [];
-  try {
-    const list = loadSavedRoadmapsList();
-    const existingIdx = list.findIndex((r) => r.id === roadmap.id);
-    const updatedItem = {
-      ...roadmap,
-      updatedAt: new Date().toISOString(),
-    };
-    let nextList;
-    if (existingIdx >= 0) {
-      nextList = [...list];
-      nextList[existingIdx] = updatedItem;
-    } else {
-      nextList = [updatedItem, ...list];
-    }
-    localStorage.setItem(SAVED_ROADMAPS_KEY, JSON.stringify(nextList));
-    return nextList;
-  } catch {
-    return [];
-  }
-}
-
-export function deleteSavedRoadmap(roadmapId) {
-  try {
-    const list = loadSavedRoadmapsList();
-    const nextList = list.filter((r) => r.id !== roadmapId);
-    localStorage.setItem(SAVED_ROADMAPS_KEY, JSON.stringify(nextList));
-    return nextList;
-  } catch {
-    return [];
-  }
 }
 
 export function loadUiThemeMode() {

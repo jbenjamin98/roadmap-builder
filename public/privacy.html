@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Privacy Policy – Roadmap Builder Studio</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <style>
+      :root {
+        color-scheme: dark;
+      }
+      body {
+        margin: 0;
+        padding: 40px 20px;
+        background-color: #0b0f19;
+        color: #e2e8f0;
+        font-family:
+          -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        line-height: 1.6;
+      }
+      .container {
+        max-width: 800px;
+        margin: 0 auto;
+        background: #111827;
+        border: 1px solid #1f2937;
+        border-radius: 16px;
+        padding: 40px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      }
+      h1 {
+        color: #ffffff;
+        margin-top: 0;
+        font-size: 2rem;
+        border-bottom: 1px solid #1f2937;
+        padding-bottom: 16px;
+      }
+      h2 {
+        color: #818cf8;
+        margin-top: 32px;
+        font-size: 1.25rem;
+      }
+      p,
+      li {
+        color: #94a3b8;
+        font-size: 0.95rem;
+      }
+      code {
+        background: #1e293b;
+        color: #fde047;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-size: 0.85em;
+        font-family: monospace;
+      }
+      a {
+        color: #6366f1;
+        text-decoration: underline;
+      }
+      a:hover {
+        color: #818cf8;
+      }
+      .highlight-box {
+        background: rgba(99, 102, 241, 0.1);
+        border: 1px solid rgba(99, 102, 241, 0.3);
+        border-radius: 12px;
+        padding: 16px 20px;
+        margin: 20px 0;
+      }
+      .highlight-box strong {
+        color: #c7d2fe;
+      }
+      .back-link {
+        display: inline-block;
+        margin-bottom: 24px;
+        color: #94a3b8;
+        text-decoration: none;
+        font-size: 0.875rem;
+      }
+      .back-link:hover {
+        color: #ffffff;
+      }
+      .nav-links {
+        display: flex;
+        gap: 16px;
+        margin-bottom: 24px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="nav-links">
+        <a href="/" class="back-link">← Back to Roadmap Builder Studio</a>
+        <a href="/terms.html" class="back-link">Terms of Service</a>
+      </div>
+      <h1>Privacy Policy</h1>
+      <p><strong>Effective Date:</strong> November 8, 2026</p>
+
+      <div class="highlight-box">
+        <strong>100% Client-Side Architecture:</strong> Roadmap Builder Studio does not have a
+        backend server, database, or analytics tracking. All roadmap creation, editing, and exports
+        occur entirely within your web browser.
+      </div>
+
+      <h2>1. Overview</h2>
+      <p>
+        Roadmap Builder Studio ("we", "our", or "the app") is a client-side visual roadmap designer
+        hosted on GitHub Pages at <code>roadmap-builder.jacob-benjamin.com</code>. We are committed
+        to protecting your privacy and ensuring you have complete control over your data.
+      </p>
+
+      <h2>2. Google User Data & Google Drive Integration</h2>
+      <p>
+        Roadmap Builder Studio offers optional integration with Google Drive so you can save, sync,
+        and restore roadmap files to your personal Google account.
+      </p>
+
+      <h3>Permissions &amp; Scope Requested</h3>
+      <p>When you connect Google Drive, we request the following restricted scope:</p>
+      <ul>
+        <li>
+          <code>https://www.googleapis.com/auth/drive.file</code> — Permits the app to create new
+          files and view, edit, or delete <em>only</em> files that were created by or explicitly
+          opened with Roadmap Builder Studio.
+        </li>
+        <li>
+          <code>userinfo.profile</code> &amp; <code>userinfo.email</code> — Used solely to display
+          your email and avatar in the app's backup menu to confirm which account is connected.
+        </li>
+      </ul>
+
+      <h3>What We Access &amp; What We Never Access</h3>
+      <ul>
+        <li>
+          <strong>We DO NOT have access to your other Google Drive files:</strong> The
+          <code>drive.file</code> scope strictly prevents the app from accessing, reading, or
+          listing any documents, photos, or folders in your Google Drive other than those created by
+          Roadmap Builder Studio.
+        </li>
+        <li>
+          <strong>No Third-Party or Intermediary Servers:</strong> Communication with Google Drive
+          occurs via direct, encrypted HTTPS requests between your web browser and Google's official
+          endpoints (<code>https://www.googleapis.com</code>). Your access token, credentials, and
+          roadmap contents are never sent to any developer, server, proxy, or third-party analytics
+          service.
+        </li>
+        <li>
+          <strong>No Data Retention on External Servers:</strong> We do not operate external
+          databases, log servers, or data collection systems.
+        </li>
+      </ul>
+
+      <h3>Compliance with Google API Services User Data Policy</h3>
+      <p>
+        Roadmap Builder Studio's use and transfer to any other app of information received from
+        Google APIs adheres to the
+        <a
+          href="https://developers.google.com/terms/api-services-user-data-policy"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Google API Services User Data Policy </a
+        >, including the Limited Use requirements.
+      </p>
+
+      <h3>Revoking Access</h3>
+      <p>
+        You can disconnect your Google Drive at any time by clicking "Disconnect" in the app's
+        Backup menu, or by revoking permissions in your
+        <a href="https://myaccount.google.com/permissions" target="_blank" rel="noopener noreferrer"
+          >Google Account Security Settings</a
+        >.
+      </p>
+
+      <h2>3. Browser Local Storage &amp; IndexedDB</h2>
+      <p>
+        As you work, the app saves a temporary draft in your browser's local storage (IndexedDB /
+        localStorage). This draft remains strictly on your local device and is never transmitted
+        over the internet unless you choose to sync it to your Google Drive or export it.
+      </p>
+
+      <h2>4. Cookies &amp; Tracking</h2>
+      <p>
+        Roadmap Builder Studio does not use tracking cookies, advertising trackers, or third-party
+        telemetry scripts.
+      </p>
+
+      <h2>5. Contact Information</h2>
+      <p>
+        If you have questions about this Privacy Policy or the security of your data, please
+        contact:
+        <br />
+        <strong>Website:</strong>
+        <a href="https://jacob-benjamin.com">https://jacob-benjamin.com</a>
+        <br />
+        <strong>GitHub:</strong>
+        <a href="https://github.com/jbenjamin98/roadmap-builder"
+          >https://github.com/jbenjamin98/roadmap-builder</a
+        >
+      </p>
+    </div>
+  </body>
+</html>

@@ -11,10 +11,7 @@ export function getCategoryBackground(category, useGrad = true) {
     return `repeating-linear-gradient(135deg, ${baseColor}, ${baseColor} 7px, ${baseColor}99 7px, ${baseColor}99 14px)`;
   }
   if (!useGrad) return baseColor;
-  return (
-    category?.gradient ||
-    `linear-gradient(135deg, ${baseColor} 0%, ${baseColor}bb 100%)`
-  );
+  return category?.gradient || `linear-gradient(135deg, ${baseColor} 0%, ${baseColor}bb 100%)`;
 }
 
 /**
@@ -81,27 +78,17 @@ export function getCanvasTokens(config) {
     textMain: isLight ? '#0f172a' : '#f8fafc',
     textSecondary: isLight ? '#334155' : '#cbd5e1',
     textMuted: isLight ? '#64748b' : '#94a3b8',
-    gridBorder: isLight
-      ? 'rgba(148, 163, 184, 0.42)'
-      : 'rgba(30, 41, 59, 0.85)',
-    gridSubtle: isLight
-      ? 'rgba(148, 163, 184, 0.28)'
-      : 'rgba(30, 41, 59, 0.55)',
+    gridBorder: isLight ? 'rgba(148, 163, 184, 0.42)' : 'rgba(30, 41, 59, 0.85)',
+    gridSubtle: isLight ? 'rgba(148, 163, 184, 0.28)' : 'rgba(30, 41, 59, 0.55)',
     stickyBg: isLight ? '#ffffff' : '#020617',
     stickyAltBg: isLight ? '#f1f5f9' : '#0f172a',
-    subHeaderBg: isLight
-      ? 'rgba(241, 245, 249, 0.9)'
-      : 'rgba(15, 23, 42, 0.72)',
+    subHeaderBg: isLight ? 'rgba(241, 245, 249, 0.9)' : 'rgba(15, 23, 42, 0.72)',
     rowBgEven: isLight ? 'rgba(255, 255, 255, 0.6)' : 'rgba(2, 6, 23, 0.28)',
     rowBgOdd: isLight ? 'rgba(226, 232, 240, 0.6)' : 'rgba(15, 23, 42, 0.48)',
     colShadeBg: isLight ? 'rgba(15, 23, 42, 0.035)' : 'rgba(255, 255, 255, 0.03)',
     chipBg: isLight ? 'rgba(255, 255, 255, 0.92)' : 'rgba(15, 23, 42, 0.92)',
-    chipBorder: isLight
-      ? 'rgba(148, 163, 184, 0.48)'
-      : 'rgba(255, 255, 255, 0.14)',
-    legendBarBg: isLight
-      ? 'rgba(255, 255, 255, 0.82)'
-      : 'rgba(2, 6, 23, 0.68)',
+    chipBorder: isLight ? 'rgba(148, 163, 184, 0.48)' : 'rgba(255, 255, 255, 0.14)',
+    legendBarBg: isLight ? 'rgba(255, 255, 255, 0.82)' : 'rgba(2, 6, 23, 0.68)',
   };
 }
 
@@ -248,8 +235,8 @@ export function getTimelineBarStyle(category, design, isLight = false, tokens = 
     background = striped
       ? `repeating-linear-gradient(135deg, ${base}28, ${base}28 7px, transparent 7px, transparent 14px)`
       : isLight
-      ? `${base}18`
-      : `${base}26`;
+        ? `${base}18`
+        : `${base}26`;
     color = isLight ? base : '#ffffff';
     border = `2px solid ${base}`;
   }
@@ -262,9 +249,7 @@ export function getTimelineBarStyle(category, design, isLight = false, tokens = 
   const shadows = [];
   if (itemStyle === 'soft-bevel') {
     shadows.push(
-      glass
-        ? 'inset 0 2px 3px rgba(255,255,255,0.7)'
-        : 'inset 0 2px 1px rgba(255,255,255,0.55)'
+      glass ? 'inset 0 2px 3px rgba(255,255,255,0.7)' : 'inset 0 2px 1px rgba(255,255,255,0.55)'
     );
   }
   if (glass) shadows.push('inset 0 1.5px 0 rgba(255,255,255,0.75)');
@@ -276,9 +261,7 @@ export function getTimelineBarStyle(category, design, isLight = false, tokens = 
     );
   }
   if (neon) {
-    shadows.push(
-      `0 0 18px ${base}, 0 0 6px #ffffffaa, inset 0 0 8px rgba(255,255,255,0.45)`
-    );
+    shadows.push(`0 0 18px ${base}, 0 0 6px #ffffffaa, inset 0 0 8px rgba(255,255,255,0.45)`);
     border = '1.5px solid #ffffffdd';
   }
   if (spot) shadows.push(`0 0 26px 2px ${base}99`);
@@ -306,7 +289,19 @@ export function getTimelineBarStyle(category, design, isLight = false, tokens = 
     border = `2.5px solid ${isLight ? '#090d16' : '#f8fafc'}`;
     shadows.push(isLight ? '4px 4px 0px #090d16' : '4px 4px 0px rgba(248,250,252,0.9)');
     if (itemStyle !== 'chevron' && itemStyle !== 'glow-capsule') borderRadius = '4px';
-  } else if (useShadow && !neu && !neon && !spot && !water && !sketch && !innerGlow && !dbl && !underglow && !sticker && !emboss) {
+  } else if (
+    useShadow &&
+    !neu &&
+    !neon &&
+    !spot &&
+    !water &&
+    !sketch &&
+    !innerGlow &&
+    !dbl &&
+    !underglow &&
+    !sticker &&
+    !emboss
+  ) {
     shadows.push(`0 10px 22px -4px ${base}88, 0 3px 6px -2px rgba(0,0,0,0.4)`);
   }
 
@@ -327,10 +322,8 @@ export function getTimelineBarStyle(category, design, isLight = false, tokens = 
   const CLIPS = {
     chevron:
       'polygon(0% 0%, calc(100% - 12px) 0%, 100% 50%, calc(100% - 12px) 100%, 0% 100%, 8px 50%)',
-    pentagon:
-      'polygon(0% 0%, calc(100% - 12px) 0%, 100% 50%, calc(100% - 12px) 100%, 0% 100%)',
-    swallowtail:
-      'polygon(0% 0%, 100% 0%, calc(100% - 12px) 50%, 100% 100%, 0% 100%)',
+    pentagon: 'polygon(0% 0%, calc(100% - 12px) 0%, 100% 50%, calc(100% - 12px) 100%, 0% 100%)',
+    swallowtail: 'polygon(0% 0%, 100% 0%, calc(100% - 12px) 50%, 100% 100%, 0% 100%)',
   };
   const clipPath = CLIPS[itemStyle];
   const clipped = Boolean(clipPath);
@@ -359,9 +352,7 @@ export function getTimelineBarStyle(category, design, isLight = false, tokens = 
     styleObj.textShadow = '0 1px 2px rgba(0,0,0,0.45)';
   }
   if (itemStyle === 'soft-bevel') {
-    styleObj.borderBottom = glass
-      ? `3.5px solid ${base}`
-      : '3.5px solid rgba(0,0,0,0.45)';
+    styleObj.borderBottom = glass ? `3.5px solid ${base}` : '3.5px solid rgba(0,0,0,0.45)';
     styleObj.borderTop = '1.5px solid rgba(255,255,255,0.8)';
   }
   if (itemStyle === 'double-track') {

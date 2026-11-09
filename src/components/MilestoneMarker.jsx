@@ -13,8 +13,7 @@ export default function MilestoneMarker({
   const borderStyle = milestoneDesign?.borderStyle || 'solid';
   const rawBorder = milestoneDesign?.borderColor || 'auto';
   // 'auto' picks a border that contrasts with the canvas (dark on light, white on dark).
-  const borderColor =
-    rawBorder === 'auto' ? (isLight ? '#0f172a' : '#ffffff') : rawBorder;
+  const borderColor = rawBorder === 'auto' ? (isLight ? '#0f172a' : '#ffffff') : rawBorder;
   const borderWidth =
     borderStyle === 'none'
       ? 0
@@ -30,20 +29,18 @@ export default function MilestoneMarker({
   const boxShadow = useBrutalist
     ? `2.5px 2.5px 0px ${ink}`
     : useNeon
-    ? `0 0 14px ${color}, 0 0 5px ${borderColor}`
-    : useShadow
-    ? `0 5px 14px -2px ${color}99`
-    : 'none';
+      ? `0 0 14px ${color}, 0 0 5px ${borderColor}`
+      : useShadow
+        ? `0 5px 14px -2px ${color}99`
+        : 'none';
 
   const cssBorder = useBrutalist
     ? `2px solid ${ink}`
     : borderStyle === 'none'
-    ? 'none'
-    : `${borderWidth}px ${borderStyle} ${borderColor}`;
+      ? 'none'
+      : `${borderWidth}px ${borderStyle} ${borderColor}`;
 
-  const bgFill = useGrad
-    ? `linear-gradient(135deg, ${color} 0%, ${color}bb 100%)`
-    : color;
+  const bgFill = useGrad ? `linear-gradient(135deg, ${color} 0%, ${color}bb 100%)` : color;
 
   // SVG-based shapes: triangle, star, flag, hexagon, shield
   if (
@@ -55,16 +52,8 @@ export default function MilestoneMarker({
     shape === 'cross'
   ) {
     const strokeDasharray =
-      borderStyle === 'dashed'
-        ? '3,2'
-        : borderStyle === 'double'
-        ? '1,0'
-        : undefined;
-    const strokeCol = useBrutalist
-      ? ink
-      : borderStyle === 'none'
-      ? 'none'
-      : borderColor;
+      borderStyle === 'dashed' ? '3,2' : borderStyle === 'double' ? '1,0' : undefined;
+    const strokeCol = useBrutalist ? ink : borderStyle === 'none' ? 'none' : borderColor;
 
     return (
       <span
@@ -75,19 +64,14 @@ export default function MilestoneMarker({
           filter: useBrutalist
             ? `drop-shadow(2px 2px 0px ${ink})`
             : useNeon
-            ? `drop-shadow(0 0 7px ${color})`
-            : useShadow
-            ? `drop-shadow(0 2px 5px ${color}77)`
-            : undefined,
+              ? `drop-shadow(0 0 7px ${color})`
+              : useShadow
+                ? `drop-shadow(0 2px 5px ${color}77)`
+                : undefined,
         }}
         className={`inline-flex items-center justify-center shrink-0 select-none ${className}`}
       >
-        <svg
-          viewBox="0 0 24 24"
-          width={size}
-          height={size}
-          className="overflow-visible"
-        >
+        <svg viewBox="0 0 24 24" width={size} height={size} className="overflow-visible">
           {shape === 'triangle' && (
             <polygon
               points="12,2 22,20 2,20"
@@ -169,10 +153,10 @@ export default function MilestoneMarker({
     shape === 'circle'
       ? '9999px'
       : shape === 'square'
-      ? '2px'
-      : shape === 'rounded'
-      ? '7px'
-      : '5px'; // diamond
+        ? '2px'
+        : shape === 'rounded'
+          ? '7px'
+          : '5px'; // diamond
 
   const innerDotSize = Math.max(4, Math.round(size * 0.28));
 

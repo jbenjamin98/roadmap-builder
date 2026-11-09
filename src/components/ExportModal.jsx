@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
+import useDialogBehavior from '../hooks/useDialogBehavior';
 import {
   X,
   Download,
@@ -16,13 +17,13 @@ const FORMATS = [
     label: 'JSON',
     icon: FileJson,
     recommended: true,
-    desc: 'Everything about the roadmap. Keep this to re-import and update it later.',
+    desc: 'Everything about the roadmap. This is your backup: keep it to re-import and keep editing later.',
   },
   {
     id: 'png',
     label: 'PNG image',
     icon: ImageIcon,
-    desc: 'High-resolution picture of the full roadmap, ready for slides and docs.',
+    desc: 'High-resolution picture of the full roadmap, ready for slides and docs. Very large roadmaps are scaled down automatically to fit browser limits.',
   },
   {
     id: 'pdf',
@@ -38,19 +39,16 @@ const FORMATS = [
   },
 ];
 
-export default function ExportModal({
-  isOpen,
-  onClose,
-  onExport,
-  isExporting,
-  errors = [],
-}) {
+export default function ExportModal({ isOpen, onClose, onExport, isExporting, errors = [] }) {
   const [selected, setSelected] = useState({
     json: true,
     png: true,
     pdf: false,
     excel: false,
   });
+
+  const panelRef = useRef(null);
+  useDialogBehavior(panelRef, onClose, isOpen);
 
   if (!isOpen) return null;
 
@@ -62,16 +60,21 @@ export default function ExportModal({
       className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/65 dark:bg-slate-950/85 backdrop-blur-md"
       data-testid="export-modal"
     >
-      <div className="w-full max-w-lg rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700/80 shadow-2xl overflow-hidden">
+      <div
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Export roadmap"
+        tabIndex={-1}
+        className="w-full max-w-lg rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700/80 shadow-2xl overflow-hidden"
+      >
         <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-900">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-indigo-500/15 border border-indigo-500/30 flex items-center justify-center text-indigo-600 dark:text-indigo-300">
               <Download className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-slate-900 dark:text-white">
-                Export Roadmap
-              </h2>
+              <h2 className="text-lg font-bold text-slate-900 dark:text-white">Export Roadmap</h2>
               <p className="text-xs text-slate-600 dark:text-slate-300">
                 Choose everything you want to download
               </p>
@@ -122,9 +125,7 @@ export default function ExportModal({
                       </span>
                     )}
                   </div>
-                  <div className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
-                    {f.desc}
-                  </div>
+                  <div className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">{f.desc}</div>
                 </div>
               </label>
             );
@@ -170,9 +171,7 @@ export default function ExportModal({
               <Download className="w-4 h-4" />
             )}
             <span>
-              {isExporting
-                ? 'Exporting...'
-                : `Download ${count} file${count === 1 ? '' : 's'}`}
+              {isExporting ? 'Exporting...' : `Download ${count} file${count === 1 ? '' : 's'}`}
             </span>
           </button>
         </div>
@@ -180,4 +179,3 @@ export default function ExportModal({
     </div>
   );
 }
-

@@ -12,6 +12,7 @@ export const INDENT_SPINE = { section: 16, sub: 12, task: 26 };
 
 export function getSectionVisuals(styleId, accent, tokens, subtleGrid = true) {
   let bannerBg = `linear-gradient(90deg, ${accent}26 0%, ${accent}08 60%, transparent 100%)`;
+  /** @type {Record<string, string>} */
   let leftCell = {
     backgroundColor: tokens.stickyAltBg,
     borderColor: subtleGrid ? tokens.gridBorder : 'transparent',
