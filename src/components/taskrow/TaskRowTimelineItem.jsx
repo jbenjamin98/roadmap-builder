@@ -107,7 +107,7 @@ export default function TaskRowTimelineItem({
             else if (x >= rect.width - endThreshold) setHoveredEnd('right');
           }
         }
-        if (Math.abs(d.x - xPos) > 1) {
+        if (Math.abs(d.x - xPos) > 6) {
           lastInteractionRef.current = Date.now();
           const newStartPeriod = Math.max(
             1,
@@ -220,7 +220,7 @@ export default function TaskRowTimelineItem({
                 return (
                   <span
                     key={side}
-                    className={`resize-grip grip-${side} group/grip absolute top-0 bottom-0 z-30 select-none touch-none overflow-visible ${
+                    className={`resize-grip grip-${side} group/grip absolute top-0 bottom-0 z-30 select-none touch-none overflow-visible pointer-events-none ${
                       isDragging ? 'is-dragging z-40' : ''
                     }`}
                     style={{
@@ -233,22 +233,6 @@ export default function TaskRowTimelineItem({
                       transform: side === 'left' ? 'scaleX(-1)' : undefined,
                       transformOrigin: '28px center',
                     }}
-                    onPointerEnter={() => {
-                      if (
-                        !isPreview &&
-                        typeof document !== 'undefined' &&
-                        !document.body.classList.contains('is-resizing-horizontal')
-                      ) {
-                        setHoveredEnd(side);
-                      }
-                    }}
-                    onPointerDown={(e) => {
-                      e.stopPropagation();
-                      e.preventDefault();
-                      setHoveredEnd(side);
-                      onStartResize(e, side);
-                    }}
-                    onClick={(e) => e.stopPropagation()}
                   >
                     <div
                       className="w-full h-full relative pointer-events-none"
@@ -278,16 +262,36 @@ export default function TaskRowTimelineItem({
 
                       {/* Center handle: Refined boundary line + Bold triangle (compact & elegant) */}
                       <div
-                        className={`absolute top-1/2 -translate-y-1/2 left-0 w-full h-8 flex items-center handle-center transition-opacity duration-150 ${
-                          activeSide === side ? 'opacity-100' : 'opacity-0 pointer-events-none'
+                        className={`absolute top-1/2 -translate-y-1/2 left-0 w-full h-8 flex items-center handle-center transition-opacity duration-150 pointer-events-none ${
+                          activeSide === side ? 'opacity-100' : 'opacity-0'
                         }`}
                       >
+                        {/* Interactive drag hit target: strictly on the boundary and outer side (x >= 26) */}
+                        <div
+                          className="absolute top-0 bottom-0 left-[26px] w-[30px] cursor-ew-resize pointer-events-auto"
+                          title="Drag to resize bar duration"
+                          onPointerEnter={() => {
+                            if (
+                              !isPreview &&
+                              typeof document !== 'undefined' &&
+                              !document.body.classList.contains('is-resizing-horizontal')
+                            ) {
+                              setHoveredEnd(side);
+                            }
+                          }}
+                          onPointerDown={(e) => {
+                            e.stopPropagation();
+                            e.preventDefault();
+                            setHoveredEnd(side);
+                            onStartResize(e, side);
+                          }}
+                        />
                         <svg
                           width="56"
                           height="32"
                           viewBox="0 0 56 32"
                           fill="none"
-                          className="pull-handle-svg overflow-visible"
+                          className="pull-handle-svg overflow-visible pointer-events-none"
                         >
                           {/* Vertical line on the outside of the task bar (6px spacing from bar edge) */}
                           <line

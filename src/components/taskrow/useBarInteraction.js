@@ -125,7 +125,10 @@ export function useBarInteraction({
       if (rafId) cancelAnimationFrame(rafId);
       document.body.classList.remove('is-resizing-horizontal');
       const base = latestResizeRef.current;
-      lastInteractionRef.current = Date.now();
+      const didMove = Math.abs(base?.deltaX || 0) > 4;
+      if (didMove) {
+        lastInteractionRef.current = Date.now();
+      }
       if (base) {
         const steps = Math.round((base.deltaX || 0) / colWidth);
         if (steps !== 0) {

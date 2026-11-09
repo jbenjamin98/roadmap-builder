@@ -74,6 +74,22 @@ export default function TimelineItemPopover({
     return () => document.removeEventListener('keydown', onKeyDown);
   }, [onClose]);
 
+  // Click outside closes the popover cleanly
+  useEffect(() => {
+    const handlePointerDownOutside = (e) => {
+      const anchor = getAnchorEl?.();
+      if (
+        popoverRef.current &&
+        !popoverRef.current.contains(e.target) &&
+        (!anchor || !anchor.contains(e.target))
+      ) {
+        onClose();
+      }
+    };
+    document.addEventListener('pointerdown', handlePointerDownOutside);
+    return () => document.removeEventListener('pointerdown', handlePointerDownOutside);
+  }, [onClose, getAnchorEl]);
+
   return createPortal(
     <div
       ref={popoverRef}
