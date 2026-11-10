@@ -53,7 +53,7 @@ export function PeriodHeaderCell({
       className="px-3 flex flex-col justify-center relative border-r"
     >
       {isBrand ? (
-        <AppianPeriodBody styleId={styleId} period={period} tokens={tokens} showDates={showDates} />
+        <AppianPeriodBody period={period} tokens={tokens} showDates={showDates} />
       ) : (
         <PeriodHeaderBody
           styleId={styleId}

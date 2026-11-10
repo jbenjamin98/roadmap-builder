@@ -27,7 +27,8 @@ import {
 } from 'lucide-react';
 import MilestoneMarker from './MilestoneMarker';
 import { getCategoryBackground } from './canvasStyles';
-import { getThemeLegendPresets } from '../constants/legendPresets';
+import LegendStylePicker from './sidebar/LegendStylePicker';
+import { solidLegendGradient } from '../constants/legendPresets';
 import SortableSectionItem from './sidebar/SortableSectionItem';
 
 export default function Sidebar({
@@ -53,11 +54,16 @@ export default function Sidebar({
   onReorderTasks,
 }) {
   const [newLegendLabel, setNewLegendLabel] = useState('');
-  const [newLegendColor, setNewLegendColor] = useState(theme?.accents?.[0] || '#6366f1');
-  const [newLegendGradient, setNewLegendGradient] = useState('');
-  const [newLegendHasBorder, setNewLegendHasBorder] = useState(false);
-  const [newLegendBorderColor, setNewLegendBorderColor] = useState('#ffffff');
-  const [newLegendIsStriped, setNewLegendIsStriped] = useState(false);
+  const [newStyle, setNewStyle] = useState(() => {
+    const color = theme?.accents?.[0] || '#6366f1';
+    return {
+      color,
+      gradient: solidLegendGradient(color),
+      hasBorder: false,
+      borderColor: '#ffffff',
+      isStriped: false,
+    };
+  });
 
   const [editingLegendId, setEditingLegendId] = useState(null);
   const [legendExpanded, setLegendExpanded] = useState(true);
@@ -121,24 +127,15 @@ export default function Sidebar({
     if (!newLegendLabel.trim()) return;
     onAddLegendCategory({
       label: newLegendLabel.trim(),
-      color: newLegendColor,
-      gradient:
-        newLegendGradient ||
-        `linear-gradient(135deg, ${newLegendColor}ee 0%, ${newLegendColor}bb 100%)`,
-      hasBorder: newLegendHasBorder,
-      borderColor: newLegendBorderColor,
-      isStriped: newLegendIsStriped,
+      color: newStyle.color,
+      gradient: newStyle.gradient || solidLegendGradient(newStyle.color),
+      hasBorder: newStyle.hasBorder,
+      borderColor: newStyle.borderColor,
+      isStriped: newStyle.isStriped,
     });
     setNewLegendLabel('');
-    setNewLegendGradient('');
-    setNewLegendHasBorder(false);
-    setNewLegendIsStriped(false);
+    setNewStyle((prev) => ({ ...prev, isStriped: false, hasBorder: false }));
   };
-
-  const themeSwatches = [
-    theme?.primary || '#6366f1',
-    ...(theme?.accents || ['#818cf8', '#ec4899', '#14b8a6', '#f59e0b']),
-  ];
 
   return (
     <aside
@@ -287,104 +284,15 @@ export default function Sidebar({
                       )}
                     </div>
 
-                    {/* Expandable Style & Border Editor for this Legend Category */}
+                    {/* Expandable style editor: same picker as the "new category" form */}
                     {isEditingStyle && (
-                      <div className="px-3 pb-3 pt-2 border-t border-slate-200 dark:border-slate-800/80 bg-white dark:bg-slate-900/80 space-y-2.5 text-xs">
-                        {/* Preset Gradient Picker */}
-                        <div>
-                          <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5">
-                            Preset Styles & Custom Fill
-                          </div>
-                          <div className="flex flex-wrap items-center gap-1.5">
-                            {getThemeLegendPresets(theme).map((preset) => (
-                              <button
-                                key={preset.name}
-                                type="button"
-                                onClick={() =>
-                                  onUpdateLegendCategory(cat.id, {
-                                    color: preset.color,
-                                    gradient: preset.gradient,
-                                  })
-                                }
-                                className={`w-6 h-6 rounded-lg border transition-transform ${
-                                  cat.color === preset.color
-                                    ? 'scale-110 ring-2 ring-indigo-400 border-white'
-                                    : 'border-white/20 hover:scale-105'
-                                }`}
-                                style={{ background: preset.gradient }}
-                                title={preset.name}
-                              />
-                            ))}
-
-                            {/* Custom Color Input */}
-                            <label
-                              className="inline-flex items-center gap-1.5 ml-auto px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 cursor-pointer text-[11px] text-slate-700 dark:text-slate-300"
-                              title="Pick custom fill color"
-                            >
-                              <input
-                                type="color"
-                                value={cat.color || '#6366f1'}
-                                onChange={(e) => {
-                                  const c = e.target.value;
-                                  onUpdateLegendCategory(cat.id, {
-                                    color: c,
-                                    gradient: `linear-gradient(135deg, ${c}ee 0%, ${c}bb 100%)`,
-                                  });
-                                }}
-                                className="w-4 h-4 rounded cursor-pointer bg-transparent border-0"
-                              />
-                              <span>Custom</span>
-                            </label>
-                          </div>
-                        </div>
-
-                        {/* Striped Pattern & Border Toggle + Border Color Picker */}
-                        <div className="flex flex-wrap items-center justify-start gap-x-4 gap-y-2 pt-1.5 border-t border-slate-100 dark:border-slate-800/60">
-                          <label className="inline-flex items-center gap-1.5 cursor-pointer text-xs text-slate-700 dark:text-slate-300">
-                            <input
-                              type="checkbox"
-                              checked={Boolean(cat.isStriped)}
-                              onChange={(e) =>
-                                onUpdateLegendCategory(cat.id, {
-                                  isStriped: e.target.checked,
-                                })
-                              }
-                              data-testid={`legend-striped-${cat.id}`}
-                              className="rounded border-slate-300 dark:border-slate-700 text-indigo-600 focus:ring-indigo-500"
-                            />
-                            <span>Striped Pattern</span>
-                          </label>
-
-                          <label className="inline-flex items-center gap-1.5 cursor-pointer text-xs text-slate-700 dark:text-slate-300">
-                            <input
-                              type="checkbox"
-                              checked={Boolean(cat.hasBorder)}
-                              onChange={(e) =>
-                                onUpdateLegendCategory(cat.id, {
-                                  hasBorder: e.target.checked,
-                                })
-                              }
-                              className="rounded border-slate-300 dark:border-slate-700 text-indigo-600 focus:ring-indigo-500"
-                            />
-                            <span>Add Border</span>
-                          </label>
-
-                          {cat.hasBorder && (
-                            <label className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 cursor-pointer text-[11px] text-slate-700 dark:text-slate-300">
-                              <span>Border Color</span>
-                              <input
-                                type="color"
-                                value={cat.borderColor || '#ffffff'}
-                                onChange={(e) =>
-                                  onUpdateLegendCategory(cat.id, {
-                                    borderColor: e.target.value,
-                                  })
-                                }
-                                className="w-4 h-4 rounded cursor-pointer bg-transparent border-0"
-                              />
-                            </label>
-                          )}
-                        </div>
+                      <div className="px-3 pb-3 pt-2 border-t border-slate-200 dark:border-slate-800/80 bg-white dark:bg-slate-900/80">
+                        <LegendStylePicker
+                          style={cat}
+                          onChange={(patch) => onUpdateLegendCategory(cat.id, patch)}
+                          theme={theme}
+                          stripedTestId={`legend-striped-${cat.id}`}
+                        />
                       </div>
                     )}
                   </div>
@@ -392,21 +300,22 @@ export default function Sidebar({
               })}
             </div>
 
-            {/* Add New Legend Category Form */}
+            {/* Add New Legend Category Form (same style picker as editing) */}
             <form
               onSubmit={handleCreateCategory}
               className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-950/90 border border-slate-200 dark:border-slate-800 space-y-2.5"
             >
               <div className="flex items-center gap-2">
-                <input
-                  type="color"
-                  value={newLegendColor}
-                  onChange={(e) => {
-                    setNewLegendColor(e.target.value);
-                    setNewLegendGradient('');
+                <span
+                  className="w-7 h-7 rounded-lg shrink-0 shadow-sm"
+                  style={{
+                    background: getCategoryBackground(newStyle),
+                    border: newStyle.hasBorder
+                      ? `2px solid ${newStyle.borderColor || '#ffffff'}`
+                      : '1px solid rgba(148, 163, 184, 0.35)',
                   }}
-                  className="w-7 h-7 rounded cursor-pointer bg-transparent border-0 shrink-0"
-                  title="Pick category color"
+                  title="Preview of the new category style"
+                  data-testid="new-legend-preview"
                 />
                 <input
                   type="text"
@@ -426,63 +335,12 @@ export default function Sidebar({
                 </button>
               </div>
 
-              {/* Theme Quick Swatches & Border Option for New Category */}
-              <div className="flex items-center justify-between text-[10px] text-slate-500 dark:text-slate-400">
-                <span>Swatches:</span>
-                <div className="flex items-center gap-1.5">
-                  {themeSwatches.map((swatch, idx) => (
-                    <button
-                      key={idx}
-                      type="button"
-                      onClick={() => {
-                        setNewLegendColor(swatch);
-                        setNewLegendGradient('');
-                      }}
-                      className={`w-4 h-4 rounded-full border transition-transform ${
-                        newLegendColor === swatch
-                          ? 'scale-125 border-indigo-500 dark:border-white'
-                          : 'border-slate-300 dark:border-white/20 hover:scale-110'
-                      }`}
-                      style={{ backgroundColor: swatch }}
-                      title={`Use theme color ${swatch}`}
-                    />
-                  ))}
-                </div>
-              </div>
-
-              <div className="flex flex-wrap items-center justify-start gap-x-4 gap-y-2 pt-1 border-t border-slate-200/70 dark:border-slate-800/70 text-[11px]">
-                <label className="inline-flex items-center gap-1.5 cursor-pointer text-slate-600 dark:text-slate-300">
-                  <input
-                    type="checkbox"
-                    checked={newLegendIsStriped}
-                    onChange={(e) => setNewLegendIsStriped(e.target.checked)}
-                    className="rounded border-slate-300 dark:border-slate-700 text-indigo-600 focus:ring-indigo-500"
-                  />
-                  <span>Striped</span>
-                </label>
-
-                <label className="inline-flex items-center gap-1.5 cursor-pointer text-slate-600 dark:text-slate-300">
-                  <input
-                    type="checkbox"
-                    checked={newLegendHasBorder}
-                    onChange={(e) => setNewLegendHasBorder(e.target.checked)}
-                    className="rounded border-slate-300 dark:border-slate-700 text-indigo-600 focus:ring-indigo-500"
-                  />
-                  <span>Border</span>
-                </label>
-
-                {newLegendHasBorder && (
-                  <label className="inline-flex items-center gap-1.5 cursor-pointer text-slate-600 dark:text-slate-300">
-                    <span>Color:</span>
-                    <input
-                      type="color"
-                      value={newLegendBorderColor}
-                      onChange={(e) => setNewLegendBorderColor(e.target.value)}
-                      className="w-4 h-4 rounded cursor-pointer bg-transparent border-0"
-                    />
-                  </label>
-                )}
-              </div>
+              <LegendStylePicker
+                style={newStyle}
+                onChange={(patch) => setNewStyle((prev) => ({ ...prev, ...patch }))}
+                theme={theme}
+                stripedTestId="new-legend-striped"
+              />
             </form>
           </div>
         )}

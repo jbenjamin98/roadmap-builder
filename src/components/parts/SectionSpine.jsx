@@ -55,7 +55,17 @@ export function SectionSpine({
       borderRight: `1.5px solid ${tokens.gridBorder}`,
       color: tokens.textMain,
     };
+  } else if (styleId === 'appian-spine') {
+    // Brand solid band spine: theme band color, light Medium title in title case.
+    wrap = {
+      backgroundColor: tokens.brand?.band || accent,
+      color: tokens.brand?.bandText || '#ffffff',
+    };
   }
+  const brandText =
+    styleId === 'appian-spine'
+      ? { fontWeight: 500, textTransform: 'none', letterSpacing: '0.03em', fontSize: 12 }
+      : null;
 
   const text = (
     <div className="flex-1 min-h-0 w-full flex items-center justify-center py-2 overflow-hidden">
@@ -67,6 +77,7 @@ export function SectionSpine({
           maxHeight: '100%',
           textAlign: 'center',
           ...NO_WORD_BREAK,
+          ...brandText,
         }}
         className="text-[10px] font-extrabold uppercase tracking-wider leading-tight whitespace-normal overflow-hidden"
       >

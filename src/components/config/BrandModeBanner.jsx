@@ -63,9 +63,9 @@ export default function BrandModeBanner({ ctx }) {
               </span>
             </div>
             <div className="text-[11px] text-slate-600 dark:text-slate-300">
-              Typography, header, hierarchy, bars and milestones follow the Appian Brand Guidelines.
-              Timeline, subtitle, version, legend, condensed view and grid settings stay editable.
-              The logo and owner (Appian) are set by the theme.
+              Typography, header, hierarchy and bars follow the Appian Brand Guidelines. Timeline,
+              header details (not the logo), milestone shape, legend, condensed view and grid
+              settings stay editable.
             </div>
           </div>
         </div>

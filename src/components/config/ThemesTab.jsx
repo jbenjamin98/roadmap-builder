@@ -2,7 +2,6 @@ import { Dices, Layers, Moon, Palette, Sparkles, Sun } from 'lucide-react';
 import { YellowDuckIcon } from '../parts/DuckParts';
 import { AppianNode } from '../parts/AppianParts';
 import AppianThemeCards from './AppianThemeCards';
-import AppianLayoutOptions from './AppianLayoutOptions';
 
 export default function ThemesTab({ ctx }) {
   const {
@@ -193,7 +192,6 @@ export default function ThemesTab({ ctx }) {
           <span>Brand Themes - Appian</span>
         </div>
         <AppianThemeCards ctx={ctx} />
-        <AppianLayoutOptions ctx={ctx} />
       </div>
 
       {/* Ultimate Duck Mode */}

@@ -98,51 +98,16 @@ export function getSectionVisuals(styleId, accent, tokens, subtleGrid = true) {
         borderColor: subtleGrid ? tokens.gridBorder : 'transparent',
       };
       break;
-    case 'appian-rail': {
-      // Brand section: tinted row with a thick accent rail on the left.
-      const a = tokens.brand?.accent || accent;
-      bannerBg = `${a}${tokens.isLight ? '0d' : '1a'}`;
-      leftCell = {
-        backgroundColor: tokens.stickyAltBg,
-        borderColor: subtleGrid ? tokens.gridBorder : 'transparent',
-        borderLeft: `5px solid ${a}`,
-      };
-      break;
-    }
-    case 'appian-underline': {
-      // Brand section: clean row with a 2px accent rule beneath.
-      const a = tokens.brand?.accent || accent;
-      bannerBg = `linear-gradient(0deg, ${a} 0, ${a} 2px, transparent 2px)`;
-      leftCell = {
-        backgroundColor: tokens.stickyBg,
-        borderColor: subtleGrid ? tokens.gridBorder : 'transparent',
-        boxShadow: `inset 0 -2px 0 ${a}`,
-      };
-      break;
-    }
-    case 'appian-solid': {
-      // Brand section: full-width band in the theme's brand color.
-      const band = tokens.brand?.band || accent;
-      bannerBg = band;
-      leftCell = { backgroundColor: band, borderColor: 'rgba(255, 255, 255, 0.18)' };
-      break;
-    }
     default:
   }
 
-  const brandBand = styleId === 'appian-solid';
   return {
     bannerBg,
     leftCell,
-    solid: styleId === 'solid-band' || brandBand,
+    solid: styleId === 'solid-band',
     pill: styleId === 'floating-pill',
     tab: styleId === 'tab-flag',
-    titleColor:
-      styleId === 'solid-band'
-        ? '#ffffff'
-        : brandBand
-          ? tokens.brand?.bandText || '#ffffff'
-          : tokens.textMain,
+    titleColor: styleId === 'solid-band' ? '#ffffff' : tokens.textMain,
   };
 }
 

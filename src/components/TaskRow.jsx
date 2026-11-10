@@ -128,6 +128,7 @@ export default function TaskRow({
     colWidth,
     legend,
     isPreview,
+    isPopoverOpen: activePopoverItemId != null,
     setActivePopoverItemId,
     onAddTimelineItem,
     onUpdateTimelineItem,

@@ -50,7 +50,13 @@ export default function TimelineSection({
     ? { fontWeight: 500, textTransform: 'none', letterSpacing: '0.01em' }
     : undefined;
   const brandSubText = design?.brandTheme
-    ? { fontWeight: 600, textTransform: 'none', letterSpacing: '0.01em' }
+    ? {
+        fontWeight: 600,
+        fontSize: 12,
+        textTransform: 'none',
+        letterSpacing: '0.01em',
+        color: tokens.textMain,
+      }
     : undefined;
   const dividerColor = isLastSection
     ? 'transparent'
@@ -84,8 +90,10 @@ export default function TimelineSection({
         <div
           className="flex items-stretch"
           style={{
-            minHeight: `${density.subMin}px`,
+            minHeight: `${density.subMin + (tokens.brand ? 4 : 0)}px`,
             backgroundColor: tokens.subHeaderBg,
+            // Brand themes: an opaque full-width band with a hairline above it.
+            borderTop: tokens.brand ? `1px solid ${tokens.brand.subRowBorder}` : undefined,
           }}
         >
           <div
@@ -94,7 +102,7 @@ export default function TimelineSection({
               left: `${stickyLeft}px`,
               paddingLeft: (stickyLeft > 0 ? INDENT_SPINE : INDENT).sub,
               paddingRight: 14,
-              backgroundColor: tokens.stickyAltBg,
+              backgroundColor: tokens.brand ? tokens.subHeaderBg : tokens.stickyAltBg,
               borderColor: subtleGridDemarcations ? tokens.gridBorder : 'transparent',
             }}
             className="shrink-0 py-1 flex items-center sticky z-[46] border-r"

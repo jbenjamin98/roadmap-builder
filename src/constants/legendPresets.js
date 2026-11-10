@@ -57,3 +57,7 @@ export function remapLegendForTheme(legend, oldTheme, newTheme) {
     return { ...entry, color: next.color, gradient: next.gradient };
   });
 }
+
+/** Gradient used for a legend category that is a single solid color (swatch or custom pick). */
+export const solidLegendGradient = (color) =>
+  `linear-gradient(135deg, ${color}ee 0%, ${color}bb 100%)`;

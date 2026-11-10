@@ -52,8 +52,11 @@ export default function MilestoneMarker({
     shape === 'cross' ||
     shape === 'duck-egg' ||
     shape === 'yellow-duck' ||
-    shape === 'appian-flag'
+    shape === 'appian-flag' ||
+    shape === 'map-pin' ||
+    shape === 'push-pin'
   ) {
+    const holeColor = borderStyle === 'none' ? '#ffffff' : borderColor;
     const strokeDasharray =
       borderStyle === 'dashed' ? '3,2' : borderStyle === 'double' ? '1,0' : undefined;
     const strokeCol = useBrutalist ? ink : borderStyle === 'none' ? 'none' : borderColor;
@@ -147,13 +150,52 @@ export default function MilestoneMarker({
               strokeLinejoin="round"
             />
           )}
+          {shape === 'map-pin' && (
+            // Classic teardrop location pin with a round hole.
+            <g>
+              <path
+                d="M12 2C7.6 2 4 5.5 4 9.8c0 5.6 8 12.2 8 12.2s8-6.6 8-12.2C20 5.5 16.4 2 12 2Z"
+                fill={color}
+                stroke={strokeCol}
+                strokeWidth={Math.max(1.2, borderWidth * 0.8)}
+                strokeDasharray={strokeDasharray}
+                strokeLinejoin="round"
+              />
+              <circle cx="12" cy="9.8" r="3.2" fill={holeColor} />
+            </g>
+          )}
+          {shape === 'push-pin' && (
+            // Round-headed push pin: a head with a highlight and a short needle.
+            <g>
+              <path d="M12 13.5V22" stroke={color} strokeWidth="2.2" strokeLinecap="round" />
+              <circle
+                cx="12"
+                cy="8"
+                r="6"
+                fill={color}
+                stroke={strokeCol}
+                strokeWidth={Math.max(1.2, borderWidth * 0.8)}
+                strokeDasharray={strokeDasharray}
+              />
+              <path
+                d="M9 6.2C9.6 5 10.8 4.4 12 4.4"
+                stroke="rgba(255,255,255,0.85)"
+                strokeWidth="1.4"
+                strokeLinecap="round"
+                fill="none"
+              />
+            </g>
+          )}
           {shape === 'appian-flag' && (
-            // Brand flag: one solid shape (pole + pennant) with the pennant's end cut at 45 degrees.
+            // Brand flag: one solid shape (pole + pennant, pennant end cut at 45 degrees). The
+            // pole is thick and the outline is bold, drawn outside the fill (paint-order) so the
+            // flag stays readable on bars and canvases of any color.
             <path
-              d="M4.5 2H20V9L14 15H6.9V22H4.5Z"
+              d="M4 2H20.5V9.5L14.5 15.5H7.4V22H4Z"
               fill={color}
               stroke={strokeCol}
-              strokeWidth={Math.max(1, borderWidth * 0.6)}
+              strokeWidth={Math.max(3.4, borderWidth * 2)}
+              paintOrder="stroke"
               strokeLinejoin="miter"
             />
           )}

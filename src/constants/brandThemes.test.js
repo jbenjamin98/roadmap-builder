@@ -1,8 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  APPIAN_PERIOD_STYLES,
   APPIAN_PRESETS,
-  APPIAN_SECTION_STYLES,
   APPIAN_STYLE_IDS,
   getAppianDesign,
   getBrandAccent,
@@ -15,10 +13,11 @@ import {
   getDefaultDesign,
   getExitBrandDesign,
   getRandomDesignConfig,
+  isRotatedSectionStyle,
   normalizeDesign,
 } from './designOptions';
 import { getAccessibleInk, getCanvasTokens, getTimelineBarStyle } from '../components/canvasStyles';
-import { getSectionVisuals } from '../components/styleHelpers';
+import { getAppianPeriodCellStyle } from '../components/parts/appianPeriodCell';
 
 describe('Appian presets', () => {
   it('registers light, dark and slate brand presets hidden from the galleries', () => {
@@ -77,12 +76,15 @@ describe('getAppianDesign', () => {
       expect(d.brandTheme).toBe(`appian-${mode}`);
       expect(d.duckMode).toBe(false);
       for (const [key, id] of Object.entries(APPIAN_STYLE_IDS)) expect(d[key]).toBe(id);
-      expect(d.taskStyle).toBe('appian-rule');
+      expect(d.taskStyle).toBe('appian-plain');
       expect(d.canvasCorners).toBe('subtle');
       expect(Object.values(d.effects).every((v) => v === false)).toBe(true);
       expect(d.milestone.shape).toBe('appian-flag');
     }
-    expect(getAppianDesign(prev, 'light').milestone.color).toBe('#2322F0');
+    expect(getAppianDesign(prev, 'light').milestone).toMatchObject({
+      color: '#2322F0',
+      borderColor: '#FFFFFF',
+    });
     expect(getAppianDesign(prev, 'dark').milestone.color).toBe('#2AE3FF');
     expect(getAppianDesign(prev, 'slate').milestone).toMatchObject({
       color: '#E5EDF6',
@@ -138,7 +140,7 @@ describe('normalizeDesign brandTheme', () => {
       taskStyle: 'appian-tick',
       milestone: { shape: 'appian-node', color: '#2AE3FF' },
     });
-    expect(d.taskStyle).toBe('appian-rule');
+    expect(d.taskStyle).toBe('appian-plain');
     expect(d.milestone.shape).toBe('appian-flag');
     expect(d.milestone.borderColor).toBe('#020A51');
   });
@@ -151,7 +153,16 @@ describe('getLockedTabs', () => {
 
   it('keeps the requested Appian tabs editable', () => {
     const locked = getLockedTabs(getAppianDesign(getDefaultDesign(), 'light'));
-    for (const t of ['timeline', 'banner', 'themes', 'legend', 'condensed', 'grid', 'numbering']) {
+    for (const t of [
+      'timeline',
+      'banner',
+      'themes',
+      'legend',
+      'condensed',
+      'grid',
+      'numbering',
+      'milestones',
+    ]) {
       expect(locked.has(t)).toBe(false);
     }
     for (const t of [
@@ -163,7 +174,6 @@ describe('getLockedTabs', () => {
       'subsection',
       'task',
       'bars',
-      'milestones',
     ]) {
       expect(locked.has(t)).toBe(true);
     }
@@ -215,59 +225,102 @@ describe('brand rendering helpers', () => {
     expect(getAccessibleInk('#FCB858')).toBe('#020A51');
   });
 
-  it('appian-solid section uses the theme band color with its light title', () => {
-    const tk = (id) => getCanvasTokens({ themeId: id });
-    const light = getSectionVisuals('appian-solid', '#2322F0', tk('appian-light'), true);
-    const dark = getSectionVisuals('appian-solid', '#2AE3FF', tk('appian-dark'), true);
-    const slate = getSectionVisuals('appian-solid', '#2AE3FF', tk('appian-slate'), true);
-    expect(light.leftCell.backgroundColor).toBe('#020A51');
-    expect(dark.leftCell.backgroundColor).toBe('#2322F0');
-    expect(slate.leftCell.backgroundColor).toBe('#5B7499'); // Standard Slate third tone, not cyan
-    for (const v of [light, dark, slate]) expect(v.titleColor).toBe('#FFFFFF');
-  });
-
-  it('appian-rail and appian-underline keep the row neutral with an accent', () => {
-    const tokens = getCanvasTokens({ themeId: 'appian-light' });
-    const rail = getSectionVisuals('appian-rail', '#2322F0', tokens, true);
-    const underline = getSectionVisuals('appian-underline', '#2322F0', tokens, true);
-    expect(rail.leftCell.borderLeft).toContain('#2322F0');
-    expect(rail.titleColor).toBe('#020A51');
-    expect(underline.leftCell.boxShadow).toContain('#2322F0');
-    expect(underline.bannerBg).toContain('#2322F0');
+  it('every Appian theme has an opaque sub-section band and a hairline', () => {
+    for (const id of ['appian-light', 'appian-dark', 'appian-slate']) {
+      const t = getCanvasTokens({ themeId: id });
+      expect(t.subHeaderBg).toMatch(/^#[0-9A-Fa-f]{6}$/); // opaque, so sticky cells can reuse it
+      expect(t.subHeaderBg).not.toBe(t.stickyBg);
+      expect(t.brand.subRowBorder).toBeTruthy();
+    }
   });
 });
 
-describe('brand layout options', () => {
+describe('Appian single layouts', () => {
   const prev = getDefaultDesign();
 
-  it('offers three section and five period layouts', () => {
-    expect(APPIAN_SECTION_STYLES.map((o) => o.id)).toEqual([
-      'appian-rail',
-      'appian-underline',
-      'appian-solid',
-    ]);
-    expect(APPIAN_PERIOD_STYLES).toHaveLength(5);
+  it('uses one approved layout per area', () => {
+    for (const mode of /** @type {const} */ (['light', 'dark', 'slate'])) {
+      const d = getAppianDesign(prev, mode);
+      expect(d.sectionStyle).toBe('appian-spine');
+      expect(d.periodHeaderStyle).toBe('appian-tab');
+      expect(d.taskStyle).toBe('appian-plain');
+    }
+    expect(isRotatedSectionStyle('appian-spine')).toBe(true); // renders as a vertical spine
   });
 
-  it('keeps a chosen layout across theme switches and exits cleanly', () => {
-    const picked = { ...prev, sectionStyle: 'appian-solid', periodHeaderStyle: 'appian-chip' };
-    const dark = getAppianDesign(picked, 'dark');
-    expect(dark.sectionStyle).toBe('appian-solid');
-    expect(dark.periodHeaderStyle).toBe('appian-chip');
-    const slate = getAppianDesign(dark, 'slate');
-    expect(slate.periodHeaderStyle).toBe('appian-chip');
-    const exited = getExitBrandDesign(slate);
-    expect(exited.sectionStyle).toBe(prev.sectionStyle);
-    expect(exited.periodHeaderStyle).toBe(prev.periodHeaderStyle);
+  it('the tab period header has no top border', () => {
+    expect(getAppianPeriodCellStyle('appian-tab')).toEqual({
+      paddingTop: 0,
+      paddingLeft: 0,
+      paddingRight: 0,
+    });
   });
 
-  it('falls back to the defaults for ids that are not brand layouts (e.g. old appian-band)', () => {
+  it('the spine uses the theme band colors (Slate uses the Standard Slate third tone)', () => {
+    const tk = (id) => getCanvasTokens({ themeId: id }).brand;
+    expect(tk('appian-light')).toMatchObject({ band: '#020A51', bandText: '#FFFFFF' });
+    expect(tk('appian-dark')).toMatchObject({ band: '#2322F0', bandText: '#FFFFFF' });
+    expect(tk('appian-slate')).toMatchObject({ band: '#5B7499', bandText: '#FFFFFF' });
+  });
+
+  it('migrates every earlier layout id to the single layouts', () => {
     const d = normalizeDesign({
       brandTheme: 'appian-light',
-      sectionStyle: 'appian-band',
-      periodHeaderStyle: 'pill-badge',
+      sectionStyle: 'appian-rail',
+      periodHeaderStyle: 'appian-index',
+      taskStyle: 'appian-rule', // earlier id
     });
-    expect(d.sectionStyle).toBe('appian-rail');
-    expect(d.periodHeaderStyle).toBe('appian-index');
+    expect(d.sectionStyle).toBe('appian-spine');
+    expect(d.periodHeaderStyle).toBe('appian-tab');
+    expect(d.taskStyle).toBe('appian-plain');
+  });
+});
+
+describe('Appian milestone shapes', () => {
+  const prev = getDefaultDesign();
+
+  it('starts with the brand flag when entering from a non-brand theme', () => {
+    expect(getAppianDesign(prev, 'dark').milestone.shape).toBe('appian-flag');
+    expect(
+      getAppianDesign({ ...prev, duckMode: true, milestone: { shape: 'duck-egg' } }, 'light')
+        .milestone.shape
+    ).toBe('appian-flag');
+  });
+
+  it('keeps the chosen shape between Appian themes but always uses the theme colors', () => {
+    const dark = getAppianDesign(prev, 'dark');
+    const picked = {
+      ...dark,
+      milestone: { ...dark.milestone, shape: 'map-pin', color: '#ff0000' },
+    };
+    const slate = getAppianDesign(picked, 'slate');
+    expect(slate.milestone.shape).toBe('map-pin');
+    expect(slate.milestone.color).toBe('#E5EDF6'); // colors stay brand-locked
+    expect(slate.milestone.borderColor).toBe('#2F3A52');
+  });
+
+  it('normalizeDesign preserves the picked shape and migrates the retired ones', () => {
+    expect(
+      normalizeDesign({ brandTheme: 'appian-dark', milestone: { shape: 'push-pin' } }).milestone
+        .shape
+    ).toBe('push-pin');
+    for (const old of ['appian-diamond', 'appian-node']) {
+      expect(
+        normalizeDesign({ brandTheme: 'appian-dark', milestone: { shape: old } }).milestone.shape
+      ).toBe('appian-flag');
+    }
+  });
+
+  it('unlocks the Milestones tab in Appian themes (and still locks it in Duck Mode)', () => {
+    expect(getLockedTabs(getAppianDesign(prev, 'light')).has('milestones')).toBe(false);
+    expect(getLockedTabs(getDuckModeDesign(prev)).has('milestones')).toBe(true);
+  });
+
+  it('Owner / Team is no longer treated as a brand field', () => {
+    const d = getAppianDesign(
+      { ...prev, banner: { owner: 'Platform Team', subtitle: '', version: '' } },
+      'dark'
+    );
+    expect(d.banner.owner).toBe('Platform Team');
   });
 });

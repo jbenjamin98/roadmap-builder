@@ -18,6 +18,7 @@ export {
   applyEffectToggle,
 } from './effectOptions';
 
+// Grouped so related shapes sit together: basics, then flags, then map pins, then ducks.
 export const MILESTONE_SHAPES = [
   { id: 'diamond', name: 'Diamond' },
   { id: 'circle', name: 'Circle' },
@@ -25,10 +26,13 @@ export const MILESTONE_SHAPES = [
   { id: 'rounded', name: 'Rounded' },
   { id: 'triangle', name: 'Triangle' },
   { id: 'star', name: 'Star' },
-  { id: 'flag', name: 'Flag' },
   { id: 'hexagon', name: 'Hexagon' },
   { id: 'shield', name: 'Shield' },
   { id: 'cross', name: 'Cross' },
+  { id: 'flag', name: 'Flag' },
+  { id: 'appian-flag', name: 'Brand flag' },
+  { id: 'map-pin', name: 'Map pin' },
+  { id: 'push-pin', name: 'Push pin' },
   { id: 'duck-egg', name: 'Duck egg' },
   { id: 'yellow-duck', name: 'Yellow duck' },
 ];
@@ -311,7 +315,8 @@ export const SECTION_STYLES = [
   },
 ];
 
-export const isRotatedSectionStyle = (id) => String(id || '').startsWith('rotated-');
+export const isRotatedSectionStyle = (id) =>
+  String(id || '').startsWith('rotated-') || id === 'appian-spine';
 export const STANDARD_SECTION_STYLES = SECTION_STYLES.filter((s) => !isRotatedSectionStyle(s.id));
 export const SPINE_SECTION_STYLES = SECTION_STYLES.filter((s) => isRotatedSectionStyle(s.id));
 
@@ -642,6 +647,6 @@ export function getRandomDesignConfig() {
     itemStyle: pick(ITEM_STYLES).id,
     canvasCorners: pick(CANVAS_CORNER_STYLES).id,
     numberingStyle: pick(NUMBERING_STYLES).id,
-    milestoneShape: pick(MILESTONE_SHAPES).id,
+    milestoneShape: pick(MILESTONE_SHAPES.filter((s) => s.id !== 'appian-flag')).id,
   };
 }

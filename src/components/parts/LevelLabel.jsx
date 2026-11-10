@@ -35,17 +35,9 @@ export function LevelLabel({
           {body}
         </div>
       );
-    case 'appian-rule':
-      // Brand task marker: a short 2px vertical accent rule (the node is kept for sub-sections).
-      return (
-        <div className={base}>
-          <span
-            className="shrink-0 rounded-full"
-            style={{ width: 2, height: 14, backgroundColor: accent }}
-          />
-          {body}
-        </div>
-      );
+    case 'appian-plain':
+      // Brand task rows: no marker; the indent shows the hierarchy.
+      return <div className={base}>{body}</div>;
     case 'duck-egg':
       return (
         <div className={base}>

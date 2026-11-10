@@ -17,6 +17,7 @@ export function useBarInteraction({
   colWidth,
   legend,
   isPreview,
+  isPopoverOpen = false,
   setActivePopoverItemId,
   onAddTimelineItem,
   onUpdateTimelineItem,
@@ -165,6 +166,12 @@ export function useBarInteraction({
       e.target.closest('[data-rnd-item="true"]') ||
       e.target.closest('[data-item-popover="true"]')
     ) {
+      return;
+    }
+    // While a bar's popover is open, a press on a cell only dismisses it. Starting a draw here
+    // would create a new bar on pointer-up, which users then have to delete.
+    if (isPopoverOpen) {
+      setActivePopoverItemId(null);
       return;
     }
     setActivePopoverItemId(null);

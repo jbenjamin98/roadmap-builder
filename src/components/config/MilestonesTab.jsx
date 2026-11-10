@@ -5,6 +5,7 @@ import { OptionCard } from './primitives';
 
 export default function MilestonesTab({ ctx }) {
   const { design, panelTitle, resolvedMilestone, swatchEffects, tokens, updateMilestone } = ctx;
+  const brandLocked = Boolean(design.brandTheme);
 
   return (
     <div className="space-y-4">
@@ -30,7 +31,18 @@ export default function MilestonesTab({ ctx }) {
         ))}
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800">
+      {brandLocked && (
+        <p className="text-[11px] text-slate-500 dark:text-slate-400">
+          Pick any shape. Fill and border colors are set by the Appian theme.
+        </p>
+      )}
+      <div
+        data-testid="config-milestone-colors"
+        aria-disabled={brandLocked}
+        className={`grid grid-cols-1 sm:grid-cols-3 gap-3 p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800 ${
+          brandLocked ? 'pointer-events-none opacity-50' : ''
+        }`}
+      >
         <div>
           <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
             Fill Color

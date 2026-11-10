@@ -4,29 +4,13 @@
 export const APPIAN_THEME_IDS = ['appian-light', 'appian-dark', 'appian-slate'];
 export const isAppianTheme = (id) => APPIAN_THEME_IDS.includes(id);
 
-/** Section header layouts offered inside the Appian themes (hidden from the normal catalogs). */
-export const APPIAN_SECTION_STYLES = [
-  { id: 'appian-rail', name: 'Rail', desc: 'Tinted row with a thick accent rail on the left' },
-  { id: 'appian-underline', name: 'Underline', desc: 'Clean row with a 2px accent rule beneath' },
-  { id: 'appian-solid', name: 'Solid band', desc: 'Full-width brand-color band with light title' },
-];
-
-/** Period header layouts offered inside the Appian themes. */
-export const APPIAN_PERIOD_STYLES = [
-  { id: 'appian-index', name: 'Index', desc: 'Large light numeral beside the title and dates' },
-  { id: 'appian-tab', name: 'Tab', desc: 'Accent tab with a 45 degree cut over the title' },
-  { id: 'appian-span', name: 'Span', desc: 'Title over a start-to-end rule with date ends' },
-  { id: 'appian-chip', name: 'Chip', desc: 'Code chip with 5px corners beside the title' },
-  { id: 'appian-eyebrow', name: 'Eyebrow', desc: 'Tracked code, title, dates and a 2px rule' },
-];
-
-/** Hidden style ids used only by the Appian themes. Section/period are the default layouts. */
+/** Hidden style ids used only by the Appian themes (each area has one approved layout). */
 export const APPIAN_STYLE_IDS = {
   headerStyle: 'appian-brand',
-  periodHeaderStyle: 'appian-index',
-  sectionStyle: 'appian-rail',
+  periodHeaderStyle: 'appian-tab',
+  sectionStyle: 'appian-spine',
   subSectionStyle: 'appian-node',
-  taskStyle: 'appian-rule',
+  taskStyle: 'appian-plain',
   itemStyle: 'appian-bar',
 };
 export const APPIAN_MILESTONE_SHAPE = 'appian-flag';
@@ -57,7 +41,7 @@ const LIGHT_TOKENS = {
   gridSubtle: '#E4E8ED',
   stickyBg: C.white,
   stickyAltBg: '#F0F2F4',
-  subHeaderBg: C.cloudMist,
+  subHeaderBg: C.cloudMist, // opaque full-width sub-section band
   rowBgEven: C.white,
   rowBgOdd: '#F6F8FB',
   colShadeBg: 'rgba(2, 10, 81, 0.035)',
@@ -71,7 +55,8 @@ const LIGHT_TOKENS = {
     logo: 'blue',
     band: C.darkBlue,
     bandText: C.white,
-    milestone: { color: C.blue, border: C.white },
+    milestone: { color: C.blue, border: C.white }, // blue flag; the bold white outline keeps it visible on blue bars
+    subRowBorder: '#B3C3DA',
   },
 };
 
@@ -83,7 +68,7 @@ const DARK_TOKENS = {
   gridSubtle: 'rgba(179, 195, 218, 0.12)',
   stickyBg: C.darkBlue,
   stickyAltBg: '#070E69',
-  subHeaderBg: 'rgba(35, 34, 240, 0.18)',
+  subHeaderBg: '#0A1079', // Appian Blue 25% over Dark Blue (opaque)
   rowBgEven: 'rgba(2, 10, 81, 0.4)',
   rowBgOdd: 'rgba(35, 34, 240, 0.1)',
   colShadeBg: 'rgba(255, 255, 255, 0.04)',
@@ -98,6 +83,7 @@ const DARK_TOKENS = {
     band: C.blue,
     bandText: C.white,
     milestone: { color: C.cyan, border: C.darkBlue },
+    subRowBorder: 'rgba(42, 227, 255, 0.35)',
   },
 };
 
@@ -110,7 +96,7 @@ const SLATE_TOKENS = {
   gridSubtle: 'rgba(179, 195, 218, 0.14)',
   stickyBg: C.slate,
   stickyAltBg: '#414D65', // Standard Slate lifted toward Interface Grey (opaque for sticky cells)
-  subHeaderBg: 'rgba(91, 116, 153, 0.22)',
+  subHeaderBg: C.interfaceGrey, // opaque full-width sub-section band
   rowBgEven: C.slate,
   rowBgOdd: 'rgba(79, 92, 117, 0.35)',
   colShadeBg: 'rgba(255, 255, 255, 0.04)',
@@ -125,6 +111,7 @@ const SLATE_TOKENS = {
     band: C.slateBlue, // Standard Slate third tone (p. 14)
     bandText: C.white,
     milestone: { color: C.cloudMist, border: C.slate },
+    subRowBorder: 'rgba(179, 195, 218, 0.4)',
   },
 };
 
@@ -175,12 +162,14 @@ export const APPIAN_PRESETS = [
   },
 ];
 
-const keepVariant = (list, value, fallback) =>
-  list.some((o) => o.id === value) ? value : fallback;
+// Earlier brand milestone shapes that no longer exist. LEGACY_MILESTONE_SHAPES = ['appian-diamond', 'appian-node'];
+
+// Earlier brand milestone shapes that no longer exist.
+const LEGACY_MILESTONE_SHAPES = ['appian-diamond', 'appian-node'];
 
 const presetFor = (id) => APPIAN_PRESETS.find((p) => p.id === id);
 
-/** Brand token block (accent, tag, logo, band, milestone) for an Appian theme id. */
+/** Brand token block (accent, tag, logo, band, milestone, subRowBorder) for an Appian theme id. */
 export function getBrandTokens(brandTheme) {
   return presetFor(brandTheme)?.tokenOverrides.brand;
 }
@@ -198,28 +187,21 @@ export function getBrandAccent(brandTheme) {
 export function getAppianDesign(prev = {}, mode = 'light') {
   const id = isAppianTheme(`appian-${mode}`) ? `appian-${mode}` : 'appian-light';
   const ms = getBrandTokens(id).milestone;
+  // Moving between Appian themes keeps the chosen milestone shape; entering one starts with the flag.
+  const prevShape = prev.milestone?.shape;
+  const keepShape =
+    isAppianTheme(prev.brandTheme) && prevShape && !LEGACY_MILESTONE_SHAPES.includes(prevShape);
   return {
     ...prev,
     duckMode: false,
     brandTheme: id,
     ...APPIAN_STYLE_IDS,
-    // Keep the chosen section/period layout when it's one of the brand options.
-    sectionStyle: keepVariant(
-      APPIAN_SECTION_STYLES,
-      prev.sectionStyle,
-      APPIAN_STYLE_IDS.sectionStyle
-    ),
-    periodHeaderStyle: keepVariant(
-      APPIAN_PERIOD_STYLES,
-      prev.periodHeaderStyle,
-      APPIAN_STYLE_IDS.periodHeaderStyle
-    ),
     canvasCorners: 'subtle',
     numberingStyle: 'soft-tint',
     effects: Object.fromEntries(Object.keys(prev.effects || {}).map((k) => [k, false])),
     milestone: {
       ...(prev.milestone || {}),
-      shape: APPIAN_MILESTONE_SHAPE,
+      shape: keepShape ? prevShape : APPIAN_MILESTONE_SHAPE,
       color: ms.color,
       borderStyle: 'solid',
       borderColor: ms.border,
@@ -299,7 +281,16 @@ const ALL_TABS = [
 /** Tabs that stay editable while a brand mode is active. */
 export const BRAND_EDITABLE_TABS = {
   duck: ['timeline', 'banner', 'themes'],
-  appian: ['timeline', 'banner', 'themes', 'numbering', 'legend', 'condensed', 'grid'],
+  appian: [
+    'timeline',
+    'banner',
+    'themes',
+    'numbering',
+    'legend',
+    'condensed',
+    'grid',
+    'milestones',
+  ],
 };
 
 /** Returns the Set of settings tab ids that are locked for a design. */

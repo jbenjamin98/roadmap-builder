@@ -172,27 +172,21 @@ export default function BannerTab({ ctx }) {
           ['subtitle', 'Subtitle / strategic goal'],
           ['owner', 'Owner / Team'],
           ['version', 'Version (e.g. v2.4)'],
-        ].map(([key, label]) => {
-          // Owner is always Appian in a brand theme; the saved value is kept for later.
-          const locked = key === 'owner' && Boolean(design.brandTheme);
-          return (
-            <div key={key}>
-              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-                {label}
-              </label>
-              <input
-                type="text"
-                aria-label={label}
-                data-testid={`banner-${key}-input`}
-                value={locked ? '' : design.banner?.[key] || ''}
-                placeholder={locked ? 'Appian (set by the brand theme)' : undefined}
-                disabled={locked}
-                onChange={(e) => updateBanner({ [key]: e.target.value })}
-                className={`${inputCls} ${locked ? 'opacity-60 cursor-not-allowed' : ''}`}
-              />
-            </div>
-          );
-        })}
+        ].map(([key, label]) => (
+          <div key={key}>
+            <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+              {label}
+            </label>
+            <input
+              type="text"
+              aria-label={label}
+              data-testid={`banner-${key}-input`}
+              value={design.banner?.[key] || ''}
+              onChange={(e) => updateBanner({ [key]: e.target.value })}
+              className={inputCls}
+            />
+          </div>
+        ))}
       </div>
     </div>
   );

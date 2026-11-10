@@ -103,6 +103,23 @@ describe('SECTION_STYLES', () => {
 });
 
 describe('Duck Mode and Randomizer', () => {
+  it('groups milestone shapes: flags together, pins together, ducks together', () => {
+    const ids = MILESTONE_SHAPES.map((s) => s.id);
+    expect(new Set(ids).size).toBe(ids.length);
+    expect(ids).toHaveLength(15);
+    const at = (id) => ids.indexOf(id);
+    expect(Math.abs(at('flag') - at('appian-flag'))).toBe(1);
+    expect(Math.abs(at('map-pin') - at('push-pin'))).toBe(1);
+    expect(Math.abs(at('duck-egg') - at('yellow-duck'))).toBe(1);
+    // flags -> pins -> ducks, in that order
+    expect(Math.max(at('flag'), at('appian-flag'))).toBeLessThan(
+      Math.min(at('map-pin'), at('push-pin'))
+    );
+    expect(Math.max(at('map-pin'), at('push-pin'))).toBeLessThan(
+      Math.min(at('duck-egg'), at('yellow-duck'))
+    );
+  });
+
   it('provides duck-egg and yellow-duck in MILESTONE_SHAPES', () => {
     const ids = MILESTONE_SHAPES.map((s) => s.id);
     expect(ids).toContain('duck-egg');

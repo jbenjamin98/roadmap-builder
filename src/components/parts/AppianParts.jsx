@@ -1,6 +1,7 @@
 // Appian brand visuals (Appian Brand Guidelines, Sept 2026). Shared by the real canvas,
 // the live preview and the theme cards, so they always match.
 import LegendBar from '../timeline/LegendBar';
+import { OwnerRow } from './CanvasHeaderParts';
 import { NO_WORD_BREAK } from '../styleHelpers';
 import { APPIAN_COLORS } from '../../constants/brandThemes';
 import logoBlue from '../../assets/brand/appian-logo-blue.png';
@@ -84,7 +85,7 @@ export function AppianLineWork({ className = '' }) {
   );
 }
 
-/** Canvas header for the Appian themes (style id `appian-brand`). Owner is omitted: it's Appian. */
+/** Canvas header for the Appian themes (style id `appian-brand`). */
 export function AppianHeader({
   config = {},
   banner = {},
@@ -170,7 +171,10 @@ export function AppianHeader({
 
       <div className="flex flex-col items-end justify-between gap-3 shrink-0">
         <AppianLogo variant={brand.logo} height={compact ? 24 : 32} />
-        {showLegend && <LegendBar legend={legend} design={design} tokens={tokens} />}
+        <div className="flex flex-col items-end gap-2">
+          <OwnerRow banner={banner} tokens={tokens} primaryColor={brand.accent} />
+          {showLegend && <LegendBar legend={legend} design={design} tokens={tokens} />}
+        </div>
       </div>
 
       <AppianLineWork />
