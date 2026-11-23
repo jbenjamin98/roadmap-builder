@@ -6,6 +6,10 @@ import HorizonScene from './landing/HorizonScene';
 import DuckPond from './landing/DuckPond';
 import ShoreIsland from './landing/ShoreIsland';
 import PrivacyModal from './PrivacyModal';
+import { isDesktop } from '../storage/desktop';
+
+// Installers are attached to the latest GitHub Release (see .github/workflows/release.yml).
+const DESKTOP_DOWNLOAD_URL = 'https://github.com/jbenjamin98/roadmap-builder/releases/latest';
 import OpenRoadmapModal from './OpenRoadmapModal';
 import { MAX_IMPORT_BYTES, validateRoadmapImport } from '../data/roadmapSchema';
 import { MAX_DUCKS, QUACK_PHRASES, pickRandom, createDuckData } from './art/duckData';
@@ -394,6 +398,19 @@ export default function LandingPage({
       >
         Privacy &amp; Security
       </button>
+
+      {/* Web version only: the desktop app is already installed, so it has no use for this link. */}
+      {!isDesktop && (
+        <a
+          href={DESKTOP_DOWNLOAD_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          data-testid="download-desktop-link"
+          className="fixed bottom-3 right-4 z-30 text-[11px] font-semibold text-slate-700 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white transition-colors backdrop-blur-md px-2.5 py-1 rounded-lg bg-white/40 dark:bg-slate-900/60 border border-white/50 dark:border-indigo-400/30 shadow-sm"
+        >
+          Download the desktop app
+        </a>
+      )}
 
       {openStep === 'choose' && (
         <OpenRoadmapModal

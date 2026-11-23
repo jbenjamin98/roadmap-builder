@@ -298,6 +298,11 @@ try {
   // --- K. Privacy & backup UI checks
   const ctx4 = await browser.newContext({ viewport: { width: 1440, height: 900 } });
   const page4 = await gotoLandingFresh(ctx4);
+  const dl = page4.locator(sel('download-desktop-link'));
+  check(
+    'web landing page links to the latest desktop release',
+    (await dl.count()) === 1 && /releases\/latest$/.test(await dl.getAttribute('href'))
+  );
   const privacyBtn = page4.locator(sel('landing-privacy-btn'));
   check('privacy button exists on landing page', (await privacyBtn.count()) === 1);
   await privacyBtn.click();
