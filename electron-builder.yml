@@ -38,9 +38,10 @@ mac:
   artifactName: RoadmapBuilder-${version}-${arch}.${ext}
   notarize: false
 
+# AppImage only: it runs on any distro and supports auto-update. A .deb would need a maintainer
+# email in package.json, which would be published with the repo.
 linux:
   category: Office
   target:
     - AppImage
-    - deb
   artifactName: RoadmapBuilder-${version}-${arch}.${ext}

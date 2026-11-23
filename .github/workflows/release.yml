@@ -35,10 +35,18 @@ jobs:
         id: version
         run: echo "tag=v$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
       - name: Stop if this version was already released
+        # A leftover DRAFT (from an earlier failed run) is cleared so the run can start over;
+        # a published release is never touched.
         run: |
-          if gh release view "${{ steps.version.outputs.tag }}" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            echo "Release ${{ steps.version.outputs.tag }} already exists. Bump \"version\" in package.json and merge it first."
-            exit 1
+          tag="${{ steps.version.outputs.tag }}"
+          if state=$(gh release view "$tag" --repo "$GITHUB_REPOSITORY" --json isDraft --jq .isDraft 2>/dev/null); then
+            if [ "$state" = "true" ]; then
+              echo "Removing the unfinished draft release $tag from an earlier run."
+              gh release delete "$tag" --repo "$GITHUB_REPOSITORY" --yes
+            else
+              echo "Release $tag is already published. Bump \"version\" in package.json and merge it first."
+              exit 1
+            fi
           fi
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
