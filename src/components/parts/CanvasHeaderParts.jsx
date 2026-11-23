@@ -1,5 +1,6 @@
 import { Calendar, MapPin, Tag as TagIcon, User } from 'lucide-react';
 import { DuckEggIcon, YellowDuckIcon } from './DuckParts';
+import { getPeriodLengthSummary } from '../../utils/dateUtils';
 
 export function RoadmapPinSlot({ logo, primaryColor, variant = 'brand-hero' }) {
   switch (variant) {
@@ -209,6 +210,7 @@ export function CadenceRow({
   isTerminal = false,
   hideLogo = false,
 }) {
+  const periodLength = getPeriodLengthSummary(config);
   return (
     <div
       className={`flex flex-wrap items-center gap-2 text-[11px] font-bold uppercase tracking-widest ${
@@ -229,10 +231,8 @@ export function CadenceRow({
         style={{ color: isTerminal ? '#38bdf8' : tokens.isLight ? primaryColor : '#a5b4fc' }}
       >
         {isTerminal
-          ? `[${config.totalPeriods} ${config.periodLabel} // ${config.weeksPerPeriod}W]`
-          : `${config.totalPeriods} ${config.periodLabel} • ${config.weeksPerPeriod} ${
-              Number(config.weeksPerPeriod) === 1 ? 'Week' : 'Weeks'
-            } / ${singularPeriod}`}
+          ? `[${config.totalPeriods} ${config.periodLabel} // ${periodLength.text}W]`
+          : `${config.totalPeriods} ${config.periodLabel} • ${periodLength.text} ${periodLength.unit} / ${singularPeriod}`}
       </span>
 
       {banner?.version && (

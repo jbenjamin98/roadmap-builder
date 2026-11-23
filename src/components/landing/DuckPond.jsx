@@ -1,5 +1,6 @@
 import DuckSvg from '../art/DuckSvg';
 import ContinuePad from './ContinuePad';
+import LibraryPad from './LibraryPad';
 
 export default function DuckPond({
   ducks,
@@ -13,6 +14,7 @@ export default function DuckPond({
   handleDuckLanded,
   onCreateRoadmap,
   onOpenClick,
+  onBrowseClick,
   continueRoadmap,
   onContinue,
 }) {
@@ -261,13 +263,7 @@ export default function DuckPond({
           </span>
         </button>
 
-        {continueRoadmap && (
-          <ContinuePad
-            name={continueRoadmap.name}
-            hasUnbackedChanges={continueRoadmap.hasUnbackedChanges}
-            onContinue={onContinue}
-          />
-        )}
+        {continueRoadmap && <ContinuePad name={continueRoadmap.name} onContinue={onContinue} />}
 
         {/* Open Roadmap (upload a roadmap file) Bottle Lily Pad */}
         <button
@@ -362,6 +358,8 @@ export default function DuckPond({
             Open Roadmap
           </span>
         </button>
+
+        {onBrowseClick && <LibraryPad onBrowse={onBrowseClick} />}
       </div>
     </>
   );

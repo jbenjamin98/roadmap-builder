@@ -2,7 +2,7 @@
  * "Continue editing" lily pad: only shown when a roadmap is already in progress. Sits between
  * Create and Open and names the roadmap it will reopen.
  */
-export default function ContinuePad({ name, hasUnbackedChanges, onContinue }) {
+export default function ContinuePad({ name, onContinue }) {
   return (
     <button
       type="button"
@@ -57,14 +57,7 @@ export default function ContinuePad({ name, hasUnbackedChanges, onContinue }) {
         <path d="M55 14 L58 12 L61 15 L59 17 Z" fill="#fb7185" stroke="#92400e" strokeWidth="1.2" />
       </svg>
       <span className="relative flex items-center gap-1.5 text-sm font-extrabold tracking-tight text-white drop-shadow-sm sm:text-base">
-        {hasUnbackedChanges && (
-          <span
-            title="Not backed up"
-            className="inline-block h-2 w-2 shrink-0 rounded-full bg-rose-400 shadow-[0_0_6px_rgba(251,113,133,0.9)]"
-          />
-        )}
         Continue editing
-        {hasUnbackedChanges && <span className="sr-only">(not backed up)</span>}
       </span>
       <span className="relative max-w-full truncate text-[11px] font-bold text-amber-200 drop-shadow-sm sm:text-xs">
         “{name}”

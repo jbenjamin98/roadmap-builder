@@ -4,6 +4,7 @@ import { DATE_FORMATS } from '../../constants/designOptions';
 import { PERIOD_TYPES } from '../../constants/themes';
 import { formatDateWithPattern } from '../../utils/dateUtils';
 import { OptionCard, FieldLabel } from './primitives';
+import PeriodsEditor from './PeriodsEditor';
 
 export default function TimelineTab({ ctx }) {
   const {
@@ -124,6 +125,8 @@ export default function TimelineTab({ ctx }) {
         </div>
       </div>
 
+      <PeriodsEditor ctx={ctx} />
+
       <div className="space-y-2">
         <FieldLabel>Date Format</FieldLabel>
         <div className="grid grid-cols-2 xl:grid-cols-4 gap-2.5">
@@ -149,8 +152,8 @@ export default function TimelineTab({ ctx }) {
           <span className="text-indigo-600 dark:text-indigo-300 font-semibold">
             Calculated Horizon:
           </span>{' '}
-          {previewPeriods.length} {periodLabel} ({Number(weeksPerPeriod) * previewPeriods.length}{' '}
-          weeks)
+          {previewPeriods.length} {periodLabel} (
+          {previewPeriods.reduce((sum, p) => sum + p.weeks, 0)} weeks)
         </div>
         {previewPeriods.length > 0 && (
           <div className="font-mono text-[11px] text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-900 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-800">

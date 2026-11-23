@@ -1,7 +1,6 @@
 const DB_NAME = 'roadmap_builder_store';
 const DB_VERSION = 1;
 const DRAFTS_STORE = 'drafts';
-const HANDLES_STORE = 'file_handles';
 
 let dbPromise = null;
 
@@ -18,9 +17,6 @@ function openDb() {
         const db = request.result;
         if (!db.objectStoreNames.contains(DRAFTS_STORE)) {
           db.createObjectStore(DRAFTS_STORE);
-        }
-        if (!db.objectStoreNames.contains(HANDLES_STORE)) {
-          db.createObjectStore(HANDLES_STORE);
         }
       };
       request.onsuccess = () => resolve(request.result);
@@ -72,51 +68,6 @@ export async function clearDraftFromIdb() {
       tx.oncomplete = () => resolve(true);
       tx.onerror = () => resolve(false);
       tx.objectStore(DRAFTS_STORE).delete('current_draft');
-    } catch {
-      resolve(false);
-    }
-  });
-}
-
-export async function saveFileHandleToIdb(handle) {
-  const db = await openDb();
-  if (!db) return false;
-  return new Promise((resolve) => {
-    try {
-      const tx = db.transaction(HANDLES_STORE, 'readwrite');
-      tx.oncomplete = () => resolve(true);
-      tx.onerror = () => resolve(false);
-      tx.objectStore(HANDLES_STORE).put(handle, 'active_handle');
-    } catch {
-      resolve(false);
-    }
-  });
-}
-
-export async function loadFileHandleFromIdb() {
-  const db = await openDb();
-  if (!db) return null;
-  return new Promise((resolve) => {
-    try {
-      const tx = db.transaction(HANDLES_STORE, 'readonly');
-      const req = tx.objectStore(HANDLES_STORE).get('active_handle');
-      req.onsuccess = () => resolve(req.result || null);
-      req.onerror = () => resolve(null);
-    } catch {
-      resolve(null);
-    }
-  });
-}
-
-export async function clearFileHandleFromIdb() {
-  const db = await openDb();
-  if (!db) return false;
-  return new Promise((resolve) => {
-    try {
-      const tx = db.transaction(HANDLES_STORE, 'readwrite');
-      tx.oncomplete = () => resolve(true);
-      tx.onerror = () => resolve(false);
-      tx.objectStore(HANDLES_STORE).delete('active_handle');
     } catch {
       resolve(false);
     }

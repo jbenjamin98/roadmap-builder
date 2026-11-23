@@ -16,6 +16,15 @@ describe('normalizeRoadmapState', () => {
     expect(normalizeRoadmapState(null).sections.length).toBeGreaterThan(0);
   });
 
+  it('defaults and sanitizes per-period overrides (older files have none)', () => {
+    expect(normalizeRoadmapState({ id: 'rm-1' }).config.periodOverrides).toEqual({});
+    const s = normalizeRoadmapState({
+      id: 'rm-1',
+      config: { periodOverrides: { 2: { label: ' Hardening ', weeks: 99 }, junk: { weeks: 1 } } },
+    });
+    expect(s.config.periodOverrides).toEqual({ 2: { label: 'Hardening', weeks: 52 } });
+  });
+
   it('keeps ids and fills defaults', () => {
     const s = normalizeRoadmapState({
       id: 'rm-1',

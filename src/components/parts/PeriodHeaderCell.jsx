@@ -14,6 +14,8 @@ export function PeriodHeaderCell({
   subtleGrid = true,
   width,
   testId,
+  onSelect,
+  selected = false,
 }) {
   const showDates = !density?.hideDates;
   const py = density?.headerPy ?? 12;
@@ -46,12 +48,41 @@ export function PeriodHeaderCell({
   const isBrand = String(styleId).startsWith('appian-');
   if (isBrand) Object.assign(cellStyle, getAppianPeriodCellStyle(styleId, tokens));
 
+  const interactive = typeof onSelect === 'function';
+
   return (
     <div
       style={cellStyle}
       data-testid={testId}
-      className="px-3 flex flex-col justify-center relative border-r"
+      {...(interactive && {
+        role: 'button',
+        tabIndex: 0,
+        title: 'Click to rename or change the length of this period',
+        'aria-haspopup': 'dialog',
+        'aria-expanded': selected,
+        onClick: (e) => onSelect(e.currentTarget),
+        onKeyDown: (e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onSelect(e.currentTarget);
+          }
+        },
+      })}
+      className={`px-3 flex flex-col justify-center relative border-r ${
+        interactive
+          ? 'cursor-pointer hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-indigo-400'
+          : ''
+      }`}
     >
+      {period.isCustomLength && (
+        <span
+          data-testid={`period-weeks-badge-${period.index}`}
+          data-export-text="true"
+          className="absolute right-1 top-1 rounded-full bg-black/25 px-1.5 text-[9px] font-bold leading-4 text-white"
+        >
+          {period.weeks}w
+        </span>
+      )}
       {isBrand ? (
         <AppianPeriodBody period={period} tokens={tokens} showDates={showDates} />
       ) : (

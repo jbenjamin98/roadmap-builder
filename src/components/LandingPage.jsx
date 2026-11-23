@@ -345,6 +345,7 @@ export default function LandingPage({
               handleDuckLanded={handleDuckLanded}
               onCreateRoadmap={onCreateRoadmap}
               onOpenClick={() => setOpenStep('choose')}
+              onBrowseClick={onOpenLibrary}
               continueRoadmap={continueRoadmap}
               onContinue={onContinueRoadmap}
             />
@@ -401,14 +402,6 @@ export default function LandingPage({
             setOpenStep(null);
             fileInputRef.current?.click();
           }}
-          onChooseLibrary={
-            onOpenLibrary
-              ? () => {
-                  setOpenStep(null);
-                  onOpenLibrary();
-                }
-              : undefined
-          }
         />
       )}
 

@@ -59,23 +59,20 @@ try {
     (await page.evaluate(() => localStorage.getItem('roadmap_builder_state_v1'))) === null
   );
 
-  // --- B. Create + first-run draft notice
+  // --- B. Create. There is no first-run draft notice and no backup chip any more
   await page.locator(sel('create-roadmap-btn')).click({ force: true });
   await page.waitForSelector(sel('config-modal'));
   await page.fill(sel('config-roadmap-name'), 'E2E Roadmap');
   await page.click(sel('save-config-btn'));
   await page.waitForSelector(sel('roadmap-export-canvas'));
   check(
-    'draft notice appears on first workspace visit',
-    (await page.locator(sel('draft-notice')).count()) === 1
+    'no draft notice on first workspace visit',
+    (await page.locator(sel('draft-notice')).count()) === 0
   );
-  await page.keyboard.press('Escape');
-  check('draft notice closes with Escape', (await page.locator(sel('draft-notice')).count()) === 0);
-
-  // --- C. Backup chip
+  check('no backup chip in the workspace', (await page.locator(sel('backup-chip')).count()) === 0);
   check(
-    'chip says "Not backed up" for a new roadmap',
-    /Not backed up/.test(await page.locator(sel('backup-chip')).innerText())
+    'no backup banner in the workspace',
+    (await page.locator(sel('backup-banner')).count()) === 0
   );
 
   // --- D/E. Undo / redo (buttons + keyboard)
@@ -103,18 +100,19 @@ try {
   check('toast Undo restores the task', (await page.locator(sel('cell-task-1-1')).count()) === 1);
   check("toast Undo restores the task's bar too", (await page.locator(ITEMS).count()) === 1);
 
-  // --- G. Backup via chip
-  await page.click(sel('backup-chip'));
+  // --- G. Export JSON (the way to keep a copy)
+  await page.click(sel('export-btn'));
+  await page.waitForSelector(sel('export-modal'));
+  for (const id of ['json', 'excel', 'png', 'pdf']) {
+    const box = page.locator(sel('export-option-' + id));
+    if ((await box.isChecked()) !== (id === 'json')) await box.click();
+  }
   const [download] = await Promise.all([
     page.waitForEvent('download'),
-    page.click(sel('backup-download-btn')),
+    page.click(sel('export-run-btn')),
   ]);
-  check('backup downloads a .json file', download.suggestedFilename().endsWith('.json'));
-  await page.waitForTimeout(200);
-  check(
-    'chip says "Backed up" afterwards',
-    /Backed up/.test(await page.locator(sel('backup-chip')).innerText())
-  );
+  check('export downloads a .json file', download.suggestedFilename().endsWith('.json'));
+  await page.waitForSelector(sel('export-modal'), { state: 'detached' });
 
   // --- H. Draft persists across reload and is reachable again
   await page.waitForTimeout(800);
@@ -127,18 +125,9 @@ try {
   await page.click(sel('continue-editing-btn'), { force: true });
   await page.waitForSelector(sel('roadmap-export-canvas'));
   check('draft restored after reload (bar still there)', (await page.locator(ITEMS).count()) === 1);
-  check(
-    'still marked backed up after reload',
-    /Backed up/.test(await page.locator(sel('backup-chip')).innerText())
-  );
-
-  // --- I. Import confirmation when current work is not backed up
+  // --- I. Importing over the browser draft asks first
   await page.click(sel('add-section-btn'));
   await page.waitForTimeout(200);
-  check(
-    'chip flips to "Not backed up" after an edit',
-    /Not backed up/.test(await page.locator(sel('backup-chip')).innerText())
-  );
   fs.writeFileSync(
     `${OUT}/import-test.json`,
     JSON.stringify({ config: { name: 'Imported' }, sections: [], tasks: [], timelineItems: [] })
@@ -147,7 +136,7 @@ try {
   await page.waitForSelector(sel('create-roadmap-btn'));
   await page.setInputFiles(sel('upload-json-input'), `${OUT}/import-test.json`);
   await page.waitForSelector(sel('import-confirm'));
-  check('import asks before replacing un-backed-up work', true);
+  check('import asks before replacing the browser draft', true);
   await page.getByRole('button', { name: 'Cancel' }).click();
   check(
     'Cancel keeps the current roadmap',
@@ -174,15 +163,12 @@ try {
     };
   });
   await page.click(sel('add-section-btn'));
-  await page.waitForSelector(sel('backup-banner'), { timeout: 5000 });
-  check(
-    'failed draft save shows a visible banner',
-    /not being saved/i.test(await page.locator(sel('backup-banner')).innerText())
-  );
-  check(
-    'chip reports the failing draft',
-    /Draft not saving/.test(await page.locator(sel('backup-chip')).innerText())
-  );
+  const failToast = page.locator(sel('toast')).filter({ hasText: /could not be saved/i });
+  await failToast
+    .first()
+    .waitFor({ timeout: 5000 })
+    .catch(() => {});
+  check('failed draft save raises an error toast', (await failToast.count()) >= 1);
   await ctx.close();
 
   // --- K. Corrupt draft is quarantined, never overwritten
@@ -333,21 +319,11 @@ try {
   await page4.fill(sel('config-roadmap-name'), 'Backup Test');
   await page4.click(sel('save-config-btn'));
   await page4.waitForSelector(sel('roadmap-export-canvas'));
-  await page4.keyboard.press('Escape'); // dismiss first-run draft notice
-
-  await page4.locator(sel('backup-chip')).click();
-  await page4.waitForSelector('[role="dialog"][aria-label="Backup status"]');
   check(
-    'backup chip popover opens',
-    (await page4.locator('[role="dialog"][aria-label="Backup status"]').count()) === 1
-  );
-  check(
-    'backup chip no longer offers Google Drive',
-    (await page4.locator('text=Google Drive').count()) === 0
-  );
-  check(
-    'backup chip offers download backup',
-    (await page4.locator(sel('backup-download-btn')).count()) === 1
+    'workspace has no backup chip, Drive or draft notice',
+    (await page4.locator(sel('backup-chip')).count()) === 0 &&
+      (await page4.locator('text=Google Drive').count()) === 0 &&
+      (await page4.locator(sel('draft-notice')).count()) === 0
   );
 
   await ctx4.close();
@@ -447,11 +423,6 @@ try {
   await page5.fill(sel('config-roadmap-name'), 'Responsive Test');
   await page5.click(sel('save-config-btn'));
   await page5.waitForSelector(sel('roadmap-export-canvas'));
-  check(
-    'first-run notice offers a backup download',
-    (await page5.locator(sel('draft-notice-download')).count()) === 1
-  );
-  await page5.keyboard.press('Escape');
 
   const canvasBox = await page5.locator(sel('roadmap-export-canvas')).boundingBox();
   check(
@@ -473,16 +444,6 @@ try {
     !(await page5.locator('#workspace-sidebar').isVisible())
   );
 
-  await page5.locator(sel('backup-chip')).click();
-  const popover = await page5.locator('[role="dialog"][aria-label="Backup status"]').boundingBox();
-  check(
-    'backup popover stays inside an 800px window',
-    Boolean(popover && popover.x >= 0 && popover.x + popover.width <= 801)
-  );
-  check(
-    'no Google Drive section remains in the backup popover',
-    (await page5.locator(sel('drive-connect-btn')).count()) === 0
-  );
   await ctx5.close();
 
   // --- Configuration studio at the smallest supported laptop (1280x720)

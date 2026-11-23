@@ -3,12 +3,10 @@ import SmallScreenGuard from './components/SmallScreenGuard';
 import CustomCursor from './components/CustomCursor';
 import ToastHost from './components/ToastHost';
 import RecoveryBanner from './components/backup/RecoveryBanner';
-import DraftNoticeDialog from './components/backup/DraftNoticeDialog';
 import ConfirmDialog from './components/ui/ConfirmDialog';
 import ConfigModal from './components/ConfigModal';
 import useRoadmapState from './hooks/useRoadmapState';
 import { RoadmapContext } from './state/roadmapContext';
-import { hasSeenDraftNotice, markDraftNoticeSeen } from './data/persistence';
 import { loadUiThemeMode, saveUiThemeMode } from './data/defaultState';
 import LibraryModal from './components/library/LibraryModal';
 import { validateRoadmapImport } from './data/roadmapSchema';
@@ -35,8 +33,6 @@ export default function App() {
     updateConfig,
     undo,
     redo,
-    hasUnbackedChanges,
-    markBackedUp,
     recovery,
     restoreBackup,
     dismissRecovery,
@@ -46,9 +42,8 @@ export default function App() {
   const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
   const [isCreatingNew, setIsCreatingNew] = useState(false);
   const [themeMode, setThemeMode] = useState(() => loadUiThemeMode());
-  // Set when the user is about to replace an un-backed-up roadmap: { verb, apply }.
+  // Web only: set when the user is about to replace the roadmap held in the browser draft.
   const [pendingReplace, setPendingReplace] = useState(null);
-  const [showDraftNotice, setShowDraftNotice] = useState(false);
   const [showLibrary, setShowLibrary] = useState(false); // desktop only
 
   // Sync light/dark class on <html> synchronously before paint to prevent theme lag
@@ -80,26 +75,15 @@ export default function App() {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [currentView, undo, redo]);
 
-  // Warn before leaving only when there is work that exists nowhere but this browser.
-  useEffect(() => {
-    if (isDesktop || !hasUnbackedChanges) return undefined;
-    const onBeforeUnload = (e) => {
-      e.preventDefault();
-      e.returnValue = '';
-    };
-    window.addEventListener('beforeunload', onBeforeUnload);
-    return () => window.removeEventListener('beforeunload', onBeforeUnload);
-  }, [hasUnbackedChanges]);
-
   const enterWorkspace = () => {
     setCurrentView('workspace');
-    // The desktop app saves to real files, so the "temporary browser draft" warning does not apply.
-    if (!isDesktop && !hasSeenDraftNotice()) setShowDraftNotice(true);
   };
 
-  const closeDraftNotice = () => {
-    markDraftNoticeSeen();
-    setShowDraftNotice(false);
+  // The web draft lives only in this browser, so replacing it asks first. The desktop app saves
+  // every roadmap to its own file (and keeps version history), so it never needs to ask.
+  const confirmReplace = (verb, apply) => {
+    if (!isDesktop && roadmap.persistable) setPendingReplace({ verb, apply });
+    else apply();
   };
 
   // View A -> Trigger View B (Blank Configuration Modal)
@@ -115,7 +99,7 @@ export default function App() {
   };
 
   // View A -> Upload JSON creates/updates a roadmap and routes to editor.
-  // Replacing work that has no backup asks first, so nothing is lost by accident.
+  // Replacing the web draft asks first, so nothing is lost by accident (see confirmReplace).
   const handleUploadRoadmapJson = async (parsedJson) => {
     let json = parsedJson;
     if (isDesktop && json.id) {
@@ -128,9 +112,7 @@ export default function App() {
         /* library unreadable: autosave will report it */
       }
     }
-    if (hasUnbackedChanges)
-      setPendingReplace({ verb: 'Importing', apply: () => applyImport(json) });
-    else applyImport(json);
+    confirmReplace('Importing', () => applyImport(json));
   };
 
   // ---- Desktop library ----
@@ -180,15 +162,10 @@ export default function App() {
   };
 
   const handleSaveConfig = (updatedConfig) => {
-    // A new roadmap replaces the current one and has its own undo history, so ask first.
-    if (isCreatingNew && hasUnbackedChanges) {
-      setPendingReplace({
-        verb: 'Creating a new roadmap',
-        apply: () => finishSaveConfig(updatedConfig),
-      });
-      return;
-    }
-    finishSaveConfig(updatedConfig);
+    // A new roadmap replaces the current one and has its own undo history, so ask first (web).
+    if (isCreatingNew)
+      confirmReplace('Creating a new roadmap', () => finishSaveConfig(updatedConfig));
+    else finishSaveConfig(updatedConfig);
   };
 
   return (
@@ -207,9 +184,7 @@ export default function App() {
             onCreateRoadmap={handleTriggerCreateRoadmap}
             onUploadRoadmap={handleUploadRoadmapJson}
             onOpenLibrary={isDesktop ? () => setShowLibrary(true) : undefined}
-            continueRoadmap={
-              roadmap.persistable ? { name: roadmapState.config?.name, hasUnbackedChanges } : null
-            }
+            continueRoadmap={roadmap.persistable ? { name: roadmapState.config?.name } : null}
             onContinueRoadmap={enterWorkspace}
             themeMode={themeMode}
             onChangeThemeMode={setThemeMode}
@@ -252,22 +227,11 @@ export default function App() {
         />
       )}
 
-      {showDraftNotice && currentView === 'workspace' && (
-        <DraftNoticeDialog
-          onContinue={closeDraftNotice}
-          onDownload={() => {
-            downloadRoadmapJson(roadmapState);
-            markBackedUp('download');
-            closeDraftNotice();
-          }}
-        />
-      )}
-
       {pendingReplace && (
         <ConfirmDialog
           testId="import-confirm"
           title="Replace your current roadmap?"
-          description={`Your current roadmap has changes that are not backed up. ${pendingReplace.verb} replaces it.`}
+          description={`Your current roadmap is only stored as a draft in this browser. ${pendingReplace.verb} replaces it.`}
           onCancel={() => setPendingReplace(null)}
           actions={[
             { label: 'Cancel', onClick: () => setPendingReplace(null) },
@@ -282,14 +246,13 @@ export default function App() {
               },
             },
             {
-              label: 'Download current, then replace',
+              label: 'Export current, then replace',
               variant: 'primary',
               autoFocus: true,
               testId: 'import-backup-replace-btn',
               onClick: () => {
                 const { apply } = pendingReplace;
                 downloadRoadmapJson(roadmapState);
-                markBackedUp('download');
                 setPendingReplace(null);
                 apply();
               },

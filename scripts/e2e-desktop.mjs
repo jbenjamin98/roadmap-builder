@@ -86,20 +86,28 @@ try {
     fs.readFileSync(path.join(library, 'Desktop Test.roadmap.json'), 'utf8')
   );
   check('saved file holds the roadmap', saved.config?.name === 'Desktop Test' && Boolean(saved.id));
+  check('no backup chip on desktop', (await page.locator(sel('backup-chip')).count()) === 0);
+
+  // Period edits are saved into the roadmap file
+  await page.locator(sel('period-header-2')).click();
+  await page.waitForSelector(sel('period-edit-popover'));
+  await page.locator(sel('period-edit-name')).fill('Hardening Sprint 2');
+  await page.locator(sel('period-edit-weeks')).fill('3');
+  await page.keyboard.press('Escape');
   check(
-    'chip reports Saved',
-    await waitFor(async () =>
-      (await page.locator(sel('backup-chip')).innerText()).includes('Saved')
-    )
+    'renamed / re-lengthened period is autosaved to the file',
+    await waitFor(() => {
+      const cfg = JSON.parse(
+        fs.readFileSync(path.join(library, 'Desktop Test.roadmap.json'), 'utf8')
+      ).config;
+      return (
+        cfg.periodOverrides?.['2']?.label === 'Hardening Sprint 2' &&
+        cfg.periodOverrides?.['2']?.weeks === 3
+      );
+    })
   );
 
-  const openChip = async () => {
-    await page.locator(sel('backup-chip')).click();
-    await page.waitForSelector(sel('desktop-save-section'));
-  };
-
-  await openChip();
-  await page.locator(sel('chip-version-history-btn')).click();
+  await page.locator(sel('versions-btn')).click();
   await page.waitForSelector(sel('version-history-dialog'));
   check(
     'an automatic first version exists',
@@ -107,14 +115,14 @@ try {
   );
   await page.keyboard.press('Escape');
 
-  await openChip();
-  await page.locator(sel('chip-save-version-btn')).click();
+  await page.locator(sel('versions-btn')).click();
+  await page.waitForSelector(sel('version-history-dialog'));
+  await page.locator(sel('versions-save-btn')).click();
   await page.fill(sel('save-version-label'), 'Q3 master');
   await page.locator(`${sel('save-version-dialog')} input[type="checkbox"]`).check();
   await page.locator(sel('save-version-submit')).click();
   await page.waitForSelector(sel('save-version-dialog'), { state: 'detached' });
-  await openChip();
-  await page.locator(sel('chip-version-history-btn')).click();
+  await page.locator(sel('versions-btn')).click();
   await page.waitForSelector(sel('version-history-dialog'));
   check(
     'named master version is listed and pinned',
@@ -168,17 +176,55 @@ try {
   const roadmapFile = path.join(library, 'Desktop Test.roadmap.json');
   const mtimeBefore = fs.statSync(roadmapFile).mtimeMs;
   ({ app, page, errors } = await start());
+  await page.setViewportSize({ width: 1280, height: 720 });
+  const fits = async (id) => {
+    const box = await page.locator(sel(id)).boundingBox();
+    return Boolean(box && box.x >= 0 && box.x + box.width <= 1280 && box.y + box.height <= 720);
+  };
+  check(
+    'all four landing pads fit at 1280x720',
+    (await fits('create-roadmap-btn')) &&
+      (await fits('continue-editing-btn')) &&
+      (await fits('open-roadmap-btn')) &&
+      (await fits('library-open-btn'))
+  );
   await page.locator(sel('open-roadmap-btn')).click({ force: true });
   await page.waitForSelector(sel('open-roadmap-modal'));
-  await page.locator(sel('open-library-option')).click();
+  check(
+    'Open dialog no longer duplicates the library option',
+    (await page.locator(sel('open-library-option')).count()) === 0
+  );
+  await page.keyboard.press('Escape');
+  await page.locator(sel('library-open-btn')).click({ force: true });
   await page.waitForSelector(sel('library-modal'));
   check(
-    'library lists the saved roadmap after a restart',
-    await waitFor(async () => (await page.locator(sel('library-open-item')).count()) === 1)
+    'the Browse pad lists the saved roadmap as a card',
+    await waitFor(async () => (await page.locator(sel('library-card')).count()) === 1)
   );
-  await page.locator(sel('library-open-item')).click();
+  await page.locator('[aria-label="Duplicate Desktop Test"]').click();
+  check(
+    'duplicating adds a second card',
+    await waitFor(async () => (await page.locator(sel('library-card')).count()) === 2)
+  );
+  await page.locator(sel('library-search')).fill('copy');
+  check('search filters the grid', (await page.locator(sel('library-card')).count()) === 1);
+  await page.locator(sel('library-search')).fill('zzz-nothing');
+  check('search shows an empty state', (await page.locator(sel('library-no-match')).count()) === 1);
+  await page.locator(sel('library-search')).fill('');
+  check(
+    'clearing search restores the grid',
+    (await page.locator(sel('library-card')).count()) === 2
+  );
+  await page
+    .locator(sel('library-card'))
+    .filter({ hasNotText: '(copy)' })
+    .locator(sel('library-open-item'))
+    .click();
   await page.waitForSelector(sel('roadmap-export-canvas'));
-  check('opening from the library loads the roadmap', true);
+  check(
+    'the period rename survived being reopened from the library',
+    /Hardening Sprint 2/.test(await page.locator(sel('period-header-2')).innerText())
+  );
   await new Promise((r) => setTimeout(r, 1500));
   check(
     'merely opening a roadmap does not rewrite its file',

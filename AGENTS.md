@@ -31,7 +31,7 @@ tasks, timelineItems), `Design`, `ConfigModalContext`, and `RoadmapActions`. Nev
 ```
 src/App.jsx                    view switching (landing | workspace) + modal wiring & shortcuts
 src/state/                     pure reducer (roadmapReducer.js), undo/redo history (history.js),
-                               backup indicators (backupState.js), context (roadmapContext.js)
+                               context (roadmapContext.js)
 src/hooks/useRoadmapState.js   state hook connecting reducer, history, and persistence
 src/data/persistence.js       draft storage, corrupt state quarantine, last-good snapshots
 src/data/defaultState.js       blank/sample state, normalizeRoadmapState, theme storage
@@ -61,7 +61,9 @@ src/components/
                                BarVisual, CanvasOverlays (used by canvas, live preview AND swatches)
   ConfigModal.jsx + config/    settings modal shell; one <XxxTab> per tab, shared `ctx` object,
                                swatches.jsx builds preview swatches from real renderers
-  backup/                      BackupChip, BackupNagBanner, RecoveryBanner, DraftNoticeDialog
+  backup/                      RecoveryBanner only (corrupt-draft recovery). There is no backup chip, nag banner
+                               or draft notice on purpose: the web uses Export, desktop autosaves to files.
+  library/                     desktop only: LibraryModal (card grid), VersionHistoryDialog, SaveVersionDialog
   ui/                          Modal (accessible dialog), ConfirmDialog
   canvasStyles.js, styleHelpers.js   theme tokens and style resolution
   art/                         decorative SVG (ducks, meadow). Never needs reading for logic changes.
@@ -74,7 +76,11 @@ src/components/
 - Add a new design option: catalog in `designOptions.js`, default in `getDefaultDesign`, normalization in
   `normalizeDesign`, type in `types/roadmap.d.ts`, and render it in `components/parts/*`.
 - Always load external JSON via `normalizeRoadmapState` (fills defaults, clamps periods).
-- Periods are 1-based; `calculatePeriods` clamps to 52, the UI limits to 36.
+- Periods are 1-based; `calculatePeriods` clamps to 52, the UI limits to 36. Names and lengths can be
+  overridden per period via `config.periodOverrides` (`utils/periodOverrides.js`: normalize/patch/bulk, shared by
+  the reducer, `normalizeRoadmapState` and the UI). Always read period dates and titles from `calculatePeriods`
+  (never `weeksPerPeriod * n`), and use `getTotalWeeks` / `getPeriodLengthSummary` for summaries. Bars are
+  stored by period number, so they follow their period when lengths change. Columns stay uniform width.
 - Swatches and the canvas must share renderers in `parts/`; do not fork visuals.
 - Brand themes (Appian) use hidden `appian-*` style ids, set by `getAppianDesign` and reverted by
   `getExitBrandDesign`. Their visuals live in `parts/AppianParts.jsx` (node traced from the logo's "i" dot,

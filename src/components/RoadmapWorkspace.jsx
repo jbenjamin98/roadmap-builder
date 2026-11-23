@@ -10,6 +10,7 @@ import {
   Undo2,
   Redo2,
   PanelLeft,
+  History,
 } from 'lucide-react';
 import Sidebar from './Sidebar';
 import TimelineGrid from './TimelineGrid';
@@ -22,8 +23,7 @@ import { nextPaint, printRoadmapPdf, renderRoadmapPng } from '../utils/exportUti
 import { downloadBlob, downloadRoadmapJson, slugifyName } from '../utils/download';
 import { loadFont } from '../constants/fontLoaders';
 import { useRoadmap } from '../state/roadmapContext';
-import BackupChip from './backup/BackupChip';
-import BackupNagBanner from './backup/BackupNagBanner';
+import { isDesktop } from '../storage/desktop';
 import DesktopWorkspaceTools from './library/DesktopWorkspaceTools';
 
 export default function RoadmapWorkspace({
@@ -32,7 +32,7 @@ export default function RoadmapWorkspace({
   themeMode,
   onChangeThemeMode,
 }) {
-  const { roadmapState, actions, undo, redo, canUndo, canRedo, markBackedUp } = useRoadmap();
+  const { roadmapState, actions, undo, redo, canUndo, canRedo, persistable } = useRoadmap();
   const {
     onAddLegendCategory,
     onUpdateLegendCategory,
@@ -52,6 +52,8 @@ export default function RoadmapWorkspace({
     onAddTimelineItem,
     onUpdateTimelineItem,
     onDeleteTimelineItem,
+    onUpdatePeriod,
+    onBulkPeriods,
   } = actions;
   const [mode, setMode] = useState('editor'); // 'editor' | 'preview'
   // Below the `lg` breakpoint the sidebar becomes an overlay drawer so the timeline keeps the screen.
@@ -59,6 +61,7 @@ export default function RoadmapWorkspace({
   const [isExporting, setIsExporting] = useState(false);
   const [exportStatus, setExportStatus] = useState('');
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  const [versionDialog, setVersionDialog] = useState(null); // desktop: 'save' | 'history' | null
   const [exportErrors, setExportErrors] = useState([]);
   const exportCanvasRef = useRef(null);
 
@@ -92,7 +95,6 @@ export default function RoadmapWorkspace({
       if (selection.json) {
         setExportStatus('Exporting JSON...');
         downloadRoadmapJson(roadmapState, baseSlug);
-        markBackedUp('download');
         done.push('JSON');
         await pause(250);
       }
@@ -273,7 +275,19 @@ export default function RoadmapWorkspace({
             </button>
           </div>
 
-          <BackupChip />
+          {isDesktop && (
+            <button
+              type="button"
+              onClick={() => setVersionDialog('history')}
+              disabled={!persistable}
+              data-testid="versions-btn"
+              title="Version history and saving named versions"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-200 disabled:opacity-40 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+            >
+              <History className="h-3.5 w-3.5" aria-hidden="true" />
+              <span>Versions</span>
+            </button>
+          )}
 
           <ThemeModeToggle themeMode={themeMode} onChangeThemeMode={onChangeThemeMode} />
 
@@ -306,8 +320,11 @@ export default function RoadmapWorkspace({
         </div>
       </header>
 
-      <DesktopWorkspaceTools onOpenExport={() => setIsExportModalOpen(true)} />
-      <BackupNagBanner />
+      <DesktopWorkspaceTools
+        dialog={versionDialog}
+        setDialog={setVersionDialog}
+        onOpenExport={() => setIsExportModalOpen(true)}
+      />
 
       {/* Main Workspace Split Pane: Left Sidebar (Editor only) + Right Timeline Grid */}
       <div className="relative flex-1 min-h-0 flex flex-row overflow-hidden">
@@ -360,6 +377,8 @@ export default function RoadmapWorkspace({
           onAddTimelineItem={onAddTimelineItem}
           onUpdateTimelineItem={onUpdateTimelineItem}
           onDeleteTimelineItem={onDeleteTimelineItem}
+          onUpdatePeriod={onUpdatePeriod}
+          onBulkPeriods={onBulkPeriods}
         />
       </div>
       <ExportModal

@@ -49,6 +49,13 @@ export function createLibrary({ getDir, trash }) {
       file: path.basename(file),
       updatedAt: stat.mtimeMs,
       sections: Array.isArray(parsed.sections) ? parsed.sections.length : 0,
+      items: Array.isArray(parsed.timelineItems) ? parsed.timelineItems.length : 0,
+      periods: Number(parsed.config?.totalPeriods) || 0,
+      periodLabel: String(parsed.config?.periodLabel || ''),
+      colors: [
+        parsed.config?.theme?.primary,
+        ...(parsed.config?.theme?.accents || []).slice(0, 2),
+      ].filter((c) => typeof c === 'string' && /^#[0-9a-fA-F]{3,8}$/.test(c)),
     };
     cache.set(file, { mtimeMs: stat.mtimeMs, size: stat.size, meta });
     return meta;

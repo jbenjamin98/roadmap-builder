@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { calculatePeriods, formatDateWithPattern, parseSafeDate } from './dateUtils';
+import {
+  calculatePeriods,
+  formatDateWithPattern,
+  getPeriodLengthSummary,
+  getTotalWeeks,
+  parseSafeDate,
+} from './dateUtils';
 
 describe('parseSafeDate', () => {
   it('parses YYYY-MM-DD', () => {
@@ -48,5 +54,38 @@ describe('calculatePeriods', () => {
   it('clamps out-of-range values', () => {
     expect(calculatePeriods({ ...config, totalPeriods: 999 })).toHaveLength(52);
     expect(calculatePeriods({ ...config, totalPeriods: 0 })).toHaveLength(8);
+  });
+});
+
+describe('calculatePeriods with per-period overrides', () => {
+  const base = {
+    startDate: '2026-01-05',
+    weeksPerPeriod: 2,
+    totalPeriods: 6,
+    periodLabel: 'Sprints',
+  };
+  const iso = (d) =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+  it('is unchanged when there are no overrides', () => {
+    const p = calculatePeriods(base);
+    expect(iso(p[2].rawStart)).toBe('2026-02-02');
+    expect(p.every((x) => !x.isCustomLength && !x.isCustomLabel)).toBe(true);
+  });
+
+  it('renames a period and shifts the periods after a custom length', () => {
+    const cfg = { ...base, periodOverrides: { 2: { label: 'Hardening Sprint 2', weeks: 1 } } };
+    const p = calculatePeriods(cfg);
+    expect(p[1].title).toBe('Hardening Sprint 2');
+    expect([iso(p[1].rawStart), iso(p[1].rawEnd)]).toEqual(['2026-01-19', '2026-01-25']);
+    expect(iso(p[2].rawStart)).toBe('2026-01-26');
+    expect(getTotalWeeks(cfg)).toBe(11);
+    expect(getPeriodLengthSummary(cfg)).toEqual({ text: '1–2', unit: 'Weeks' });
+  });
+
+  it('ignores overrides beyond totalPeriods and invalid ones', () => {
+    const cfg = { ...base, totalPeriods: 3, periodOverrides: { 5: { weeks: 9 }, x: { weeks: 3 } } };
+    expect(calculatePeriods(cfg)).toHaveLength(3);
+    expect(getTotalWeeks(cfg)).toBe(6);
   });
 });

@@ -25,6 +25,8 @@ export interface RoadmapConfig {
   startDate: string; // YYYY-MM-DD
   weeksPerPeriod: number; // 1..52
   totalPeriods: number; // 1..36 in the UI (calculatePeriods clamps to 52)
+  /** Per-period name/length overrides, keyed by 1-based period index (see utils/periodOverrides.js). */
+  periodOverrides?: Record<string, PeriodOverride>;
   fontStyle: string; // FONT_STYLES[].id
   themeId: string; // PRESET_THEMES[].id or 'custom'
   theme: CanvasTheme;
@@ -33,6 +35,11 @@ export interface RoadmapConfig {
     subtleGridDemarcations: boolean;
   };
   design: Design;
+}
+
+export interface PeriodOverride {
+  label?: string; // replaces 'Sprint 5'
+  weeks?: number; // 1..52, replaces config.weeksPerPeriod for this period
 }
 
 export interface CanvasTheme {
@@ -133,7 +140,10 @@ export interface Design {
 export interface Period {
   index: number; // 1-based
   code: string; // e.g. 'S1'
-  title: string; // e.g. 'Sprint 1'
+  title: string; // e.g. 'Sprint 1', or the override label
+  weeks: number; // length of this period
+  isCustomLength: boolean; // differs from config.weeksPerPeriod
+  isCustomLabel: boolean;
   dateRange: string;
   shortRange: string;
   startDate: string;
@@ -144,6 +154,13 @@ export interface Period {
 
 /** Action callbacks returned by hooks/useRoadmapState and spread into RoadmapWorkspace. */
 export interface RoadmapActions {
+  onUpdatePeriod(index: number, patch: { label?: string | null; weeks?: number | null }): void;
+  onBulkPeriods(
+    bulk:
+      | { mode: 'all'; weeks: number }
+      | { mode: 'every'; every: number; offset: number; weeks: number }
+      | { mode: 'reset' }
+  ): void;
   onAddLegendCategory(c: Omit<LegendCategory, 'id'>): void;
   onUpdateLegendCategory(legendId: string, updates: Partial<LegendCategory>): void;
   onDeleteLegendCategory(legendId: string): void;
@@ -235,6 +252,10 @@ export interface LibraryItem {
   file: string; // `<name>.roadmap.json`
   updatedAt: number; // file mtime (ms)
   sections: number;
+  items: number; // bars and milestones
+  periods: number;
+  periodLabel: string;
+  colors: string[]; // theme primary + first accents, for the card accent strip
 }
 
 export interface VersionEntry {

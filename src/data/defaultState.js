@@ -3,6 +3,7 @@ import { CURRENT_VERSION, migrateRoadmap } from './migrations';
 import { PRESET_THEMES } from '../constants/themes';
 import { remapLegendForTheme } from '../constants/legendPresets';
 import { getDefaultDesign, normalizeDesign } from '../constants/designOptions';
+import { normalizePeriodOverrides } from '../utils/periodOverrides';
 
 export const UI_THEME_KEY = 'roadmap_builder_ui_theme_v1';
 
@@ -43,6 +44,7 @@ export function createBlankRoadmapState(customConfig = {}) {
       startDate: customConfig.startDate || getTodayDateString(),
       weeksPerPeriod: Number(customConfig.weeksPerPeriod) || 2,
       totalPeriods: Number(customConfig.totalPeriods) || 8,
+      periodOverrides: normalizePeriodOverrides(customConfig.periodOverrides),
       fontStyle: customConfig.fontStyle || 'sans',
       themeId: customConfig.themeId || defaultTheme.id,
       theme: customConfig.theme || {
@@ -95,6 +97,7 @@ export function getSampleRoadmapState() {
       startDate: '2026-11-09',
       weeksPerPeriod: 2,
       totalPeriods: 8,
+      periodOverrides: {},
       fontStyle: 'sans',
       themeId: defaultTheme.id,
       theme: {
@@ -240,6 +243,7 @@ export function normalizeRoadmapState(input, options = {}) {
       ...(raw.config?.previewSettings || {}),
     },
     design: normalizeDesign(raw.config?.design),
+    periodOverrides: normalizePeriodOverrides(raw.config?.periodOverrides),
   };
 
   const legend =
