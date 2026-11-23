@@ -3,6 +3,7 @@
 import LegendBar from '../timeline/LegendBar';
 import { OwnerRow } from './CanvasHeaderParts';
 import { NO_WORD_BREAK } from '../styleHelpers';
+import { getPeriodLengthSummary } from '../../utils/dateUtils';
 import { APPIAN_COLORS } from '../../constants/brandThemes';
 import logoBlue from '../../assets/brand/appian-logo-blue.png';
 import logoWhite from '../../assets/brand/appian-logo-white.png';
@@ -98,7 +99,7 @@ export function AppianHeader({
   compact = false,
 }) {
   const brand = brandOf(tokens);
-  const weeks = Number(config.weeksPerPeriod);
+  const length = getPeriodLengthSummary(config);
   const showLegend = legendPosition === 'top';
 
   return (
@@ -122,9 +123,7 @@ export function AppianHeader({
           style={{ letterSpacing: '0.25em', fontWeight: 600 }}
         >
           <span data-export-text="true" style={{ color: brand.accent }}>
-            {`${config.totalPeriods} ${config.periodLabel} • ${weeks} ${
-              weeks === 1 ? 'Week' : 'Weeks'
-            } / ${singularPeriod}`}
+            {`${config.totalPeriods} ${config.periodLabel} • ${length.text} ${length.unit} / ${singularPeriod}`}
           </span>
           {banner.version && (
             <span

@@ -2,6 +2,7 @@ import { arrayMove } from '@dnd-kit/sortable';
 import { normalizeDesign } from '../constants/designOptions';
 import { remapLegendForTheme } from '../constants/legendPresets';
 import { placeNewBar, resolveBarUpdate } from './barOverlap';
+import { applyBulkPeriods, patchPeriodOverride } from '../utils/periodOverrides';
 
 /**
  * Pure reducer for the roadmap document. No ids, dates or randomness are generated here: action
@@ -35,6 +36,25 @@ export function roadmapReducer(state, action) {
         },
       };
     }
+
+    // ---- Periods: rename / re-length one period, or apply a bulk change
+    case 'PERIOD_UPDATE':
+      return {
+        ...state,
+        config: {
+          ...state.config,
+          periodOverrides: patchPeriodOverride(
+            state.config?.periodOverrides,
+            action.index,
+            action.patch
+          ),
+        },
+      };
+    case 'PERIODS_BULK':
+      return {
+        ...state,
+        config: { ...state.config, ...applyBulkPeriods(state.config, action.bulk) },
+      };
 
     // ---- Legend
     case 'LEGEND_ADD': {

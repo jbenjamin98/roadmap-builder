@@ -1,6 +1,7 @@
-import { addDays, addWeeks, differenceInCalendarDays, format, isValid, parseISO } from 'date-fns';
+import { addDays, differenceInCalendarDays, format, isValid, parseISO } from 'date-fns';
 import { getSingularPeriodLabel } from '../constants/themes';
 import { DATE_FORMATS } from '../constants/designOptions';
+import { normalizePeriodOverrides } from './periodOverrides';
 
 /**
  * Safely parses a YYYY-MM-DD date string in local time without timezone drift.
@@ -44,11 +45,17 @@ export function calculatePeriods(config) {
   const singularLabel = getSingularPeriodLabel(config?.periodLabel || 'Sprints');
   const dateFormat = config?.design?.dateFormat || config?.dateFormat || 'MM/dd/yyyy';
 
+  const overrides = normalizePeriodOverrides(config?.periodOverrides);
+
   const periods = [];
+  let offsetDays = 0; // periods are laid end to end, so a custom length shifts every later period
   for (let i = 0; i < totalPeriods; i++) {
     const periodNumber = i + 1;
-    const periodStart = addWeeks(baseDate, i * weeksPerPeriod);
-    const periodEnd = addDays(addWeeks(periodStart, weeksPerPeriod), -1);
+    const override = overrides[String(periodNumber)];
+    const weeks = override?.weeks ?? weeksPerPeriod;
+    const periodStart = addDays(baseDate, offsetDays);
+    const periodEnd = addDays(periodStart, weeks * 7 - 1);
+    offsetDays += weeks * 7;
 
     const startFormatted = formatDateWithPattern(periodStart, dateFormat);
     const endFormatted = formatDateWithPattern(periodEnd, dateFormat);
@@ -58,7 +65,10 @@ export function calculatePeriods(config) {
     periods.push({
       index: periodNumber, // 1-based relative period index
       code: `${shortPrefix}${periodNumber}`,
-      title: `${singularLabel} ${periodNumber}`,
+      title: override?.label || `${singularLabel} ${periodNumber}`,
+      weeks,
+      isCustomLength: weeks !== weeksPerPeriod,
+      isCustomLabel: Boolean(override?.label),
       dateRange: `${startFormatted} - ${endFormatted}`,
       shortRange,
       startDate: startFormatted,
@@ -69,6 +79,22 @@ export function calculatePeriods(config) {
   }
 
   return periods;
+}
+
+/**
+ * Period length for header summaries: "2" when every period is the same, "1–2" when overrides
+ * make them differ. `unit` is the matching word ("Week" / "Weeks").
+ */
+export function getPeriodLengthSummary(config) {
+  const weeks = calculatePeriods(config).map((p) => p.weeks);
+  const min = Math.min(...weeks);
+  const max = Math.max(...weeks);
+  return { text: min === max ? `${min}` : `${min}–${max}`, unit: max === 1 ? 'Week' : 'Weeks' };
+}
+
+/** Total length of the horizon in weeks, honouring per-period length overrides. */
+export function getTotalWeeks(config) {
+  return calculatePeriods(config).reduce((sum, p) => sum + p.weeks, 0);
 }
 
 /**

@@ -190,6 +190,10 @@ export default function useRoadmapState() {
     };
 
     return {
+      onUpdatePeriod: (index, patch) =>
+        coalesced({ type: 'PERIOD_UPDATE', index, patch }, `period:${index}`),
+      onBulkPeriods: (bulk) => dispatch({ type: 'PERIODS_BULK', bulk }),
+
       onAddLegendCategory: (c) => dispatch({ type: 'LEGEND_ADD', id: createId('leg'), ...c }),
       onUpdateLegendCategory: (legendId, updates) =>
         coalesced({ type: 'LEGEND_UPDATE', legendId, updates }, `leg:${legendId}`),

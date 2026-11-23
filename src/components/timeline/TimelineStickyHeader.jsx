@@ -14,6 +14,8 @@ export default function TimelineStickyHeader({
   density,
   design,
   subtleGridDemarcations,
+  onSelectPeriod,
+  selectedPeriod,
 }) {
   return (
     <div
@@ -62,6 +64,8 @@ export default function TimelineStickyHeader({
               subtleGrid={subtleGridDemarcations}
               width={`${colWidth}px`}
               testId={`period-header-${period.index}`}
+              onSelect={onSelectPeriod ? () => onSelectPeriod(period.index) : undefined}
+              selected={selectedPeriod === period.index}
             />
           ))}
         </div>

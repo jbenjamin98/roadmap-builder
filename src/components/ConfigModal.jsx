@@ -8,6 +8,7 @@ import {
   normalizeDesign,
 } from '../constants/designOptions';
 import { calculatePeriods } from '../utils/dateUtils';
+import { normalizePeriodOverrides } from '../utils/periodOverrides';
 import { getCanvasTokens } from './canvasStyles';
 import { getTodayDateString } from '../data/defaultState';
 import { resolveMilestoneDesign } from './styleHelpers';
@@ -59,6 +60,9 @@ export default function ConfigModal({
   );
   const [totalPeriods, setTotalPeriods] = useState(
     isCreatingNew ? 8 : Number(initialConfig?.totalPeriods) || 8
+  );
+  const [periodOverrides, setPeriodOverrides] = useState(() =>
+    isCreatingNew ? {} : normalizePeriodOverrides(initialConfig?.periodOverrides)
   );
   const [fontStyle, setFontStyle] = useState(
     isCreatingNew ? 'sans' : initialConfig?.fontStyle || 'sans'
@@ -115,6 +119,7 @@ export default function ConfigModal({
     startDate,
     weeksPerPeriod: Math.max(1, Math.min(52, Number(weeksPerPeriod) || 2)),
     totalPeriods: Math.max(1, Math.min(36, Number(totalPeriods) || 8)),
+    periodOverrides,
     fontStyle,
     themeId,
     theme: activeTheme,
@@ -248,6 +253,8 @@ export default function ConfigModal({
     setWeeksPerPeriod,
     totalPeriods,
     setTotalPeriods,
+    periodOverrides,
+    setPeriodOverrides,
     fontStyle,
     setFontStyle,
     themeId,

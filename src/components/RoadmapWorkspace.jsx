@@ -52,6 +52,8 @@ export default function RoadmapWorkspace({
     onAddTimelineItem,
     onUpdateTimelineItem,
     onDeleteTimelineItem,
+    onUpdatePeriod,
+    onBulkPeriods,
   } = actions;
   const [mode, setMode] = useState('editor'); // 'editor' | 'preview'
   // Below the `lg` breakpoint the sidebar becomes an overlay drawer so the timeline keeps the screen.
@@ -360,6 +362,8 @@ export default function RoadmapWorkspace({
           onAddTimelineItem={onAddTimelineItem}
           onUpdateTimelineItem={onUpdateTimelineItem}
           onDeleteTimelineItem={onDeleteTimelineItem}
+          onUpdatePeriod={onUpdatePeriod}
+          onBulkPeriods={onBulkPeriods}
         />
       </div>
       <ExportModal

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import useFont from '../hooks/useFont';
 import { calculatePeriods, getTodayMarkerInfo } from '../utils/dateUtils';
 import { FONT_STYLES, getSingularPeriodLabel } from '../constants/themes';
@@ -15,6 +15,7 @@ import LegendBar from './timeline/LegendBar';
 import TimelineHeader from './timeline/TimelineHeader';
 import TimelineStickyHeader from './timeline/TimelineStickyHeader';
 import TimelineSection from './timeline/TimelineSection';
+import PeriodEditPopover from './timeline/PeriodEditPopover';
 
 export default function TimelineGrid({
   exportRef,
@@ -30,8 +31,15 @@ export default function TimelineGrid({
   onAddTimelineItem,
   onUpdateTimelineItem,
   onDeleteTimelineItem,
+  onUpdatePeriod,
+  onBulkPeriods,
 }) {
   const [activePopoverItemId, setActivePopoverItemId] = useState(null);
+  const [editingPeriod, setEditingPeriod] = useState(null); // 1-based period index
+  const getPeriodAnchor = useCallback(
+    () => document.querySelector(`[data-testid="period-header-${editingPeriod}"]`),
+    [editingPeriod]
+  );
 
   const design = normalizeDesign(config?.design);
   const density = getDensity(design);
@@ -145,6 +153,12 @@ export default function TimelineGrid({
               density={density}
               design={design}
               subtleGridDemarcations={subtleGridDemarcations}
+              onSelectPeriod={
+                !isPreview && onUpdatePeriod
+                  ? (index) => setEditingPeriod((cur) => (cur === index ? null : index))
+                  : undefined
+              }
+              selectedPeriod={editingPeriod}
             />
 
             {/* Sections -> Sub-sections -> Tasks */}
@@ -208,6 +222,19 @@ export default function TimelineGrid({
           )}
         </div>
       </div>
+
+      {!isPreview && editingPeriod && periods[editingPeriod - 1] && (
+        <PeriodEditPopover
+          key={editingPeriod}
+          period={periods[editingPeriod - 1]}
+          defaultTitle={`${singularPeriod} ${editingPeriod}`}
+          defaultWeeks={Math.max(1, Math.min(52, Number(config.weeksPerPeriod) || 2))}
+          getAnchorEl={getPeriodAnchor}
+          onUpdatePeriod={onUpdatePeriod}
+          onBulkPeriods={onBulkPeriods}
+          onClose={() => setEditingPeriod(null)}
+        />
+      )}
     </div>
   );
 }
