@@ -2,11 +2,9 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import {
   KEYS,
   fingerprint,
-  loadBackupMeta,
   loadDraft,
   readQuarantined,
   restoreLastGood,
-  saveBackupMeta,
   saveDraft,
 } from './persistence';
 import { createBlankRoadmapState } from './defaultState';
@@ -111,13 +109,5 @@ describe('fingerprint across reloads', () => {
     saveDraft(state, storage);
     const reloaded = loadDraft(storage).state;
     expect(fingerprint(reloaded)).toBe(fingerprint(state));
-  });
-});
-
-describe('backup meta', () => {
-  it('round-trips and has safe defaults', () => {
-    expect(loadBackupMeta(storage).lastBackupAt).toBe(null);
-    saveBackupMeta({ lastBackupAt: 5, backedUpFingerprint: 'f', method: 'download' }, storage);
-    expect(loadBackupMeta(storage)).toMatchObject({ lastBackupAt: 5, method: 'download' });
   });
 });

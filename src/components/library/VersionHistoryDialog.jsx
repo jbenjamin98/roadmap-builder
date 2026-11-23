@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Pin, PinOff, RotateCcw, Trash2, Copy } from 'lucide-react';
+import { Pin, PinOff, RotateCcw, Trash2, Copy, Save, FolderOpen } from 'lucide-react';
 import Modal from '../ui/Modal';
 import { desktop } from '../../storage/desktop';
 import { formatBytes, formatRelativeTime } from '../../utils/download';
@@ -12,7 +12,13 @@ const iconBtn =
  * Desktop only: every saved version of the open roadmap. Pinned "master" versions never expire.
  * `onRestore(state)` replaces the open roadmap (undoable); `onOpenCopy(state)` loads it as a new one.
  */
-export default function VersionHistoryDialog({ roadmapId, onRestore, onOpenCopy, onClose }) {
+export default function VersionHistoryDialog({
+  roadmapId,
+  onRestore,
+  onOpenCopy,
+  onSaveVersion,
+  onClose,
+}) {
   const [versions, setVersions] = useState(null);
   const [editing, setEditing] = useState(null); // { id, label }
 
@@ -85,6 +91,25 @@ export default function VersionHistoryDialog({ roadmapId, onRestore, onOpenCopy,
       onClose={onClose}
       widthClass="max-w-2xl"
     >
+      <div className="mb-3 flex flex-wrap gap-2">
+        <button
+          type="button"
+          data-testid="versions-save-btn"
+          onClick={onSaveVersion}
+          className="inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-indigo-500"
+        >
+          <Save className="h-3.5 w-3.5" aria-hidden="true" />
+          Save version…
+        </button>
+        <button
+          type="button"
+          onClick={() => desktop.library.reveal(roadmapId)}
+          className="inline-flex items-center gap-1.5 rounded-xl bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+        >
+          <FolderOpen className="h-3.5 w-3.5" aria-hidden="true" />
+          Show file
+        </button>
+      </div>
       {versions === null && <p className="py-8 text-center text-sm text-slate-500">Loading…</p>}
       {versions?.length === 0 && (
         <p className="py-8 text-center text-sm text-slate-500" data-testid="versions-empty">

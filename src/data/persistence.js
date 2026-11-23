@@ -9,8 +9,6 @@ export const KEYS = {
   draft: 'roadmap_builder_state_v1',
   lastGood: 'roadmap_builder_state_v1_lastgood',
   corruptPrefix: 'roadmap_builder_state_v1_corrupt_',
-  backupMeta: 'roadmap_builder_backup_meta_v1',
-  noticeSeen: 'roadmap_builder_draft_notice_v1',
 };
 
 function defaultStorage() {
@@ -21,7 +19,7 @@ function defaultStorage() {
   }
 }
 
-/** Stable, cheap content hash that ignores volatile fields. Used to tell "changed since backup". */
+/** Stable, cheap content hash that ignores volatile fields. Used to skip redundant file writes. */
 export function fingerprint(state) {
   // Normalize first: loading always normalizes, so a fresh in-memory edit and the same document
   // reloaded from storage must hash identically.
@@ -125,40 +123,5 @@ export function readQuarantined(corruptKey, storage = defaultStorage()) {
     return corruptKey ? (storage?.getItem(corruptKey) ?? null) : null;
   } catch {
     return null;
-  }
-}
-
-/** Backup bookkeeping: when the document was last backed up and what it looked like then. */
-export function loadBackupMeta(storage = defaultStorage()) {
-  try {
-    const parsed = JSON.parse(storage?.getItem(KEYS.backupMeta) || 'null');
-    if (parsed && typeof parsed === 'object') return parsed;
-  } catch {
-    /* ignore */
-  }
-  return { lastBackupAt: null, backedUpFingerprint: null, method: null };
-}
-
-export function saveBackupMeta(meta, storage = defaultStorage()) {
-  try {
-    storage?.setItem(KEYS.backupMeta, JSON.stringify(meta));
-  } catch {
-    /* ignore */
-  }
-}
-
-export function hasSeenDraftNotice(storage = defaultStorage()) {
-  try {
-    return storage?.getItem(KEYS.noticeSeen) === '1';
-  } catch {
-    return true; // storage blocked: do not nag on every load
-  }
-}
-
-export function markDraftNoticeSeen(storage = defaultStorage()) {
-  try {
-    storage?.setItem(KEYS.noticeSeen, '1');
-  } catch {
-    /* ignore */
   }
 }

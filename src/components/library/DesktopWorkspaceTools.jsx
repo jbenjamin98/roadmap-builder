@@ -1,6 +1,4 @@
-import { useEffect, useState } from 'react';
 import { desktop, isDesktop } from '../../storage/desktop';
-import { OPEN_SAVE_VERSION, OPEN_VERSION_HISTORY } from '../../storage/desktopEvents';
 import { useDesktopMenu } from '../../hooks/useDesktopEvents';
 import { useRoadmap } from '../../state/roadmapContext';
 import { showToast } from '../../utils/toast';
@@ -8,12 +6,12 @@ import SaveVersionDialog from './SaveVersionDialog';
 import VersionHistoryDialog from './VersionHistoryDialog';
 
 /**
- * Desktop only. Owns the version dialogs and the workspace-level native menu actions (Save
- * Version, Version History, Export). The backup chip opens the same dialogs via window events.
+ * Desktop only. Renders the version dialogs and handles the workspace-level native menu actions
+ * (Save Version, Version History, Export). The workspace owns `dialog` ('save' | 'history' | null)
+ * so its header Versions button can open the same dialogs.
  */
-export default function DesktopWorkspaceTools({ onOpenExport }) {
+export default function DesktopWorkspaceTools({ dialog, setDialog, onOpenExport }) {
   const { roadmapState, importRoadmap, flushNow, persistable } = useRoadmap();
-  const [dialog, setDialog] = useState(null); // 'save' | 'history' | null
 
   const open = (which) => {
     if (!persistable) {
@@ -27,18 +25,6 @@ export default function DesktopWorkspaceTools({ onOpenExport }) {
     'save-version': () => open('save'),
     'version-history': () => open('history'),
     export: () => onOpenExport(),
-  });
-
-  useEffect(() => {
-    if (!isDesktop) return undefined;
-    const save = () => open('save');
-    const history = () => open('history');
-    window.addEventListener(OPEN_SAVE_VERSION, save);
-    window.addEventListener(OPEN_VERSION_HISTORY, history);
-    return () => {
-      window.removeEventListener(OPEN_SAVE_VERSION, save);
-      window.removeEventListener(OPEN_VERSION_HISTORY, history);
-    };
   });
 
   if (!isDesktop || !dialog) return null;
@@ -68,6 +54,7 @@ export default function DesktopWorkspaceTools({ onOpenExport }) {
     <VersionHistoryDialog
       roadmapId={roadmapState.id}
       onClose={() => setDialog(null)}
+      onSaveVersion={() => setDialog('save')}
       onRestore={(state) => {
         importRoadmap(state);
         showToast({ message: 'Version restored. Undo is available.', tone: 'success' });

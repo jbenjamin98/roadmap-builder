@@ -261,13 +261,7 @@ export default function DuckPond({
           </span>
         </button>
 
-        {continueRoadmap && (
-          <ContinuePad
-            name={continueRoadmap.name}
-            hasUnbackedChanges={continueRoadmap.hasUnbackedChanges}
-            onContinue={onContinue}
-          />
-        )}
+        {continueRoadmap && <ContinuePad name={continueRoadmap.name} onContinue={onContinue} />}
 
         {/* Open Roadmap (upload a roadmap file) Bottle Lily Pad */}
         <button
