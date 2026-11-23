@@ -223,3 +223,77 @@ export interface ConfigModalContext {
   onClose(): void;
   swatches: Record<string, Record<string, React.ReactNode>>;
 }
+
+// ---------------------------------------------------------------------------
+// Desktop (Electron) bridge. Exposed by electron/preload.cjs as `window.desktop`;
+// undefined on the hosted web version. Always go through src/storage/desktop.js.
+// ---------------------------------------------------------------------------
+
+export interface LibraryItem {
+  id: string;
+  name: string;
+  file: string; // `<name>.roadmap.json`
+  updatedAt: number; // file mtime (ms)
+  sections: number;
+}
+
+export interface VersionEntry {
+  id: string;
+  createdAt: number;
+  label: string;
+  pinned: boolean; // "master" version, never pruned
+  auto: boolean;
+  hash: string;
+  size: number;
+  name: string;
+}
+
+export interface SaveFileResult {
+  canceled: boolean;
+  file?: string;
+}
+
+export interface DesktopApi {
+  isDesktop: true;
+  platform: string;
+  appInfo(): Promise<{ version: string; platform: string }>;
+  library: {
+    getPath(): Promise<string>;
+    chooseFolder(): Promise<string | null>;
+    openFolder(): Promise<void>;
+    list(): Promise<{ items: LibraryItem[]; unreadable: string[] }>;
+    read(id: string): Promise<RoadmapState>;
+    save(state: RoadmapState): Promise<{ id: string; file: string }>;
+    remove(id: string): Promise<boolean>;
+    duplicate(id: string): Promise<RoadmapState>;
+    importFile(): Promise<unknown | null>;
+    reveal(id: string): Promise<void>;
+  };
+  versions: {
+    list(id: string): Promise<VersionEntry[]>;
+    create(id: string, opts: { label?: string; pinned?: boolean }): Promise<VersionEntry>;
+    read(id: string, versionId: string): Promise<RoadmapState>;
+    restore(id: string, versionId: string): Promise<RoadmapState>;
+    update(
+      id: string,
+      versionId: string,
+      patch: { label?: string; pinned?: boolean }
+    ): Promise<VersionEntry>;
+    remove(id: string, versionId: string): Promise<void>;
+  };
+  saveFile(args: { suggestedName: string; data: Uint8Array }): Promise<SaveFileResult>;
+  printToPdf(args: { suggestedName: string }): Promise<SaveFileResult>;
+  installUpdate(): Promise<void>;
+  openReleasePage(): Promise<void>;
+  onMenu(cb: (action: string) => void): () => void;
+  onUpdate(
+    cb: (info: { kind: 'downloading' | 'available' | 'ready'; version: string }) => void
+  ): () => void;
+  onBeforeClose(handler: () => unknown): () => void;
+}
+
+declare global {
+  interface Window {
+    desktop?: DesktopApi;
+  }
+}

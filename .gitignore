@@ -24,3 +24,5 @@ dist-ssr
 *.sw?
 
 e2e-output
+
+release

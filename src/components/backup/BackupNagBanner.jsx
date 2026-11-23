@@ -3,7 +3,7 @@ import { Download, ShieldAlert, X } from 'lucide-react';
 import { useRoadmap } from '../../state/roadmapContext';
 import { downloadRoadmapJson } from '../../utils/download';
 import { showToast } from '../../utils/toast';
-import { useDriveBackupContext } from '../../state/driveBackupContext';
+import { isDesktop } from '../../storage/desktop';
 
 export const NAG_AFTER_MS = 5 * 60 * 1000;
 
@@ -13,7 +13,6 @@ export const NAG_AFTER_MS = 5 * 60 * 1000;
  */
 export default function BackupNagBanner() {
   const { roadmapState, saveError, hasUnbackedChanges, markBackedUp } = useRoadmap();
-  const drive = useDriveBackupContext();
   const [overdue, setOverdue] = useState(false);
   const [dismissed, setDismissed] = useState(false);
   const sinceRef = useRef(null);
@@ -37,11 +36,6 @@ export default function BackupNagBanner() {
   if (!saveError && !nagVisible) return null;
 
   const handleDownload = () => {
-    // A roadmap already linked to Drive backs up there; otherwise fall back to a file download.
-    if (drive.link && drive.auth.connected) {
-      drive.syncNow();
-      return;
-    }
     downloadRoadmapJson(roadmapState);
     markBackedUp('download');
     showToast({ message: 'Backup downloaded. Keep the file somewhere safe.', tone: 'success' });
@@ -61,8 +55,12 @@ export default function BackupNagBanner() {
       <p className="min-w-0 flex-1">
         {saveError ? (
           <>
-            <strong>Changes are not being saved in this browser.</strong> {saveError.message}{' '}
-            Download a backup so you do not lose your work.
+            <strong>
+              {isDesktop
+                ? 'Changes could not be saved to your library folder.'
+                : 'Changes are not being saved in this browser.'}
+            </strong>{' '}
+            {saveError.message} Download a backup so you do not lose your work.
           </>
         ) : (
           <>

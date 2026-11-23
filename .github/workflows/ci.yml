@@ -40,3 +40,19 @@ jobs:
         if: steps.playwright-cache.outputs.cache-hit == 'true'
         run: npx playwright install-deps chromium
       - run: npm run test:e2e
+
+  desktop:
+    name: Desktop app (Electron) end-to-end
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+      - run: npm ci
+      - run: npm run build
+      - name: Install Electron system libraries
+        run: sudo apt-get update && sudo apt-get install -y xvfb libgtk-3-0 libnss3 libasound2t64 libgbm1
+      - name: Run the desktop end-to-end test
+        run: xvfb-run -a node scripts/e2e-desktop.mjs

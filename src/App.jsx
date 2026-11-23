@@ -4,13 +4,16 @@ import CustomCursor from './components/CustomCursor';
 import ToastHost from './components/ToastHost';
 import RecoveryBanner from './components/backup/RecoveryBanner';
 import DraftNoticeDialog from './components/backup/DraftNoticeDialog';
-import DriveBackupProvider from './components/backup/DriveBackupProvider';
 import ConfirmDialog from './components/ui/ConfirmDialog';
 import ConfigModal from './components/ConfigModal';
 import useRoadmapState from './hooks/useRoadmapState';
 import { RoadmapContext } from './state/roadmapContext';
 import { hasSeenDraftNotice, markDraftNoticeSeen } from './data/persistence';
 import { loadUiThemeMode, saveUiThemeMode } from './data/defaultState';
+import LibraryModal from './components/library/LibraryModal';
+import { validateRoadmapImport } from './data/roadmapSchema';
+import { useDesktopMenu, useDesktopUpdates } from './hooks/useDesktopEvents';
+import { desktop, isDesktop } from './storage/desktop';
 import { downloadRoadmapJson } from './utils/download';
 import { showToast } from './utils/toast';
 
@@ -27,6 +30,7 @@ export default function App() {
   const {
     roadmapState,
     importRoadmap,
+    openRoadmapFile,
     createRoadmap,
     updateConfig,
     undo,
@@ -45,6 +49,7 @@ export default function App() {
   // Set when the user is about to replace an un-backed-up roadmap: { verb, apply }.
   const [pendingReplace, setPendingReplace] = useState(null);
   const [showDraftNotice, setShowDraftNotice] = useState(false);
+  const [showLibrary, setShowLibrary] = useState(false); // desktop only
 
   // Sync light/dark class on <html> synchronously before paint to prevent theme lag
   useLayoutEffect(() => {
@@ -77,7 +82,7 @@ export default function App() {
 
   // Warn before leaving only when there is work that exists nowhere but this browser.
   useEffect(() => {
-    if (!hasUnbackedChanges) return undefined;
+    if (isDesktop || !hasUnbackedChanges) return undefined;
     const onBeforeUnload = (e) => {
       e.preventDefault();
       e.returnValue = '';
@@ -88,7 +93,8 @@ export default function App() {
 
   const enterWorkspace = () => {
     setCurrentView('workspace');
-    if (!hasSeenDraftNotice()) setShowDraftNotice(true);
+    // The desktop app saves to real files, so the "temporary browser draft" warning does not apply.
+    if (!isDesktop && !hasSeenDraftNotice()) setShowDraftNotice(true);
   };
 
   const closeDraftNotice = () => {
@@ -110,11 +116,58 @@ export default function App() {
 
   // View A -> Upload JSON creates/updates a roadmap and routes to editor.
   // Replacing work that has no backup asks first, so nothing is lost by accident.
-  const handleUploadRoadmapJson = (parsedJson) => {
+  const handleUploadRoadmapJson = async (parsedJson) => {
+    let json = parsedJson;
+    if (isDesktop && json.id) {
+      // A file from outside the library must never overwrite a library roadmap that shares its id
+      // (an old export, a copy someone sent): give it a new id so it lands beside the original.
+      try {
+        const { items } = await desktop.library.list();
+        if (items.some((item) => item.id === json.id)) json = { ...json, id: undefined };
+      } catch {
+        /* library unreadable: autosave will report it */
+      }
+    }
     if (hasUnbackedChanges)
-      setPendingReplace({ verb: 'Importing', apply: () => applyImport(parsedJson) });
-    else applyImport(parsedJson);
+      setPendingReplace({ verb: 'Importing', apply: () => applyImport(json) });
+    else applyImport(json);
   };
+
+  // ---- Desktop library ----
+  const openFromLibrary = async (id) => {
+    try {
+      await roadmap.flushNow();
+      const json = await desktop.library.read(id);
+      openRoadmapFile(json);
+      setShowLibrary(false);
+      enterWorkspace();
+    } catch (err) {
+      showToast({ message: `Could not open roadmap: ${err?.message || err}`, tone: 'error' });
+    }
+  };
+
+  const importFileFromDisk = async () => {
+    try {
+      const json = await desktop.library.importFile();
+      if (!json) return;
+      const result = validateRoadmapImport(json);
+      if (!result.ok) {
+        showToast({ message: result.error, tone: 'error' });
+        return;
+      }
+      setShowLibrary(false);
+      await handleUploadRoadmapJson(json);
+    } catch (err) {
+      showToast({ message: `Could not import file: ${err?.message || err}`, tone: 'error' });
+    }
+  };
+
+  useDesktopUpdates();
+  useDesktopMenu({
+    new: () => handleTriggerCreateRoadmap(),
+    'open-library': () => setShowLibrary(true),
+    'open-file': () => importFileFromDisk(),
+  });
 
   // Save Configuration from ConfigModal (View B)
   const finishSaveConfig = (updatedConfig) => {
@@ -140,103 +193,110 @@ export default function App() {
 
   return (
     <RoadmapContext.Provider value={roadmap}>
-      <DriveBackupProvider>
-        <SmallScreenGuard />
-        <CustomCursor
-          themeMode={themeMode}
-          isWorkspace={currentView === 'workspace'}
-          roadmapTheme={roadmapState.config?.theme}
-        />
-        <ToastHost />
-        <RecoveryBanner recovery={recovery} onRestore={restoreBackup} onDismiss={dismissRecovery} />
-        <Suspense fallback={null}>
-          {currentView === 'landing' ? (
-            <LandingPage
-              onCreateRoadmap={handleTriggerCreateRoadmap}
-              onUploadRoadmap={handleUploadRoadmapJson}
-              onDriveRoadmapOpened={enterWorkspace}
-              continueRoadmap={
-                roadmap.persistable ? { name: roadmapState.config?.name, hasUnbackedChanges } : null
-              }
-              onContinueRoadmap={enterWorkspace}
-              themeMode={themeMode}
-              onChangeThemeMode={setThemeMode}
-            />
-          ) : (
-            <RoadmapWorkspace
-              onOpenConfigModal={() => {
-                setIsCreatingNew(false);
-                setIsConfigModalOpen(true);
-              }}
-              onNavigateHome={() => {
-                setCurrentView('landing');
-              }}
-              themeMode={themeMode}
-              onChangeThemeMode={setThemeMode}
-            />
-          )}
-        </Suspense>
-
-        {isConfigModalOpen && (
-          <ConfigModal
-            key={isCreatingNew ? 'create-blank' : `edit-${roadmapState.id}`}
-            isOpen={isConfigModalOpen}
-            onClose={() => {
-              setIsConfigModalOpen(false);
+      <SmallScreenGuard />
+      <CustomCursor
+        themeMode={themeMode}
+        isWorkspace={currentView === 'workspace'}
+        roadmapTheme={roadmapState.config?.theme}
+      />
+      <ToastHost />
+      <RecoveryBanner recovery={recovery} onRestore={restoreBackup} onDismiss={dismissRecovery} />
+      <Suspense fallback={null}>
+        {currentView === 'landing' ? (
+          <LandingPage
+            onCreateRoadmap={handleTriggerCreateRoadmap}
+            onUploadRoadmap={handleUploadRoadmapJson}
+            onOpenLibrary={isDesktop ? () => setShowLibrary(true) : undefined}
+            continueRoadmap={
+              roadmap.persistable ? { name: roadmapState.config?.name, hasUnbackedChanges } : null
+            }
+            onContinueRoadmap={enterWorkspace}
+            themeMode={themeMode}
+            onChangeThemeMode={setThemeMode}
+          />
+        ) : (
+          <RoadmapWorkspace
+            onOpenConfigModal={() => {
               setIsCreatingNew(false);
+              setIsConfigModalOpen(true);
             }}
-            initialConfig={isCreatingNew ? null : roadmapState.config}
-            onSaveConfig={handleSaveConfig}
-            isCreatingNew={isCreatingNew}
-          />
-        )}
-
-        {showDraftNotice && currentView === 'workspace' && (
-          <DraftNoticeDialog
-            onContinue={closeDraftNotice}
-            onDownload={() => {
-              downloadRoadmapJson(roadmapState);
-              markBackedUp('download');
-              closeDraftNotice();
+            onNavigateHome={() => {
+              setCurrentView('landing');
             }}
+            themeMode={themeMode}
+            onChangeThemeMode={setThemeMode}
           />
         )}
+      </Suspense>
 
-        {pendingReplace && (
-          <ConfirmDialog
-            testId="import-confirm"
-            title="Replace your current roadmap?"
-            description={`Your current roadmap has changes that are not backed up. ${pendingReplace.verb} replaces it.`}
-            onCancel={() => setPendingReplace(null)}
-            actions={[
-              { label: 'Cancel', onClick: () => setPendingReplace(null) },
-              {
-                label: 'Replace anyway',
-                variant: 'danger',
-                testId: 'import-replace-btn',
-                onClick: () => {
-                  const { apply } = pendingReplace;
-                  setPendingReplace(null);
-                  apply();
-                },
+      {isDesktop && showLibrary && (
+        <LibraryModal
+          currentId={roadmap.persistable ? roadmapState.id : null}
+          onClose={() => setShowLibrary(false)}
+          onOpen={openFromLibrary}
+          onImportFile={importFileFromDisk}
+        />
+      )}
+
+      {isConfigModalOpen && (
+        <ConfigModal
+          key={isCreatingNew ? 'create-blank' : `edit-${roadmapState.id}`}
+          isOpen={isConfigModalOpen}
+          onClose={() => {
+            setIsConfigModalOpen(false);
+            setIsCreatingNew(false);
+          }}
+          initialConfig={isCreatingNew ? null : roadmapState.config}
+          onSaveConfig={handleSaveConfig}
+          isCreatingNew={isCreatingNew}
+        />
+      )}
+
+      {showDraftNotice && currentView === 'workspace' && (
+        <DraftNoticeDialog
+          onContinue={closeDraftNotice}
+          onDownload={() => {
+            downloadRoadmapJson(roadmapState);
+            markBackedUp('download');
+            closeDraftNotice();
+          }}
+        />
+      )}
+
+      {pendingReplace && (
+        <ConfirmDialog
+          testId="import-confirm"
+          title="Replace your current roadmap?"
+          description={`Your current roadmap has changes that are not backed up. ${pendingReplace.verb} replaces it.`}
+          onCancel={() => setPendingReplace(null)}
+          actions={[
+            { label: 'Cancel', onClick: () => setPendingReplace(null) },
+            {
+              label: 'Replace anyway',
+              variant: 'danger',
+              testId: 'import-replace-btn',
+              onClick: () => {
+                const { apply } = pendingReplace;
+                setPendingReplace(null);
+                apply();
               },
-              {
-                label: 'Download current, then replace',
-                variant: 'primary',
-                autoFocus: true,
-                testId: 'import-backup-replace-btn',
-                onClick: () => {
-                  const { apply } = pendingReplace;
-                  downloadRoadmapJson(roadmapState);
-                  markBackedUp('download');
-                  setPendingReplace(null);
-                  apply();
-                },
+            },
+            {
+              label: 'Download current, then replace',
+              variant: 'primary',
+              autoFocus: true,
+              testId: 'import-backup-replace-btn',
+              onClick: () => {
+                const { apply } = pendingReplace;
+                downloadRoadmapJson(roadmapState);
+                markBackedUp('download');
+                setPendingReplace(null);
+                apply();
               },
-            ]}
-          />
-        )}
-      </DriveBackupProvider>
+            },
+          ]}
+        />
+      )}
     </RoadmapContext.Provider>
   );
 }

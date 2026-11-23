@@ -6,7 +6,6 @@ import HorizonScene from './landing/HorizonScene';
 import DuckPond from './landing/DuckPond';
 import ShoreIsland from './landing/ShoreIsland';
 import PrivacyModal from './PrivacyModal';
-import DriveRoadmapsModal from './backup/DriveRoadmapsModal';
 import OpenRoadmapModal from './OpenRoadmapModal';
 import { MAX_IMPORT_BYTES, validateRoadmapImport } from '../data/roadmapSchema';
 import { MAX_DUCKS, QUACK_PHRASES, pickRandom, createDuckData } from './art/duckData';
@@ -14,7 +13,7 @@ import { MAX_DUCKS, QUACK_PHRASES, pickRandom, createDuckData } from './art/duck
 export default function LandingPage({
   onCreateRoadmap,
   onUploadRoadmap,
-  onDriveRoadmapOpened,
+  onOpenLibrary,
   continueRoadmap,
   onContinueRoadmap,
   themeMode,
@@ -37,7 +36,7 @@ export default function LandingPage({
   const [quacks, setQuacks] = useState([]);
   const [isEggHatching, setIsEggHatching] = useState(false);
   const [showPrivacy, setShowPrivacy] = useState(false);
-  // Open Roadmap flow: null | 'choose' | 'drive'
+  // Open Roadmap flow: null | 'choose'
   const [openStep, setOpenStep] = useState(null);
 
   const isDark = themeMode === 'dark';
@@ -402,18 +401,14 @@ export default function LandingPage({
             setOpenStep(null);
             fileInputRef.current?.click();
           }}
-          onChooseDrive={() => setOpenStep('drive')}
-        />
-      )}
-
-      {openStep === 'drive' && (
-        <DriveRoadmapsModal
-          onClose={() => setOpenStep(null)}
-          onBack={() => setOpenStep('choose')}
-          onOpened={() => {
-            setOpenStep(null);
-            onDriveRoadmapOpened?.();
-          }}
+          onChooseLibrary={
+            onOpenLibrary
+              ? () => {
+                  setOpenStep(null);
+                  onOpenLibrary();
+                }
+              : undefined
+          }
         />
       )}
 

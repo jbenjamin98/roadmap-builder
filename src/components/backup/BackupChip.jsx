@@ -1,18 +1,19 @@
 import { useEffect, useRef, useState } from 'react';
 import {
-  AlertTriangle,
   CheckCircle2,
   CloudOff,
   Download,
   FileWarning,
-  Loader2,
+  FolderOpen,
+  History,
+  Save,
   ShieldAlert,
   ShieldCheck,
 } from 'lucide-react';
+import { desktop, isDesktop } from '../../storage/desktop';
+import { OPEN_SAVE_VERSION, OPEN_VERSION_HISTORY } from '../../storage/desktopEvents';
 import { useRoadmap } from '../../state/roadmapContext';
-import { useDriveBackupContext } from '../../state/driveBackupContext';
 import { getBackupState } from '../../state/backupState';
-import { isBlockingProblem } from '../../hooks/useDriveBackup';
 import { downloadRoadmapJson, formatRelativeTime } from '../../utils/download';
 import { showToast } from '../../utils/toast';
 import {
@@ -25,9 +26,6 @@ import {
   saveFileHandleToIdb,
   clearFileHandleFromIdb,
 } from '../../data/indexedDbDraft';
-import RevisionHistoryModal from './RevisionHistoryModal';
-import GoogleDriveSection from './GoogleDriveSection';
-import DriveRoadmapsModal from './DriveRoadmapsModal';
 import LocalFileSection from './LocalFileSection';
 import PrivacyModal from '../PrivacyModal';
 
@@ -47,16 +45,6 @@ const STATES = {
     icon: CheckCircle2,
     cls: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/40 hover:bg-emerald-500/25',
   },
-  syncing: {
-    label: 'Saving to Drive…',
-    icon: Loader2,
-    cls: 'bg-amber-500/15 text-amber-800 dark:text-amber-200 border-amber-500/40 hover:bg-amber-500/25',
-  },
-  attention: {
-    label: 'Drive needs attention',
-    icon: AlertTriangle,
-    cls: 'bg-orange-500/20 text-orange-800 dark:text-orange-200 border-orange-500/50 hover:bg-orange-500/30',
-  },
   sample: {
     label: 'Sample roadmap',
     icon: FileWarning,
@@ -71,21 +59,16 @@ export default function BackupChip() {
     hasUnbackedChanges,
     saveError,
     lastBackupAt,
-    backupMethod,
     markBackedUp,
     lastDraftSavedAt,
-    importRoadmap,
   } = useRoadmap();
-  const drive = useDriveBackupContext();
   const [open, setOpen] = useState(false);
   const rootRef = useRef(null);
 
   const [localFileHandle, setLocalFileHandle] = useState(null);
   const [isLocalSaving, setIsLocalSaving] = useState(false);
 
-  const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
-  const [showDriveModal, setShowDriveModal] = useState(false);
 
   useEffect(() => {
     loadFileHandleFromIdb().then((handle) => {
@@ -93,28 +76,12 @@ export default function BackupChip() {
     });
   }, []);
 
-  const driveAttention =
-    isBlockingProblem(drive.problem) ||
-    drive.linkedElsewhere ||
-    Boolean(drive.link && !drive.auth.connected && hasUnbackedChanges);
-
-  const stateKey = getBackupState({
-    persistable,
-    hasUnbackedChanges,
-    saveError,
-    driveSyncing: drive.syncing,
-    driveAttention,
-  });
+  const stateKey = getBackupState({ persistable, hasUnbackedChanges, saveError });
   const meta = STATES[stateKey];
   const Icon = meta.icon;
   let label = meta.label;
-  if (stateKey === 'backed-up' && backupMethod === 'google-drive') label = 'Saved to Google Drive';
-  if (stateKey === 'attention') {
-    const kind = drive.problem?.kind;
-    if (kind === 'conflict') label = 'Drive conflict';
-    else if (kind === 'trashed' || kind === 'missing') label = 'Drive file missing';
-    else if (!drive.auth.connected && !drive.linkedElsewhere) label = 'Reconnect Drive';
-  }
+  if (isDesktop && stateKey === 'not-backed-up') label = 'Saving…';
+  if (isDesktop && stateKey === 'backed-up') label = 'Saved';
 
   useEffect(() => {
     if (!open) return undefined;
@@ -187,10 +154,7 @@ export default function BackupChip() {
         className={`inline-flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-semibold transition-colors ${meta.cls}`}
         title="Where is my work saved?"
       >
-        <Icon
-          className={`h-3.5 w-3.5 ${stateKey === 'syncing' ? 'animate-spin' : ''}`}
-          aria-hidden="true"
-        />
+        <Icon className="h-3.5 w-3.5" aria-hidden="true" />
         <span>{label}</span>
         {stateKey === 'backed-up' && (
           <span className="hidden font-normal opacity-80 md:inline">
@@ -225,15 +189,49 @@ export default function BackupChip() {
             </button>
           </div>
 
-          <GoogleDriveSection
-            onOpenHistory={() => setShowHistoryModal(true)}
-            onOpenFromDrive={() => {
-              setOpen(false);
-              setShowDriveModal(true);
-            }}
-          />
+          {isDesktop && (
+            <div className="mt-3 space-y-2" data-testid="desktop-save-section">
+              <p className="text-xs text-slate-600 dark:text-slate-300">
+                Changes are saved automatically to a file in your roadmap library folder.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  data-testid="chip-save-version-btn"
+                  onClick={() => {
+                    setOpen(false);
+                    window.dispatchEvent(new Event(OPEN_SAVE_VERSION));
+                  }}
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+                >
+                  <Save className="h-3.5 w-3.5" aria-hidden="true" />
+                  Save version…
+                </button>
+                <button
+                  type="button"
+                  data-testid="chip-version-history-btn"
+                  onClick={() => {
+                    setOpen(false);
+                    window.dispatchEvent(new Event(OPEN_VERSION_HISTORY));
+                  }}
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+                >
+                  <History className="h-3.5 w-3.5" aria-hidden="true" />
+                  Version history…
+                </button>
+                <button
+                  type="button"
+                  onClick={() => desktop.library.reveal(roadmapState.id)}
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+                >
+                  <FolderOpen className="h-3.5 w-3.5" aria-hidden="true" />
+                  Show file
+                </button>
+              </div>
+            </div>
+          )}
 
-          {isFileSystemAccessSupported() && (
+          {!isDesktop && isFileSystemAccessSupported() && (
             <LocalFileSection
               localFileHandle={localFileHandle}
               isLocalSaving={isLocalSaving}
@@ -253,28 +251,6 @@ export default function BackupChip() {
             <span>Download backup (.json)</span>
           </button>
         </div>
-      )}
-
-      {showHistoryModal && (
-        <RevisionHistoryModal
-          isOpen={showHistoryModal}
-          onClose={() => setShowHistoryModal(false)}
-          fileId={drive.link?.fileId}
-          onRestore={(data) => {
-            importRoadmap(data);
-            showToast({
-              message: 'Restored that version. Undo is available; back up to keep it.',
-              tone: 'success',
-            });
-          }}
-        />
-      )}
-
-      {showDriveModal && (
-        <DriveRoadmapsModal
-          onClose={() => setShowDriveModal(false)}
-          onOpened={() => setShowDriveModal(false)}
-        />
       )}
 
       {showPrivacyModal && (

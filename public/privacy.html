@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Privacy Policy – Roadmap Builder Studio</title>
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
     <style>
       :root {
         color-scheme: dark;
@@ -89,8 +89,8 @@
   <body>
     <div class="container">
       <div class="nav-links">
-        <a href="/" class="back-link">← Back to Roadmap Builder Studio</a>
-        <a href="/terms.html" class="back-link">Terms of Service</a>
+        <a href="./" class="back-link">← Back to Roadmap Builder Studio</a>
+        <a href="./terms.html" class="back-link">Terms of Service</a>
       </div>
       <h1>Privacy Policy</h1>
       <p><strong>Effective Date:</strong> November 8, 2026</p>
@@ -108,74 +108,19 @@
         to protecting your privacy and ensuring you have complete control over your data.
       </p>
 
-      <h2>2. Google User Data & Google Drive Integration</h2>
+      <h2>2. Your Files</h2>
       <p>
-        Roadmap Builder Studio offers optional integration with Google Drive so you can save, sync,
-        and restore roadmap files to your personal Google account.
-      </p>
-
-      <h3>Permissions &amp; Scope Requested</h3>
-      <p>When you connect Google Drive, we request the following restricted scope:</p>
-      <ul>
-        <li>
-          <code>https://www.googleapis.com/auth/drive.file</code> — Permits the app to create new
-          files and view, edit, or delete <em>only</em> files that were created by or explicitly
-          opened with Roadmap Builder Studio.
-        </li>
-        <li>
-          <code>userinfo.profile</code> &amp; <code>userinfo.email</code> — Used solely to display
-          your email and avatar in the app's backup menu to confirm which account is connected.
-        </li>
-      </ul>
-
-      <h3>What We Access &amp; What We Never Access</h3>
-      <ul>
-        <li>
-          <strong>We DO NOT have access to your other Google Drive files:</strong> The
-          <code>drive.file</code> scope strictly prevents the app from accessing, reading, or
-          listing any documents, photos, or folders in your Google Drive other than those created by
-          Roadmap Builder Studio.
-        </li>
-        <li>
-          <strong>No Third-Party or Intermediary Servers:</strong> Communication with Google Drive
-          occurs via direct, encrypted HTTPS requests between your web browser and Google's official
-          endpoints (<code>https://www.googleapis.com</code>). Your access token, credentials, and
-          roadmap contents are never sent to any developer, server, proxy, or third-party analytics
-          service.
-        </li>
-        <li>
-          <strong>No Data Retention on External Servers:</strong> We do not operate external
-          databases, log servers, or data collection systems.
-        </li>
-      </ul>
-
-      <h3>Compliance with Google API Services User Data Policy</h3>
-      <p>
-        Roadmap Builder Studio's use and transfer to any other app of information received from
-        Google APIs adheres to the
-        <a
-          href="https://developers.google.com/terms/api-services-user-data-policy"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Google API Services User Data Policy </a
-        >, including the Limited Use requirements.
-      </p>
-
-      <h3>Revoking Access</h3>
-      <p>
-        You can disconnect your Google Drive at any time by clicking "Disconnect" in the app's
-        Backup menu, or by revoking permissions in your
-        <a href="https://myaccount.google.com/permissions" target="_blank" rel="noopener noreferrer"
-          >Google Account Security Settings</a
-        >.
+        Roadmaps you export, download, or save are written to your own device. In the optional
+        desktop app, roadmaps are saved as plain <code>.roadmap.json</code> files in a folder on
+        your computer (along with a local version history), and you choose where that folder is.
+        Nothing is uploaded anywhere, and the app does not connect to any account or cloud service.
       </p>
 
       <h2>3. Browser Local Storage &amp; IndexedDB</h2>
       <p>
-        As you work, the app saves a temporary draft in your browser's local storage (IndexedDB /
-        localStorage). This draft remains strictly on your local device and is never transmitted
-        over the internet unless you choose to sync it to your Google Drive or export it.
+        In the web version, the app saves a temporary draft in your browser's local storage
+        (IndexedDB / localStorage). This draft remains strictly on your local device and is never
+        transmitted over the internet.
       </p>
 
       <h2>4. Cookies &amp; Tracking</h2>
