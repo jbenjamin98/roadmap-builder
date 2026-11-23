@@ -1,21 +1,23 @@
 # Roadmap Builder – agent guide
 
-Client-only React 19 + Vite 8 + Tailwind 3 app that builds visual roadmaps. No backend; state lives in
-`localStorage` and can be imported/exported as JSON, PNG, PDF or XLSX. Deployed to GitHub Pages.
+Client-only React 19 + Vite 8 + Tailwind 3 app that builds visual roadmaps. No backend; on the web, state lives in
+`localStorage` and can be imported/exported as JSON, PNG, PDF or XLSX (GitHub Pages). The same build also runs in an
+Electron desktop app that saves roadmaps as files with version history (`electron/`, `src/storage/`).
 Requires Node 24 (see `.nvmrc`).
 
 ## Commands
 
-| Task                            | Command                             |
-| ------------------------------- | ----------------------------------- |
-| Dev server                      | `npm run dev`                       |
-| Format check                    | `npm run format:check`              |
-| Format auto-fix                 | `npm run format`                    |
-| Lint                            | `npm run lint`                      |
-| Type check                      | `npm run typecheck`                 |
-| Unit tests (Vitest, pure logic) | `npm test`                          |
-| Build                           | `npm run build`                     |
-| E2E smoke & state               | `npm run build && npm run test:e2e` |
+| Task                            | Command                                                                      |
+| ------------------------------- | ---------------------------------------------------------------------------- |
+| Dev server                      | `npm run dev`                                                                |
+| Format check                    | `npm run format:check`                                                       |
+| Format auto-fix                 | `npm run format`                                                             |
+| Lint                            | `npm run lint`                                                               |
+| Type check                      | `npm run typecheck`                                                          |
+| Unit tests (Vitest, pure logic) | `npm test`                                                                   |
+| Build                           | `npm run build`                                                              |
+| E2E smoke & state               | `npm run build && npm run test:e2e`                                          |
+| Desktop app (dev / e2e / build) | `npm run electron:dev` / `node scripts/e2e-desktop.mjs` / `npm run dist:win` |
 
 Run format:check + lint + typecheck + test + build before finishing a change. CI (`.github/workflows`) runs the same.
 
@@ -35,6 +37,10 @@ src/data/persistence.js       draft storage, corrupt state quarantine, last-good
 src/data/defaultState.js       blank/sample state, normalizeRoadmapState, theme storage
 src/data/migrations.js         schema version migrations (v1 -> v...)
 src/data/roadmapSchema.js      zod check for uploaded JSON (validateRoadmapImport, 50MB limit)
+electron/                      desktop shell: main.js (window, app:// protocol, IPC), preload.cjs (window.desktop),
+                               menu.js, updater.js, settings.js, lib/ (libraryStore, versionStore, versionPolicy,
+                               fileNames: pure Node logic, unit tested)
+src/storage/desktop.js         `desktop`/`isDesktop` bridge (undefined on web); src/components/library/ = desktop UI
 src/constants/
   designOptions.js             option catalogs + getDefaultDesign/normalizeDesign/getDensity
   brandThemes.js               locked brand modes: Appian Light/Dark presets, getAppianDesign, Duck Mode
@@ -75,5 +81,9 @@ src/components/
   never rotate/recolor it). Brand logos are unmodified files in `src/assets/brand/`. To lock/unlock a tab
   in a brand mode, edit `BRAND_EDITABLE_TABS` in `brandThemes.js`.
 - `data-testid` attributes are used by `scripts/e2e-smoke.mjs`; keep them stable.
-- `dist/`, `e2e-output/` and `node_modules/` are generated; never read or edit them.
+- Desktop-only code must be gated on `isDesktop` (`src/storage/desktop.js`); the web path must keep working
+  unchanged. All paths/IPC in `electron/` must stay inside the library folder (see `isInside`, `isSafeId`).
+- Google Drive support was removed on purpose; do not reintroduce it.
+- `ELECTRON_RUN_AS_NODE` (set by some terminals) makes Electron run as plain Node; unset it when launching.
+- `dist/`, `release/`, `e2e-output/` and `node_modules/` are generated; never read or edit them.
 - Keep files under ~400 lines. Split by component rather than adding to a large file.

@@ -269,7 +269,7 @@ export default function DuckPond({
           />
         )}
 
-        {/* Open Roadmap (upload a file or open from Google Drive) Bottle Lily Pad */}
+        {/* Open Roadmap (upload a roadmap file) Bottle Lily Pad */}
         <button
           type="button"
           onClick={onOpenClick}

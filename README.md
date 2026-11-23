@@ -2,7 +2,8 @@
 
 A browser-based roadmap designer. Build multi-track timelines (sections, sub-sections, tasks, bars and
 milestones), restyle them with themes and effects, and export to JSON, PNG, PDF or XLSX. Everything runs
-client-side; data is kept in `localStorage`.
+client-side. The hosted web version keeps data in `localStorage`; the optional desktop app (Windows, macOS,
+Linux) saves each roadmap as a file on your computer with automatic version history.
 
 ## Getting started
 
@@ -23,6 +24,29 @@ npm run dev
 | `npm run format`       | Prettier auto-formatting                                                                                   |
 | `npm test`             | Vitest unit tests (date math, state normalization, design options, import validation, reducer, history)    |
 | `npm run test:e2e`     | Playwright smoke & state tests against `vite preview` (run `npm run build` first; output in `e2e-output/`) |
+
+## Desktop app (Electron)
+
+Same code as the web app, wrapped in Electron (`electron/`). Roadmaps are plain `<name>.roadmap.json` files in a
+library folder (default `Documents/Roadmaps`, changeable under File → Change Library Folder). Edits autosave to
+the file. Version history lives in `<library>/.history/`: automatic snapshots (about every 10 minutes while
+editing and on close), named versions (File → Save Version), and pinned "master" versions that are never pruned
+(newest 50 unpinned versions are kept).
+
+| Script                         | Purpose                                                              |
+| ------------------------------ | -------------------------------------------------------------------- |
+| `npm run electron:dev`         | Vite dev server + Electron window with hot reload                    |
+| `npm run electron:start`       | Build, then run the desktop app from source                          |
+| `npm run dist:win`             | Build installer(s) into `release/` (also `dist:mac`, `dist:linux`)   |
+| `node scripts/e2e-desktop.mjs` | Desktop end-to-end test (set `DESKTOP_EXE` to test a packaged build) |
+
+**Releases:** bump `version` in `package.json`, then push a matching tag (`git tag v1.2.0 && git push --tags`).
+`.github/workflows/release.yml` builds all three platforms and publishes a GitHub Release.
+
+**Unsigned builds:** there are no paid code-signing certificates, so first launch shows warnings. Windows
+SmartScreen: _More info → Run anyway_. macOS: right-click the app → _Open_ (and, if blocked, allow it in System
+Settings → Privacy & Security). Windows and Linux AppImage update themselves; macOS only shows a "new version
+available" notice with a download link, because macOS cannot install unsigned updates automatically.
 
 ## Deployment
 

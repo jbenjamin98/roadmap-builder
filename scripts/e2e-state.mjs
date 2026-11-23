@@ -309,7 +309,7 @@ try {
   check('touch-drawn bar spans two periods', touchBar.width > (c3.x - c2.x) * 1.5);
   await ctx3.close();
 
-  // --- K. Privacy & Google Drive UI checks
+  // --- K. Privacy & backup UI checks
   const ctx4 = await browser.newContext({ viewport: { width: 1440, height: 900 } });
   const page4 = await gotoLandingFresh(ctx4);
   const privacyBtn = page4.locator(sel('landing-privacy-btn'));
@@ -330,7 +330,7 @@ try {
   // Enter workspace and check backup chip popover
   await page4.locator(sel('create-roadmap-btn')).click({ force: true });
   await page4.waitForSelector(sel('config-modal'));
-  await page4.fill(sel('config-roadmap-name'), 'Drive Test');
+  await page4.fill(sel('config-roadmap-name'), 'Backup Test');
   await page4.click(sel('save-config-btn'));
   await page4.waitForSelector(sel('roadmap-export-canvas'));
   await page4.keyboard.press('Escape'); // dismiss first-run draft notice
@@ -342,8 +342,8 @@ try {
     (await page4.locator('[role="dialog"][aria-label="Backup status"]').count()) === 1
   );
   check(
-    'backup chip offers Google Drive connect',
-    (await page4.locator('text=Connect Google Drive').count()) === 1
+    'backup chip no longer offers Google Drive',
+    (await page4.locator('text=Google Drive').count()) === 0
   );
   check(
     'backup chip offers download backup',
@@ -386,19 +386,10 @@ try {
   await page5.locator(sel('open-roadmap-btn')).click({ force: true });
   await page5.waitForSelector(sel('open-roadmap-modal'));
   check(
-    'Open Roadmap offers upload and Google Drive',
+    'Open Roadmap offers upload only (no Google Drive)',
     (await page5.locator(sel('open-upload-option')).count()) === 1 &&
-      (await page5.locator(sel('open-drive-option')).count()) === 1
+      (await page5.locator(sel('open-drive-option')).count()) === 0
   );
-  await page5.locator(sel('open-drive-option')).click();
-  await page5.waitForSelector(sel('drive-open-modal'));
-  check(
-    'Open from Google Drive step offers sign-in and a way back',
-    (await page5.locator(sel('drive-open-connect-btn')).count()) === 1 &&
-      (await page5.locator(sel('drive-back-btn')).count()) === 1
-  );
-  await page5.locator(sel('drive-back-btn')).click();
-  await page5.waitForSelector(sel('open-roadmap-modal'));
   await page5.keyboard.press('Escape');
   await page5.waitForSelector(sel('open-roadmap-modal'), { state: 'detached' });
   check(
@@ -457,8 +448,8 @@ try {
   await page5.click(sel('save-config-btn'));
   await page5.waitForSelector(sel('roadmap-export-canvas'));
   check(
-    'first-run notice offers Connect Google Drive',
-    (await page5.locator(sel('draft-notice-connect')).count()) === 1
+    'first-run notice offers a backup download',
+    (await page5.locator(sel('draft-notice-download')).count()) === 1
   );
   await page5.keyboard.press('Escape');
 
@@ -489,8 +480,8 @@ try {
     Boolean(popover && popover.x >= 0 && popover.x + popover.width <= 801)
   );
   check(
-    'drive section shows Connect Google Drive',
-    (await page5.locator(sel('drive-connect-btn')).count()) === 1
+    'no Google Drive section remains in the backup popover',
+    (await page5.locator(sel('drive-connect-btn')).count()) === 0
   );
   await ctx5.close();
 

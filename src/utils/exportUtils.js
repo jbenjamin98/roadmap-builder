@@ -1,4 +1,6 @@
 import { domToBlob } from 'modern-screenshot';
+import { desktop, isDesktop } from '../storage/desktop';
+import { showToast } from './toast';
 
 /** Resolves after the browser has painted twice (lets React commit mode changes). */
 export const nextPaint = () =>
@@ -122,6 +124,19 @@ export function printRoadmapPdf(node, title = 'roadmap') {
     document.title = previousTitle;
     window.removeEventListener('afterprint', cleanup);
   };
+  if (isDesktop) {
+    // No print dialog in the desktop app: render the print layout straight to a PDF file.
+    desktop
+      .printToPdf({ suggestedName: `${title}.pdf` })
+      .then((result) => {
+        if (!result.canceled) showToast({ message: `Saved ${result.file}`, tone: 'success' });
+      })
+      .catch((err) =>
+        showToast({ message: `Could not save PDF: ${err?.message || err}`, tone: 'error' })
+      )
+      .finally(cleanup);
+    return;
+  }
   window.addEventListener('afterprint', cleanup);
   window.print();
 }

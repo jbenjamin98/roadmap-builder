@@ -1,0 +1,46 @@
+# Desktop packaging. The web app is built to dist/ first (npm run build), then bundled here.
+# Builds are unsigned (no paid certificates): see README "Desktop app" for first-run warnings.
+appId: com.jacobbenjamin.roadmapbuilder
+productName: Roadmap Builder Studio
+copyright: Copyright © Jacob Benjamin
+directories:
+  output: release
+files:
+  - dist/**
+  - electron/**
+  - '!electron/**/*.test.js'
+  - package.json
+asar: true
+publish:
+  provider: github
+  owner: jbenjamin98
+  repo: roadmap-builder
+  releaseType: draft
+
+win:
+  target:
+    - target: nsis
+      arch: [x64]
+  artifactName: RoadmapBuilder-Setup-${version}.${ext}
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  deleteAppDataOnUninstall: false
+
+mac:
+  category: public.app-category.productivity
+  target:
+    - target: dmg
+      arch: [x64, arm64]
+    - target: zip
+      arch: [x64, arm64]
+  artifactName: RoadmapBuilder-${version}-${arch}.${ext}
+  notarize: false
+
+linux:
+  category: Office
+  target:
+    - AppImage
+    - deb
+  artifactName: RoadmapBuilder-${version}-${arch}.${ext}

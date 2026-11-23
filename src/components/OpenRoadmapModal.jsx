@@ -1,11 +1,14 @@
-import { Cloud, HardDrive } from 'lucide-react';
+import { FolderOpen, HardDrive } from 'lucide-react';
 import Modal from './ui/Modal';
 
 const optionClass =
   'group flex w-full items-center gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-left transition-colors hover:border-indigo-400 hover:bg-indigo-50 dark:border-slate-700 dark:bg-slate-800/60 dark:hover:border-indigo-400 dark:hover:bg-slate-800';
 
-/** Landing "Open Roadmap" chooser: a file from this computer, or one saved in Google Drive. */
-export default function OpenRoadmapModal({ onClose, onChooseUpload, onChooseDrive }) {
+/**
+ * Landing "Open Roadmap" chooser: a roadmap .json file from this computer and, in the desktop app,
+ * the roadmap library folder (`onChooseLibrary`).
+ */
+export default function OpenRoadmapModal({ onClose, onChooseUpload, onChooseLibrary }) {
   return (
     <Modal
       testId="open-roadmap-modal"
@@ -15,10 +18,31 @@ export default function OpenRoadmapModal({ onClose, onChooseUpload, onChooseDriv
       widthClass="max-w-md"
     >
       <div className="space-y-3">
+        {onChooseLibrary && (
+          <button
+            type="button"
+            data-testid="open-library-option"
+            data-autofocus=""
+            onClick={onChooseLibrary}
+            className={optionClass}
+          >
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-indigo-500/15 text-indigo-600 dark:text-indigo-300">
+              <FolderOpen className="h-5 w-5" aria-hidden="true" />
+            </span>
+            <span>
+              <span className="block text-sm font-bold text-slate-900 dark:text-white">
+                Open from your library
+              </span>
+              <span className="block text-xs text-slate-500 dark:text-slate-400">
+                Roadmaps saved on this computer
+              </span>
+            </span>
+          </button>
+        )}
         <button
           type="button"
           data-testid="open-upload-option"
-          data-autofocus=""
+          data-autofocus={onChooseLibrary ? undefined : ''}
           onClick={onChooseUpload}
           className={optionClass}
         >
@@ -31,24 +55,6 @@ export default function OpenRoadmapModal({ onClose, onChooseUpload, onChooseDriv
             </span>
             <span className="block text-xs text-slate-500 dark:text-slate-400">
               Choose a roadmap .json file
-            </span>
-          </span>
-        </button>
-        <button
-          type="button"
-          data-testid="open-drive-option"
-          onClick={onChooseDrive}
-          className={optionClass}
-        >
-          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-sky-500/15 text-sky-600 dark:text-sky-300">
-            <Cloud className="h-5 w-5" aria-hidden="true" />
-          </span>
-          <span>
-            <span className="block text-sm font-bold text-slate-900 dark:text-white">
-              Open from Google Drive
-            </span>
-            <span className="block text-xs text-slate-500 dark:text-slate-400">
-              Roadmaps this app saved to your Drive
             </span>
           </span>
         </button>

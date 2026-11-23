@@ -1,10 +1,28 @@
+import { desktop, isDesktop } from '../storage/desktop';
+import { showToast } from './toast';
+
 export const slugifyName = (name) =>
   String(name || 'roadmap')
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/(^-|-$)/g, '') || 'roadmap';
 
+/** Desktop app: a native Save dialog instead of a browser download. */
+async function saveBlobWithDialog(blob, filename) {
+  try {
+    const data = new Uint8Array(await blob.arrayBuffer());
+    const result = await desktop.saveFile({ suggestedName: filename, data });
+    if (!result.canceled) showToast({ message: `Saved ${result.file}`, tone: 'success' });
+  } catch (err) {
+    showToast({ message: `Could not save ${filename}: ${err?.message || err}`, tone: 'error' });
+  }
+}
+
 export function downloadBlob(blob, filename) {
+  if (isDesktop) {
+    saveBlobWithDialog(blob, filename);
+    return;
+  }
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;

@@ -24,6 +24,7 @@ import { loadFont } from '../constants/fontLoaders';
 import { useRoadmap } from '../state/roadmapContext';
 import BackupChip from './backup/BackupChip';
 import BackupNagBanner from './backup/BackupNagBanner';
+import DesktopWorkspaceTools from './library/DesktopWorkspaceTools';
 
 export default function RoadmapWorkspace({
   onOpenConfigModal,
@@ -305,6 +306,7 @@ export default function RoadmapWorkspace({
         </div>
       </header>
 
+      <DesktopWorkspaceTools onOpenExport={() => setIsExportModalOpen(true)} />
       <BackupNagBanner />
 
       {/* Main Workspace Split Pane: Left Sidebar (Editor only) + Right Timeline Grid */}

@@ -15,21 +15,6 @@ describe('getBackupState', () => {
   it('flags unbacked changes', () => {
     expect(getBackupState({ ...base, hasUnbackedChanges: true })).toBe('not-backed-up');
   });
-  it('shows uploading to Drive while a sync runs', () => {
-    expect(getBackupState({ ...base, hasUnbackedChanges: true, driveSyncing: true })).toBe(
-      'syncing'
-    );
-  });
-  it('asks for attention when Drive needs the user', () => {
-    expect(getBackupState({ ...base, hasUnbackedChanges: true, driveAttention: true })).toBe(
-      'attention'
-    );
-  });
-  it('a failing draft still wins over Drive states', () => {
-    expect(
-      getBackupState({ ...base, saveError: {}, driveSyncing: true, driveAttention: true })
-    ).toBe('draft-failing');
-  });
   it('reports backed up otherwise', () => {
     expect(getBackupState(base)).toBe('backed-up');
   });

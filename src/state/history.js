@@ -40,9 +40,9 @@ export function historyReducer(history, action) {
       };
     }
     case 'REPLACE': {
-      // Loading a different roadmap (new, imported, opened from Drive) starts a fresh history, so
+      // Loading a different roadmap (new, imported, opened from a file) starts a fresh history, so
       // Undo can never jump into an unrelated roadmap. Reloading the SAME roadmap (restoring a
-      // Drive version) stays undoable.
+      // restored version) stays undoable.
       if (action.state?.id !== history.present.id) return createHistory(action.state);
       return pushState(history, action);
     }
