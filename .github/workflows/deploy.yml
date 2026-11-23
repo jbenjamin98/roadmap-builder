@@ -1,5 +1,8 @@
 name: Deploy static content to Pages
 
+# Two jobs, as in GitHub's own Pages starter workflow: `build` checks the code and uploads the site
+# as an artifact, then a separate `deploy` job publishes it.
+
 on:
   push:
     branches: ['main']
@@ -9,19 +12,13 @@ permissions:
   contents: read
   pages: write
   id-token: write
-  # deploy-pages looks the uploaded artifact up through the Actions API, which needs this
-  # (private repos return "Found 0 artifact(s)" without it).
-  actions: read
 
 concurrency:
   group: 'pages'
   cancel-in-progress: false
 
 jobs:
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+  build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -48,7 +45,15 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v4
         with:
-          path: './dist'
+          path: ./dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
