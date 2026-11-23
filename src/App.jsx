@@ -99,7 +99,7 @@ export default function App() {
   };
 
   // View A -> Upload JSON creates/updates a roadmap and routes to editor.
-  // Replacing work that has no backup asks first, so nothing is lost by accident.
+  // Replacing the web draft asks first, so nothing is lost by accident (see confirmReplace).
   const handleUploadRoadmapJson = async (parsedJson) => {
     let json = parsedJson;
     if (isDesktop && json.id) {

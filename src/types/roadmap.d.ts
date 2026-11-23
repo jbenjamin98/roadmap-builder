@@ -252,6 +252,10 @@ export interface LibraryItem {
   file: string; // `<name>.roadmap.json`
   updatedAt: number; // file mtime (ms)
   sections: number;
+  items: number; // bars and milestones
+  periods: number;
+  periodLabel: string;
+  colors: string[]; // theme primary + first accents, for the card accent strip
 }
 
 export interface VersionEntry {

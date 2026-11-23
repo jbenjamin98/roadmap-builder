@@ -31,7 +31,8 @@ Same code as the web app, wrapped in Electron (`electron/`). Roadmaps are plain 
 library folder (default `Documents/Roadmaps`, changeable under File → Change Library Folder). Edits autosave to
 the file. Version history lives in `<library>/.history/`: automatic snapshots (about every 10 minutes while
 editing and on close), named versions (File → Save Version), and pinned "master" versions that are never pruned
-(newest 50 unpinned versions are kept).
+(newest 50 unpinned versions are kept). The landing page has a **Browse Roadmaps** pad that opens a searchable
+grid of everything in the library.
 
 | Script                         | Purpose                                                              |
 | ------------------------------ | -------------------------------------------------------------------- |
@@ -47,6 +48,12 @@ editing and on close), named versions (File → Save Version), and pinned "maste
 SmartScreen: _More info → Run anyway_. macOS: right-click the app → _Open_ (and, if blocked, allow it in System
 Settings → Privacy & Security). Windows and Linux AppImage update themselves; macOS only shows a "new version
 available" notice with a download link, because macOS cannot install unsigned updates automatically.
+
+## Editing periods
+
+Click a period header (e.g. _Sprint 5_) to rename it or change its length in weeks; later periods shift to follow
+and bars stay on their periods. **Configure → Timeline** lists every period and has bulk tools (set all periods
+to N weeks, or make every Nth period X weeks).
 
 ## Deployment
 

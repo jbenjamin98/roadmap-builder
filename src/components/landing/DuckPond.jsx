@@ -1,5 +1,6 @@
 import DuckSvg from '../art/DuckSvg';
 import ContinuePad from './ContinuePad';
+import LibraryPad from './LibraryPad';
 
 export default function DuckPond({
   ducks,
@@ -13,6 +14,7 @@ export default function DuckPond({
   handleDuckLanded,
   onCreateRoadmap,
   onOpenClick,
+  onBrowseClick,
   continueRoadmap,
   onContinue,
 }) {
@@ -356,6 +358,8 @@ export default function DuckPond({
             Open Roadmap
           </span>
         </button>
+
+        {onBrowseClick && <LibraryPad onBrowse={onBrowseClick} />}
       </div>
     </>
   );

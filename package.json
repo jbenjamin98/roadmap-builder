@@ -21,7 +21,7 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "node scripts/e2e-smoke.mjs && node scripts/e2e-state.mjs && node scripts/e2e-appian.mjs && node scripts/e2e-editing.mjs",
+    "test:e2e": "node scripts/e2e-smoke.mjs && node scripts/e2e-state.mjs && node scripts/e2e-appian.mjs && node scripts/e2e-editing.mjs && node scripts/e2e-periods.mjs",
     "electron": "electron .",
     "electron:start": "npm run build && electron .",
     "electron:dev": "node scripts/electron-dev.mjs",
