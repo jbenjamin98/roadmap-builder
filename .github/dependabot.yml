@@ -12,3 +12,9 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    ignore:
+      # v5 of this pair deployed 0 artifacts ("No artifacts named github-pages"); v4 works. Bump together, by hand.
+      - dependency-name: actions/upload-pages-artifact
+        update-types: ['version-update:semver-major']
+      - dependency-name: actions/deploy-pages
+        update-types: ['version-update:semver-major']
