@@ -67,6 +67,10 @@ try {
     await page.evaluate(() => Boolean(window.desktop?.isDesktop))
   );
   check('page is served from app://', page.url().startsWith('app://roadmap/'));
+  check(
+    'desktop app does not show the download link',
+    (await page.locator(sel('download-desktop-link')).count()) === 0
+  );
 
   await page.locator(sel('create-roadmap-btn')).click({ force: true });
   await page.waitForSelector(sel('config-modal'));

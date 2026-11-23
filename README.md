@@ -41,8 +41,10 @@ grid of everything in the library.
 | `npm run dist:win`             | Build installer(s) into `release/` (also `dist:mac`, `dist:linux`)   |
 | `node scripts/e2e-desktop.mjs` | Desktop end-to-end test (set `DESKTOP_EXE` to test a packaged build) |
 
-**Releases:** bump `version` in `package.json`, then push a matching tag (`git tag v1.2.0 && git push --tags`).
-`.github/workflows/release.yml` builds all three platforms and publishes a GitHub Release.
+**Releases:** bump `version` in `package.json` and merge it, then open the Actions tab, choose
+"Release desktop app" and click **Run workflow**. `.github/workflows/release.yml` builds all three platforms and
+publishes the GitHub Release `v<version>` (it stops early if that version was already released). The web app's
+"Download the desktop app" link points at the latest release.
 
 **Unsigned builds:** there are no paid code-signing certificates, so first launch shows warnings. Windows
 SmartScreen: _More info → Run anyway_. macOS: right-click the app → _Open_ (and, if blocked, allow it in System

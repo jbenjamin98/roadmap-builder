@@ -1,23 +1,25 @@
 name: Release desktop app
 
-# Push a tag like v1.2.0 (it must match "version" in package.json) to build installers for
-# Windows, macOS and Linux and attach them to a GitHub Release. The release is created as a draft
-# by the build jobs and published once all three have succeeded. Builds are unsigned.
+# Start it from the Actions tab: "Release desktop app" -> Run workflow. It releases whatever
+# "version" is in package.json on the chosen branch (normally main), so bump the version and merge
+# first. It builds installers for Windows, macOS and Linux (unsigned) and publishes them as the
+# GitHub Release "v<version>", which the website's "Download the desktop app" link points to.
 
 on:
-  push:
-    tags: ['v*']
+  workflow_dispatch:
 
 permissions:
   contents: write
 
 concurrency:
-  group: release-${{ github.ref }}
+  group: release
   cancel-in-progress: false
 
 jobs:
-  verify:
+  prepare:
     runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.version.outputs.tag }}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v5
@@ -25,19 +27,32 @@ jobs:
           node-version-file: '.nvmrc'
           cache: 'npm'
       - run: npm ci
-      - name: Tag must match package.json version
-        run: |
-          pkg="v$(node -p "require('./package.json').version")"
-          if [ "$pkg" != "$GITHUB_REF_NAME" ]; then
-            echo "Tag $GITHUB_REF_NAME does not match package.json version $pkg"; exit 1
-          fi
       - run: npm run format:check
       - run: npm run lint
       - run: npm run typecheck
       - run: npm test
+      - name: Work out the release tag from package.json
+        id: version
+        run: echo "tag=v$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+      - name: Stop if this version was already released
+        run: |
+          if gh release view "${{ steps.version.outputs.tag }}" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "Release ${{ steps.version.outputs.tag }} already exists. Bump \"version\" in package.json and merge it first."
+            exit 1
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Create the draft release the builds will upload into
+        run: >
+          gh release create "${{ steps.version.outputs.tag }}"
+          --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --draft
+          --title "Roadmap Builder Studio ${{ steps.version.outputs.tag }}"
+          --notes "Desktop installers for Windows, macOS and Linux. Builds are unsigned: see the README for the first-run steps."
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   build:
-    needs: verify
+    needs: prepare
     strategy:
       fail-fast: true
       matrix:
@@ -57,10 +72,10 @@ jobs:
           CSC_IDENTITY_AUTO_DISCOVERY: 'false'
 
   publish:
-    needs: build
+    needs: [prepare, build]
     runs-on: ubuntu-latest
     steps:
-      - name: Publish the draft release
-        run: gh release edit "$GITHUB_REF_NAME" --draft=false --repo "$GITHUB_REPOSITORY"
+      - name: Publish the release
+        run: gh release edit "${{ needs.prepare.outputs.tag }}" --draft=false --repo "$GITHUB_REPOSITORY"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
